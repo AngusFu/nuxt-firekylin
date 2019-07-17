@@ -33,14 +33,14 @@
 <div class="wrapper">
   <nav id="sidebar" class="behavior_1">
     <div class="wrap">
-      <div class="profile">
+      <div class="profile" @click.prevent="hideSide">
         <nuxt-link to="/">
             <img :src="logo_url" :alt="title">
         </nuxt-link>
         <span>{{title}}</span>
       </div>
       <ul class="buttons">
-        <li v-for="nav in navigation" :key="nav.label">
+        <li v-for="nav in navigation" :key="nav.label" @click="hideSide">
           <nuxt-link v-if="nav.url.indexOf('http') === -1" :to="nav.url" :title="nav.label">
             <i :class="['iconfont', 'icon-' + nav.option]"></i>
             <span>&nbsp;{{nav.label}}</span>
@@ -130,15 +130,12 @@
     },
     methods: {
       toggleSide () {
-        const SIDE_CLSN = 'side'
-        const body = document.body
-        if (body.className.indexOf(SIDE_CLSN) > -1) {
-          body.className = body.className.replace(SIDE_CLSN, '')
-          this.sideMaskShow = false
-        } else {
-          body.className += (' ' + SIDE_CLSN)
-          this.sideMaskShow = true
-        }
+        this.sideMaskShow = !document.body.classList.contains('side')
+        document.body.classList.toggle('side')
+      },
+      hideSide () {
+        document.body.classList.remove('side')
+        this.sideMaskShow = false
       }
     },
     mounted () {
