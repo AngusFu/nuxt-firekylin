@@ -3,12 +3,15 @@ body {
   padding: 0;
   color: #666;
   -webkit-text-size-adjust: none;
-  -webkit-transition: -webkit-transform .2s cubic-bezier(.4,.01,.165,.99);
-  transition: -webkit-transform .2s cubic-bezier(.4,.01,.165,.99);
-  transition: transform .2s cubic-bezier(.4,.01,.165,.99);
-  transition: transform .2s cubic-bezier(.4,.01,.165,.99),-webkit-transform .2s cubic-bezier(.4,.01,.165,.99);
+  -webkit-transition: -webkit-transform 0.2s
+    cubic-bezier(0.4, 0.01, 0.165, 0.99);
+  transition: -webkit-transform 0.2s cubic-bezier(0.4, 0.01, 0.165, 0.99);
+  transition: transform 0.2s cubic-bezier(0.4, 0.01, 0.165, 0.99);
+  transition: transform 0.2s cubic-bezier(0.4, 0.01, 0.165, 0.99),
+    -webkit-transform 0.2s cubic-bezier(0.4, 0.01, 0.165, 0.99);
   -webkit-tap-highlight-color: transparent;
-  font-family: "Helvetica Neue",Arial,"Hiragino Sans GB",STHeiti,"Microsoft YaHei";
+  font-family: "Helvetica Neue", Arial, "Hiragino Sans GB", STHeiti,
+    "Microsoft YaHei";
   -webkit-font-smoothing: antialiased;
   -webkit-overflow-scrolling: touch;
 }
@@ -26,20 +29,24 @@ h6 {
   margin: 0;
   padding: 0;
 }
-a,a:hover {
-  color: #2479CC;
+a,
+a:hover {
+  color: #2479cc;
   text-decoration: none;
 }
-ul,ol{padding: 0}
+ul,
+ol {
+  padding: 0;
+}
 * {
   -webkit-box-sizing: border-box;
   box-sizing: border-box;
 }
 body.side {
   position: fixed;
-  -webkit-transform: translate3D(250px,0,0);
-  -ms-transform: translate3D(250px,0,0);
-  transform: translate3D(250px,0,0);
+  -webkit-transform: translate3D(250px, 0, 0);
+  -ms-transform: translate3D(250px, 0, 0);
+  transform: translate3D(250px, 0, 0);
 }
 
 #main {
@@ -49,13 +56,18 @@ body.side {
   max-width: 1390px;
   -webkit-overflow-scrolling: touch;
 }
-h1.intro{
-    padding: 20px 30px;
+h1.intro {
+  padding: 20px 30px;
   background-color: #f6f9fa;
   text-align: center;
   color: #999;
 }
 
-textarea.pre-area, textarea.codespan {
-  display: none
+textarea.pre-area,
+textarea.codespan {
+  display: none;
+}
+
+.nuxt-progress {
+  background-color: #d59613 !important;
 }
