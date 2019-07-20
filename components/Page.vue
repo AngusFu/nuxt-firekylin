@@ -2,7 +2,7 @@
   <article class="post page">
     <h1 class="title">{{title}}</h1>
     <div class="entry-content">
-      <slo></slo>
+      <slot></slot>
     </div>
     <gitalk v-if="useComment" />
   </article>
