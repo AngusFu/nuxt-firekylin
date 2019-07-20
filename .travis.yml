@@ -19,8 +19,8 @@ after_script:
   - git push --force --quiet "https://${GH_TOKEN}@${GH_REF}" master:gh-pages
 
 env:
- global:
-   - GH_REF: github.com/AngusFu/nuxt-firekylin.git
+  global:
+    - GH_REF: github.com/AngusFu/nuxt-firekylin.git
 
 cache:
   directories:
