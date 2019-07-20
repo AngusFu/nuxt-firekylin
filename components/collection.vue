@@ -99,9 +99,6 @@ export default {
         path
       }
     };
-  },
-  mounted() {
-    this.$fixCode();
   }
 };
 </script>

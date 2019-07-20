@@ -116,9 +116,6 @@ export default {
       document.body.classList.remove("side");
       this.sideMaskShow = false;
     }
-  },
-  mounted() {
-    this.$fixCode();
   }
 };
 </script>
