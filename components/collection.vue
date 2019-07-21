@@ -1,11 +1,11 @@
 <template>
   <section id="page-index">
     <h1 v-if="tag" class="intro">
-      标签
+      <span>标签</span>
       <nuxt-link :to="`/tag/${tag}`">{{tag}}</nuxt-link>下的文章
     </h1>
     <h1 v-if="cate" class="intro">
-      分类
+      <span>分类</span>
       <nuxt-link :to="`/category/${cate}`">{{cate}}</nuxt-link>下的文章
     </h1>
 
