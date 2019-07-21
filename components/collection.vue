@@ -1,12 +1,10 @@
 <template>
   <section id="page-index">
     <h1 v-if="tag" class="intro">
-      <span>标签</span>
-      <nuxt-link :to="`/tag/${tag}`">{{tag}}</nuxt-link>下的文章
+      标签<nuxt-link :to="`/tag/${tag}`">{{tag}}</nuxt-link>下的文章
     </h1>
     <h1 v-if="cate" class="intro">
-      <span>分类</span>
-      <nuxt-link :to="`/category/${cate}`">{{cate}}</nuxt-link>下的文章
+      分类<nuxt-link :to="`/category/${cate}`">{{cate}}</nuxt-link>下的文章
     </h1>
 
     <article v-for="(post, i) in posts" :key="post.title + '_' + i" class="post">
