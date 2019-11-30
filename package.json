@@ -26,7 +26,7 @@
     "marked": "0.3.12",
     "mkdirp": "0.5.1",
     "nuxt": "2.8.1",
-    "rimraf": "2.6.2",
+    "rimraf": "2.7.1",
     "yaml-front-matter": "3.4.0",
     "yaml-loader": "0.5.0"
   }
