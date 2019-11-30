@@ -6,11 +6,11 @@ install:
   - npm install
 
 script:
-  - npm run generate
+  - npm run build
   - npm run clean
 
 after_script:
-  - cd ./dist
+  - cd ./public
   - git init
   - git config user.name "wemlion"
   - git config user.email "angusfu1126@qq.com"

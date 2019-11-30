@@ -20,6 +20,7 @@ module.exports = {
     html: { minify: false }
   },
   generate: {
+    dir: "public",
     routes(callback) {
       // render dynamic routes
       const cates = getDynamicRoutes(require("./data/cates.json"), "category");

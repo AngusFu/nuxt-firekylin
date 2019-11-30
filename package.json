@@ -5,9 +5,9 @@
   "license": "MIT",
   "scripts": {
     "dev": "cross-env PORT=3333 nuxt",
-    "build": "node ./build/",
-    "start": "cross-env NODE_ENV=development npm run build && npm run dev",
-    "generate": "cross-env NODE_ENV=production npm run build && nuxt generate",
+    "prepare": "node ./build/",
+    "start": "cross-env NODE_ENV=development npm run prepare && npm run dev",
+    "build": "cross-env NODE_ENV=production npm run prepare && nuxt generate",
     "clean": "rimraf dist/200.html && rimraf dist/**/*.map"
   },
   "dependencies": {
