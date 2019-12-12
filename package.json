@@ -23,7 +23,7 @@
     "indent": "0.0.2",
     "js-yaml": "3.13.1",
     "json-loader": "0.5.7",
-    "marked": "0.3.12",
+    "marked": "0.8.0",
     "mkdirp": "0.5.1",
     "nuxt": "2.8.1",
     "rimraf": "2.6.2",
