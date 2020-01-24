@@ -24,7 +24,7 @@
     "js-yaml": "3.13.1",
     "json-loader": "0.5.7",
     "marked": "0.3.12",
-    "mkdirp": "0.5.1",
+    "mkdirp": "1.0.3",
     "nuxt": "2.8.1",
     "rimraf": "2.6.2",
     "yaml-front-matter": "3.4.0",
