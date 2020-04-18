@@ -10,7 +10,7 @@ script:
   - npm run clean
 
 after_script:
-  - cd ./public
+  - cd ./dist
   - git init
   - git config user.name "wemlion"
   - git config user.email "angusfu1126@qq.com"

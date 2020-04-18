@@ -45,7 +45,6 @@ release/
 
 www/
 dist/
-public/
 .nuxt/
 data/
 static/workbox-sw*
