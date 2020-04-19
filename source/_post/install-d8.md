@@ -48,7 +48,7 @@ jsvu 安装方法如下 ——
 
    也可以直接通过命令参数指定： `jsvu --os=mac64 --engines=v8-debug`。
 
-![](https://s1.ssl.qhres.com/static/d04b435008efe9db.svg)
+   ![](https://s1.ssl.qhres.com/static/d04b435008efe9db.svg)
 
 1. 然后就可以愉快地使用  `v8-debug`命令啦。
 
