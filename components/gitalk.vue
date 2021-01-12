@@ -14,12 +14,14 @@ export default {
     }
   },
   mounted() {
+    /*
     this.timer = setTimeout(() => {
       this.renderComment();
     }, 3000);
+    */
   },
   beforeDestroy() {
-    clearTimeout(this.timer);
+    // clearTimeout(this.timer);
   }
 };
 </script>
