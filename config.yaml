@@ -22,16 +22,6 @@ github_url: https://github.com/AngusFu/
 ## logo 图片路径
 logo_url: /imgs/avatar.jpg
 
-## gitalk config
-## https://github.com/gitalk/gitalk
-gitalk:
-  clientID: be59313ed5e732f15480
-  clientSecret: b682a90980bc35fa770b539d5f6bf0a7d400eb08
-  repo: nuxt-firekylin
-  owner: AngusFu
-  admin: ['AngusFu']
-  distractionFreeMode: false
-
 ## 左侧导航栏配置
 navigation:
   -
