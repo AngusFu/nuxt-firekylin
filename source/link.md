@@ -20,7 +20,6 @@ title: 资源链接
 - [csswizardry](http://csswizardry.com/)
 - [simurai.com](http://simurai.com/blog/)
 - [mgechev](http://blog.mgechev.com/posts/)
-
 - [W3cplus](http://www.w3cplus.com/)
 - [EtherDream](https://www.cnblogs.com/index-html/)
 - [阮一峰](http://www.ruanyifeng.com/blog/)
@@ -36,10 +35,8 @@ title: 资源链接
 - [SVGTrick](http://svgtrick.com/)
 - [icodeit](http://icodeit.org/)
 - [紫云飞](http://www.cnblogs.com/ziyunfei/)
-- [侯振宇L4](http://www.cnblogs.com/sskyy/)
+- [侯振宇](http://www.cnblogs.com/sskyy/)
 - [BaiduEFE](http://efe.baidu.com/)
-- [DDFE](https://defed.github.io/archives/)
 - [饿了么](https://zhuanlan.zhihu.com/ElemeFE/)
-- [tphangout](http://tphangout.com/)
 - [美团点评技术团队](http://tech.meituan.com/)
 
