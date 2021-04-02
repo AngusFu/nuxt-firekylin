@@ -28,6 +28,7 @@ title: 资源链接
 - [叶小钗](http://www.cnblogs.com/yexiaochai/)
 - [月影](https://www.h5jun.com/archives/)
 - [QuQu](https://imququ.com/post/archives.html)
+- [二哥](https://www.leon82.com/)
 - [AlloyTeam](http://www.alloyteam.com/page/0/)
 - [meowni.ca](http://meowni.ca/)
 - [Taobao FED](http://taobaofed.org/)
