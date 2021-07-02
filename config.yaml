@@ -32,10 +32,10 @@ navigation:
     url: /archives
     option: archive
     label: 归档
-  - 
-    url: /tags
-    option: tags
-    label: 标签
+  # - 
+  #   url: /tags
+  #   option: tags
+  #   label: 标签
   -
     url: /about
     option: user
@@ -44,7 +44,6 @@ navigation:
     url: /link
     option: link
     label: 关注
-
   - url: /collection
     option: archive
     label: 收藏
