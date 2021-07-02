@@ -10,4 +10,4 @@ abstract: "[Slide] Node.js 中的一些安全问题"
 
 这是 2021 年 1 月 28 日做的一次关于 Node.js 安全相关的分享。内容已脱敏。
 
-<embeding src="https://ppt.baomitu.com/d/7d607786?style=dark" />
+<embeding src="/ppt/node-security.html" />

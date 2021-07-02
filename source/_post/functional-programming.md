@@ -9,4 +9,4 @@ desc: 函数响应式编程 —— RxJS 简介
 abstract: "[Slide] 函数响应式编程 —— RxJS 简介"
 ---
 
-<embeding src="https://ppt.baomitu.com/embed/d60409ef?style=dark" />
+<embeding src="/ppt/rxjs-intro.html" />

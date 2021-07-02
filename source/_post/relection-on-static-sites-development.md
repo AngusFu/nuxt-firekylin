@@ -10,4 +10,4 @@ abstract: "[Slide] 某官网开发手记"
 
 这是 2020 年 4 月 22 日在组内做的一次分享。内容已脱敏。
 
-<embeding src="https://ppt.baomitu.com/d/a20fc568?style=dark" />
+<embeding src="/ppt/static-dev-notes.html" />

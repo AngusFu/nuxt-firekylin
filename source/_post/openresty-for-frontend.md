@@ -10,4 +10,4 @@ abstract: "[Slide] 讲给前端的 OpenResty"
 
 这是 2020 年 7 月 22 日在组内做的一次分享。内容已脱敏。
 
-<embeding src="https://ppt.baomitu.com/d/15961aa8?style=dark" />
+<embeding src="/ppt/openresty-for-fed.html" />

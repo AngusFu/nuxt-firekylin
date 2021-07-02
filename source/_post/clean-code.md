@@ -10,4 +10,4 @@ abstract: "[Slide] Clean Code"
 
 这是 2020 年 2 月份在组内做的一次远程分享。已脱敏。
 
-<embeding src="https://ppt.baomitu.com/embed/7650adf9?style=dark" />
+<embeding src="/ppt/clean-code.html" />

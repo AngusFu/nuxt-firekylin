@@ -1,5 +1,5 @@
 ---
-title:  ES2015 Reflection API
+title: ES2015 Reflection API
 tags:
   - 原创
   - ES2015
@@ -9,4 +9,4 @@ date: 2017-06-26
 desc: ES2015 Reflection API
 ---
 
-<embeding src="https://ppt.baomitu.com/embed/fcadd8ad?style=dark" />
+<embeding src="/ppt/es2015-reflection.html" />
