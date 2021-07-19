@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+	<meta charset="utf-8">
+	<title>The (Unofficial) CanIUse Embed</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Embed up-to-date data from caniuse.com. Displays feature support data for multiple versions of the 10 major browsers. Configurable, reliable, and fully responsive. ">
+	<meta name="keywords" content="caniuse">
+	<link href='https://fonts.googleapis.com/css?family=Source+Sans+Pro:400,600|Source+Code+Pro' rel='stylesheet' type='text/css'>
+	<link rel="stylesheet" href="index.css">
+</head>
+
+<body>
+	<div class="container">
+		<section>
+			<h1>The <span class="uo">(Unofficial)</span> CanIUse Embed</h1>
+			<p>Made with <i class="twa twa-heart"></i> by <a href="https://twitter.com/ireaderinokun" target="_blank">@IreAderinokun</a><iframe src="https://ghbtns.com/github-btn.html?user=ireade&repo=caniuse-embed&type=star&count=false" frameborder="0"
+					scrolling="0" width="60px" height="20px"></iframe></p>
+		</section>
+
+		<section class="site-section" id="how-to-use">
+			<h2>How To Use</h2>
+			<!--<section>
+				<h3>Step 1 - Include Script</h3>
+				<p>Include the following javascript file in your document. </p>
+				<div class="highlight cf">
+					<pre id="stepOne">&lt;script src="/caniuse/caniuse-embed.min.js"&gt;&lt;/script&gt;</pre>
+					<div class="copy-code" id="copyStepOne" data-clipboard-target="#stepOne">Copy</div>
+				</div>
+			</section>-->
+
+			<section>
+				<h3>Choose Embed Settings</h3>
+				<div class="input-group">
+					<label for="featureID" class="main-label">a) Choose a Feature</label>
+					<select name="featureID" id="featureID">
+				</select>
+				</div>
+
+				<div class="input-group">
+					<label class="main-label">b) Select the Browser Versions to Display</label>
+					<label> <input type="checkbox" name="periods" value="future_3"> Future Version (Current + 3) </label>
+					<label> <input type="checkbox" name="periods" value="future_2"> Future Version (Current + 2) </label>
+					<label> <input type="checkbox" name="periods" value="future_1" checked="checked"> Future Version (Current + 1) </label>
+					<label class="current"> <input type="checkbox" name="periods" value="current" checked="checked"> Current Version (required)</label>
+					<label> <input type="checkbox" name="periods" value="past_1" checked="checked"> Past Version (Current - 1) </label>
+					<label> <input type="checkbox" name="periods" value="past_2" checked="checked"> Past Version (Current - 2) </label>
+					<label> <input type="checkbox" name="periods" value="past_3"> Past Version (Current - 3) </label>
+					<label> <input type="checkbox" name="periods" value="past_4"> Past Version (Current - 4) </label>
+					<label> <input type="checkbox" name="periods" value="past_5"> Past Version (Current - 5) </label>
+				</div>
+
+				<div class="input-group">
+					<input type="submit" value="Generate">
+				</div>
+			</section>
+
+			<section class="step_3" style="display: none;">
+				<h3>Get the Embed Code</h3>
+				<!--<div class="highlight cf">
+					<pre id="stepThree"></pre>
+					<div class="copy-code" id="copyStepThree" data-clipboard-target="#stepThree">Copy</div>
+				</div>-->
+				<div class="highlight cf">
+					<pre id="stepFour"></pre>
+					<div class="copy-code" id="copyStepFour" data-clipboard-target="#stepFour">Copy</div>
+				</div>
+				<p>Preview of embed:</p>
+
+				<div class="export-preview"></div>
+			</section>
+		</section>
+	</div>
+
+	<script src="caniuse-embed.min.js"></script>
+	<script src="//cdn.bootcss.com/jquery/1.11.1/jquery.min.js"></script>
+	<link href="//cdn.bootcss.com/select2/4.0.2/css/select2.min.css" rel="stylesheet">
+	<script src="//cdn.bootcss.com/select2/4.0.2/js/select2.min.js"></script>
+	<script src="clipboard.min.js"></script>
+	<script src="export.js"></script>
+</body>
+</html>
