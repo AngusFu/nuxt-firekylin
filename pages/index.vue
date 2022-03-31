@@ -1,12 +1,12 @@
 <template>
-<collection :data="posts" />
+  <collection :data="posts" />
 </template>
 <script>
+import posts from "../data/posts.json";
+
 export default {
-  data () {
-    return {
-      posts: require('../data/posts.json')
-    }
-  }
-}
+  data() {
+    return { posts };
+  },
+};
 </script>

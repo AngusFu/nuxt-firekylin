@@ -1,5 +1,5 @@
 {
-  "name": "nuxt-firekylin",
+  "name": "nuxt-blog",
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
@@ -29,5 +29,7 @@
     "rimraf": "2.6.2",
     "yaml-front-matter": "3.4.0",
     "yaml-loader": "0.5.0"
-  }
+  },
+  "keywords": [],
+  "description": ""
 }
