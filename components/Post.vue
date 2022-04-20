@@ -36,7 +36,6 @@
         class="next"
       >{{ nextPost.title }} &raquo;</nuxt-link>
     </nav>
-    <gitalk :tags="tags" />
   </div>
 </template>
 

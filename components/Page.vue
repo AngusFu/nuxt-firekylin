@@ -4,7 +4,6 @@
     <div class="entry-content">
       <slot></slot>
     </div>
-    <gitalk v-if="useComment" />
   </article>
 </template>
 

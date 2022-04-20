@@ -32,7 +32,5 @@ Vue.component("collection", Collection);
 Vue.component("embeding", Embeding);
 Vue.component("caniuse", Caniuse);
 
-Vue.prototype.$gitalkConfig = config.gitalk;
-
 // 注入配置
 Vue.prototype.$config = Object.freeze(config);
