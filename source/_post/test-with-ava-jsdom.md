@@ -49,13 +49,6 @@ tags:
 好，那就来试试看呗。前因交代清楚了，下面开始正式进入教程阶段。
 
 
-## 开始讲 demo
-
-我将自己的 demo 放到了 github 上，地址是[https://github.com/AngusFu/jsdom-ava-demo](https://github.com/AngusFu/jsdom-ava-demo)。你可以直接克隆项目，然后在本地跑起来。
-
-因为是 demo，项目内容很简单，两个 js，一个用于测试 html 文件。
-
-
 ## 测试场景
 
 先说测试场景：页面上有一个红色背景的 div，通过原生的 addEventListener 绑定了 click 事件。点击之后，将背景色变换为绿色。就酱简单？对，主要就这个，一方面我是想测试下 jsdom 对事件系统和 css 解析的支持（手动触发事件，css 解析和值变化），一方面是想试试这种异步场景下怎么更好地测试。

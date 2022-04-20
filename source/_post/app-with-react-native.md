@@ -19,7 +19,7 @@ tags:
 后来看到了 [react-native-keyboard-spacer](https://github.com/Andr3wHur5t/react-native-keyboard-spacer/blob/master/KeyboardSpacer.js)  这个组件的写法，很傻很天真的以为是需要使用什么 `java` 或 `OC` 的支持。
 
 
-于是我决定去看看源码。自己拿 `nodejs` 写了个简单的[内容搜索工具](https://github.com/AngusFu/SearchDirContent)，找到所有含有 `keyboard` 的 `java` 文件。这么一找，还真找到了。
+于是我决定去看看源码，找到所有含有 `keyboard` 的 `java` 文件。这么一找，还真找到了。
 
 ```java
 

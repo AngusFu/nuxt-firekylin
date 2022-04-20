@@ -18,10 +18,10 @@ tags:
 本系列章节如下：
 
 1.  项目结构（正是本文）
-2.  [执行调度(Execution timing)](/2016/execution-timing/)
-3.  [沙箱求值](/2016/sandbox-code-evaluation/)
-4.  [数据绑定简介](/2016/data-bind-dirty-checking)
-5.  [ES6 Proxy 实现数据绑定](/2016/es6-proxy-data-binding/)
+2.  [执行调度(Execution timing)](/post/execution-timing/)
+3.  [沙箱求值](/post/sandbox-code-evaluation/)
+4.  [数据绑定简介](/post/data-bind-dirty-checking)
+5.  [ES6 Proxy 实现数据绑定](/post/es6-proxy-data-binding/)
 6.  自定义元素
 7.  客户端路由
 
@@ -41,7 +41,7 @@ NX 的目标是成为一个开源社区驱动的易于扩展的项目。项目�
 
 项目各模块依赖关系如下图所示：
 
-![JavaScript Framework in 2016: The NX project structure](https://p4.ssl.qhimg.com/t01c9e92dbaa52fc18f.png)
+![JavaScript Framework in post: The NX project structure](https://p4.ssl.qhimg.com/t01c9e92dbaa52fc18f.png)
 
 这种结构为典型框架开发难题提供了一种解决方案。
 
