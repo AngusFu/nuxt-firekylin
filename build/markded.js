@@ -26,10 +26,13 @@ Renderer.prototype.code = function(code, lang) {
 };
 
 Renderer.prototype.image = function(href, title, text) {
-  href = href.replace(
-    /http:\/\/(s|p)[0-9]\.(qhimg|qhres)\.com/,
-    "https://$1.ssl.$2.com"
-  );
+  href = href
+    .replace(
+      /http:\/\/(s|p)[0-9]\.(qhimg|qhres)\.com/,
+      "https://$1.ssl.$2.com"
+    )
+    .replace(/qhres2./, 'qhres2');
+
   var out = '<img v-lazy="`' + href + '`" alt="' + text + '"';
   if (title) {
     out += ' title="' + title + '"';
