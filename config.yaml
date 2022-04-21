@@ -32,6 +32,10 @@ navigation:
     url: /archives
     option: archive
     label: 归档
+  - 
+    url: /slides
+    option: archive
+    label: Slides
   # - 
   #   url: /tags
   #   option: tags
