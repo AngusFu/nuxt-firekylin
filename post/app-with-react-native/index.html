@@ -1,0 +1,35 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">react-native 开发 App 手记 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,react-native,开发心得"><meta data-n-head="true" name="description" content="react-native 开发 App 手记"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-04-22</div></div> <h1 class="title">react-native 开发 App 手记</h1> <div class="entry-content"><!----> <p>做了一个月的 <code>RN</code>。</p> <p>遇到一些问题，陆续记录下来。一些关于组件上的问题不细说了。</p> <h2 id="android-">Android 下的键盘事件监听</h2> <p>一直想找安卓下面的键盘事件，可是官方文档（0.22）压根就没提这档子事啊。唯一稍微有点眉目的，就是关于<a href="http://reactnative.cn/docs/0.22/native-modules-android.html#%E5%8F%91%E9%80%81%E4%BA%8B%E4%BB%B6%E5%88%B0javascript" target="_blank">原生模块</a>这里。</p> <p>后来看到了 <a href="https://github.com/Andr3wHur5t/react-native-keyboard-spacer/blob/master/KeyboardSpacer.js" target="_blank">react-native-keyboard-spacer</a>  这个组件的写法，很傻很天真的以为是需要使用什么 <code>java</code> 或 <code>OC</code> 的支持。</p> <p>于是我决定去看看源码，找到所有含有 <code>keyboard</code> 的 <code>java</code> 文件。这么一找，还真找到了。</p> <pre><code class="hljs lang-java">
+<span class="hljs-keyword">if</span> (mKeyboardHeight != heightDiff && heightDiff > mMinKeyboardHeightDetected) {
+    <span class="hljs-comment">// keyboard is now showing, or the keyboard height has changed</span>
+    mKeyboardHeight = heightDiff;
+    WritableMap params = Arguments.createMap();
+    WritableMap coordinates = Arguments.createMap();
+    coordinates.putDouble(<span class="hljs-string">"screenY"</span>, PixelUtil.toDIPFromPixel(mVisibleViewArea.bottom));
+    coordinates.putDouble(<span class="hljs-string">"screenX"</span>, PixelUtil.toDIPFromPixel(mVisibleViewArea.left));
+    coordinates.putDouble(<span class="hljs-string">"width"</span>, PixelUtil.toDIPFromPixel(mVisibleViewArea.width()));
+    coordinates.putDouble(<span class="hljs-string">"height"</span>, PixelUtil.toDIPFromPixel(mKeyboardHeight));
+    params.putMap(<span class="hljs-string">"endCoordinates"</span>, coordinates);
+    sendEvent(<span class="hljs-string">"keyboardDidShow"</span>, params);
+} <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (mKeyboardHeight != <span class="hljs-number">0</span> && heightDiff &lt;= mMinKeyboardHeightDetected) {
+    <span class="hljs-comment">// keyboard is now hidden</span>
+    mKeyboardHeight = <span class="hljs-number">0</span>;
+    sendEvent(<span class="hljs-string">"keyboardDidHide"</span>, <span class="hljs-keyword">null</span>);
+}</code></pre><p>嗯，安卓下的事件就在这里了。<code>keyboardDidShow</code> 和 <code>keyboardDidHide</code>。</p> <p>看来 <a href="https://github.com/Andr3wHur5t/react-native-keyboard-spacer/blob/master/KeyboardSpacer.js" target="_blank">react-native-keyboard-spacer</a>  还是很靠谱的。于是从其中抽取了键盘的逻辑，做成了 <a href="https://github.com/AngusFu/react-native-keyboard-event" target="_blank">react-native-keyboard-event</a> 这个组件。可以使用 <code>npm</code> 来安装。</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-keyword">import</span> KeyListener <span class="hljs-keyword">from</span> <span class="hljs-string">'react-native-keyboard-event'</span>;
+KeyListener.show(onkeyboardShow).hide(onkeyboardHide);
+<span class="hljs-comment">// Note</span>
+<span class="hljs-comment">// event name is up to platform</span>
+KeyListener.hideEvent;
+KeyListener.showEvent;</code></pre><h2 id="fetch-">fetch 方法</h2> <p><code>fetch</code> 方法调用最好加上 <code>done</code> 方法，否则有时候会报错。</p> <h2 id="rn-">RN 请求数量限制</h2> <p>网络请求数量需要做限制。不能无限请求，否则请求都会被阻塞一直发布出去。</p> <p>为什么会遇到这种情况呢？因为底层有个死循环，四秒钟查找一次，是否有未上传的记录，若有则会通知前端上传，前端上传结果会反馈给底层。最后出现同一条记录反复通知反复失败的情况。通过分析日志，发现前端接到了通知，但 <code>fetch</code> 成功、失败的逻辑都没进去。</p> <p>最后的解决办法，很简单，底层对请求数量做限制。</p> <p>To be continued...</p></div></article> <nav class="pagination"><a href="/post/no-websockets-over-http2" title="[译] No WebSockets Over HTTP2" class="prev">« [译] No WebSockets Over HTTP2</a> <a href="/post/problems-with-firefox" title="近来在Firefox上遇到的一些坑" class="next">近来在Firefox上遇到的一些坑 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/4d4bff80a08b6331f4d2.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

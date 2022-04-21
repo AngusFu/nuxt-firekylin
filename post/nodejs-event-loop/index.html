@@ -1,0 +1,164 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 理解 Node.js 事件循环 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,JavaScript,Node.js,Event Loop"><meta data-n-head="true" name="description" content="javascript event loop; Node.js 事件循环"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-11-12</div></div> <h1 class="title">[译] 理解 Node.js 事件循环</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://blog.risingstack.com/author/tamas-kadlecsik/">Tamas Kadlecsik</a> <br>原文地址:
+          <a target="_blank" href="https://blog.risingstack.com/node-js-at-scale-understanding-node-js-event-loop/">https://blog.risingstack.com/node-js-at-scale-understanding-node-js-event-loop/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/nodejs-event-loop">http://www.wemlion.com/post/nodejs-event-loop</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>本文介绍了 Node.js 事件循环是如何工作，如何使用 Node.js 构建高速应用。文章还会涉及最常见的一些问题及其解决方案。</p> <p>（我们正在编写一系列文章，聚焦于那些大规模使用 Node.js 的公司、有一定 Node 基础的开发者们的需求。）</p> <p><strong>Node.js at Scale 系列章节:</strong></p> <ul><li><p><strong>使用 npm</strong></p> <ul><li><a href="https://blog.risingstack.com/nodejs-at-scale-npm-best-practices" target="_blank">npm 技巧与最佳实践</a></li> <li><a href="https://blog.risingstack.com/nodejs-at-scale-npm-publish-tutorial" target="_blank">语义化版本和模块发布</a></li> <li><a href="https://blog.risingstack.com/node-js-at-scale-module-system-commonjs-require" target="_blank">理解 Module System、CommonJS 和 require</a></li></ul></li> <li><p><strong>深入 Node.js 底层</strong></p> <ul><li>Node.js 事件循环 (<strong>正是本文</strong>)</li> <li>垃圾回收</li> <li>编写元素模块</li></ul></li> <li><p><strong>Building</strong></p> <ul><li>Node.js 应用结构</li> <li>代码整洁之道</li> <li>异步处理</li> <li>事件源（Event sourcing）</li> <li>命令查询与责任隔离</li></ul></li> <li><p><strong>Testing</strong></p> <ul><li>单元测试</li> <li>E2E 测试</li></ul></li> <li><p><strong>生产环境的 Node.js</strong></p> <ul><li>应用监控</li> <li>应用调试</li> <li>应用分析</li></ul></li> <li><p><strong>微服务</strong></p> <ul><li>请求签名（Request Signing）</li> <li>分布式跟踪（Distributed Tracing）</li> <li>API 网关（API Gateways）</li></ul></li></ul> <hr> <h2 id="-">问题提出</h2> <p>多数网站后端是不需要进行复杂运算的。程序多数时间都在等待进行硬盘读写，等待网络传输信息、响应返回。</p> <p>IO 操作可能比数据处理要慢几个数量级。举个例子，SSD 可以达到 200-730 MB/s 的速度 —— 至少高端 SSD 可以做到。读取 1KB 数据仅需要 1.4μs，但同样的时间里，主频 2GHz 的 CPU 可以完成 28,000 次指令处理周期。</p> <p>对网络通信来说，情况还可能更糟糕，ping 下 google.com 试试看：</p> <pre><code class="hljs lang-javascript">$ ping google.com
+<span class="hljs-number">64</span> bytes <span class="hljs-keyword">from</span> <span class="hljs-number">172.217</span><span class="hljs-number">.16</span><span class="hljs-number">.174</span>: icmp_seq=<span class="hljs-number">0</span> ttl=<span class="hljs-number">52</span> time=<span class="hljs-number">33.017</span> ms  
+<span class="hljs-number">64</span> bytes <span class="hljs-keyword">from</span> <span class="hljs-number">172.217</span><span class="hljs-number">.16</span><span class="hljs-number">.174</span>: icmp_seq=<span class="hljs-number">1</span> ttl=<span class="hljs-number">52</span> time=<span class="hljs-number">83.376</span> ms  
+<span class="hljs-number">64</span> bytes <span class="hljs-keyword">from</span> <span class="hljs-number">172.217</span><span class="hljs-number">.16</span><span class="hljs-number">.174</span>: icmp_seq=<span class="hljs-number">2</span> ttl=<span class="hljs-number">52</span> time=<span class="hljs-number">26.552</span> ms  
+<span class="hljs-number">64</span> bytes <span class="hljs-keyword">from</span> <span class="hljs-number">172.217</span><span class="hljs-number">.16</span><span class="hljs-number">.174</span>: icmp_seq=<span class="hljs-number">3</span> ttl=<span class="hljs-number">52</span> time=<span class="hljs-number">40.153</span> ms  
+<span class="hljs-number">64</span> bytes <span class="hljs-keyword">from</span> <span class="hljs-number">172.217</span><span class="hljs-number">.16</span><span class="hljs-number">.174</span>: icmp_seq=<span class="hljs-number">4</span> ttl=<span class="hljs-number">52</span> time=<span class="hljs-number">37.291</span> ms  
+<span class="hljs-number">64</span> bytes <span class="hljs-keyword">from</span> <span class="hljs-number">172.217</span><span class="hljs-number">.16</span><span class="hljs-number">.174</span>: icmp_seq=<span class="hljs-number">5</span> ttl=<span class="hljs-number">52</span> time=<span class="hljs-number">58.692</span> ms  
+<span class="hljs-number">64</span> bytes <span class="hljs-keyword">from</span> <span class="hljs-number">172.217</span><span class="hljs-number">.16</span><span class="hljs-number">.174</span>: icmp_seq=<span class="hljs-number">6</span> ttl=<span class="hljs-number">52</span> time=<span class="hljs-number">45.245</span> ms  
+<span class="hljs-number">64</span> bytes <span class="hljs-keyword">from</span> <span class="hljs-number">172.217</span><span class="hljs-number">.16</span><span class="hljs-number">.174</span>: icmp_seq=<span class="hljs-number">7</span> ttl=<span class="hljs-number">52</span> time=<span class="hljs-number">27.846</span> ms</code></pre><p>平均延时为 44ms。数据包在网络上一个来回，前面提到的处理器可以执行 8800 万次周期。</p> <h2 id="-">解决方案</h2> <p>多数操作系统都提供了某种类型的异步 IO 接口，在允许我们在处理那些不依赖于通信结果的数据之外，通信还能继续...</p> <p>数种方式可以达到此目的。如今的完成方式，主要是以额外的软件复杂性为代价，挖掘多线程潜力。比方说，在 Java 或 Python 中，文件读取是阻塞操作。在等待网络/硬盘通信（network/disk communication）完成时，程序无法做任何其他工作。我们能做的 —— 至少在 Java 中是如此 —— 只能是启动新的线程，然后在操作完成后通知主线程。</p> <p>既枯燥又复杂，但能完成任务。那 Node 是怎样的呢？好吧，因为 Node.js（更准确的说是 V8） 是单线程的，我们肯定也会遇到同样的问题。我们代码只能在一个线程中运行。</p> <p><strong>编者按</strong>: 这里所说的并非完全正确。Java 和 Python 都有异步接口，但使用起来要比 Node.js 麻烦得多。感谢 <a href="https://disqus.com/by/keidi19/" target="_blank">Shahar</a> 和 <a href="https://twitter.com/dirkjharrington" target="_blank">Dirk Harrington</a> 指正。</p> <p>也许你知道，有时候，在浏览器中用 <code>setTimeout(someFunction, 0)</code> 能够神奇地解决一些问题。可是为什么将超时时间设置为 0，将执行延迟 0ms 就能解决问题？难道和立即调用 <code>someFunction</code> 不是一回事吗？并非如此。</p> <p>首先，来看看调用栈（call stack），又简称作“栈”。我会尽量将问题简化，因为我们只需要理解调用栈的最基本概念。如果你对此已经熟悉，请直接<a href="#事件循环">跳到下一节吧</a>。</p> <h2 id="-">调用栈</h2> <p>调用一个函数时，返回地址（return address）、参数（arguments）、本地变量（local variables）等都会被推入栈中。如果在当前正在运行的函数中调用另一个函数，则该函数的相关内容也会以同样的方式推到栈顶。</p> <p>为行文简便，接下来我将使用“函数被推入栈顶”这样不太准确的表达。</p> <p>来看看吧！（<strong>译者注：下面的示意图中的一些地方将 <code>square</code> 误作 <code>sqrt</code>，请根据代码甄别。</strong>）</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">main</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-keyword">const</span> hypotenuse = getLengthOfHypotenuse(<span class="hljs-number">3</span>, <span class="hljs-number">4</span>)
+  <span class="hljs-built_in">console</span>.log(hypotenuse)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getLengthOfHypotenuse</span>(<span class="hljs-params">a, b</span>) </span>{
+  <span class="hljs-keyword">const</span> squareA = square(a)
+  <span class="hljs-keyword">const</span> squareB = square(b)
+  <span class="hljs-keyword">const</span> sumOfSquares = squareA + squareB
+  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Math</span>.sqrt(sumOfSquares)  
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">square</span>(<span class="hljs-params">number</span>) </span>{  
+  <span class="hljs-keyword">return</span> number * number  
+}
+
+main()</code></pre><p>首先调用 <code>main</code> 函数：</p> <p><img alt="The main function"></p> <p>紧接着以 3 和 4 为参数，调用 <code>getLengthOfHypotenuse</code> 函数：</p> <p><img alt="The getLengthOfHypotenuse function"></p> <p>然后是 <code>square(a)</code>：</p> <p><img alt="The square(a) function"></p> <p><code>square(a)</code> 返回后，从栈中弹出，其返回值赋值给 <code>squareA</code>。然后 <code>squareA</code> 被添加到 <code>getLengthOfHypotenuse</code> 的调用帧中：</p> <p><img alt="Variable a"></p> <p>下面计算 <code>square(b)</code> 也是一样：</p> <p><img alt="The square(b) function"></p> <p><img alt="Variable b"></p> <p>下一行是表达式 <code>squareA + squareB</code> 求值：</p> <p><img alt="sumOfSquares"></p> <p>计算 <code>Math.sqrt(sumOfSquares)</code>:</p> <p><img alt="Math.sqrt"></p> <p>现在 <code>getLengthOfHypotenuse</code> 剩下的工作就是将计算的最终结果返回：</p> <p><img alt="The return function"></p> <p><code>getLengthOfHypotenuse</code> 返回值被赋值给 <code>main</code> 中的 <code>hypotenuse</code>：</p> <p><img alt="hypotenuse"></p> <p>控制台打印出 <code>hypotenuse</code>：</p> <p><img alt="The console log"></p> <p>然后，<code>main</code> 返回，不带任何值，并从栈中弹出，栈变为空。</p> <p><img alt="Finally"></p> <p><strong>注意</strong>： 上面提到函数执行完毕后，本地变量从栈中弹出。这仅对 Number、String、Boolean 等基本类型的值成立。对象、数组等值位于堆（heap）中，变量只是指向它们的指针。传递的变量其实只是指针，让这些值在不同的栈帧中可变化。当函数从栈中弹出后，只有指针弹出，而实际值依然还在堆中。当对象失去作用后，由垃圾回收器释放空间。</p> <h2 id="-">事件循环</h2> <p><img alt="The Node.js Event Loop - cat version"></p> <p>不不不，不是这种循环。 :)</p> <p>所以，当我们调用 <code>setTimeout</code>、<code>http.get</code>、<code>process.nextTick</code> 或 <code>fs.readFile</code> 这样一些东西时，到底发生了什么？V8 代码没有这些，但 Chrome WebApi 和 Node.js 的 C++ API 中有。要了解它们，我们得更好地理解执行顺序。</p> <p>看看一个更一般的 Node.js 应用 —— 监听 <code>localhost:3000/</code> 的服务器。收到请求时，服务器会在控制台上打印一些消息，请求 <code>wttr.in/</code>，然后将接收的响应转发给请求者。</p> <pre><code class="hljs lang-javascript"><span class="hljs-meta">'use strict'</span> 
+<span class="hljs-keyword">const</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>)  
+<span class="hljs-keyword">const</span> superagent = <span class="hljs-built_in">require</span>(<span class="hljs-string">'superagent'</span>)  
+<span class="hljs-keyword">const</span> app = express()
+
+app.get(<span class="hljs-string">'/'</span>, sendWeatherOfRandomCity)
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">sendWeatherOfRandomCity</span> (<span class="hljs-params">request, response</span>) </span>{  
+  getWeatherOfRandomCity(request, response)
+  sayHi()
+}
+
+<span class="hljs-keyword">const</span> CITIES = [  
+  <span class="hljs-string">'london'</span>,
+  <span class="hljs-string">'newyork'</span>,
+  <span class="hljs-string">'paris'</span>,
+  <span class="hljs-string">'budapest'</span>,
+  <span class="hljs-string">'warsaw'</span>,
+  <span class="hljs-string">'rome'</span>,
+  <span class="hljs-string">'madrid'</span>,
+  <span class="hljs-string">'moscow'</span>,
+  <span class="hljs-string">'beijing'</span>,
+  <span class="hljs-string">'capetown'</span>,
+]
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getWeatherOfRandomCity</span> (<span class="hljs-params">request, response</span>) </span>{  
+  <span class="hljs-keyword">const</span> city = CITIES[<span class="hljs-built_in">Math</span>.floor(<span class="hljs-built_in">Math</span>.random() * CITIES.length)]
+  superagent.get(<span class="hljs-string">`wttr.in/<span class="hljs-subst">${city}</span>`</span>)
+    .end(<span class="hljs-function">(<span class="hljs-params">err, res</span>) =></span> {
+      <span class="hljs-keyword">if</span> (err) {
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'O snap'</span>)
+        <span class="hljs-keyword">return</span> response.status(<span class="hljs-number">500</span>).send(<span class="hljs-string">'There was an error getting the weather, try looking out the window'</span>)
+      }
+      <span class="hljs-keyword">const</span> responseText = res.text
+      response.send(responseText)
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Got the weather'</span>)
+    })
+
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Fetching the weather, please be patient'</span>)
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">sayHi</span> (<span class="hljs-params"></span>) </span>{  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Hi'</span>)
+}
+
+app.listen(<span class="hljs-number">3000</span>)</code></pre><p>请求 <code>localhost:3000</code> 时，除了获取天气，还有哪些内容打印出来？</p> <p>如果你在 Node 方面有些经验，肯定不会惊讶：在代码中，尽管调用 <code>console.log('Fetching the weather, please be patient')</code> 在 <code>console.log('Got the weather')</code> 之后，当前者会先打印出来：</p> <pre><code class="hljs lang-bash">Fetching the weather, please be patient  
+Hi  
+Got the weather</code></pre><p>发生了什么？就算 V8 是单线程的，Node 底层的 C++ API 并不是啊。这意味着，无论何时调用非阻塞的操作，Node 会在底层调用一些和 JavaScript 代码同时运行的代码。一旦该隐藏线程接收到等待的值或者抛出错误，就会传入必要参数，调用提供的回调。</p> <p><strong>注意</strong>： 上面所谓的“一些和 JavaScript 代码同时运行的代码”，实际上是 <a href="https://github.com/libuv/libuv" target="_blank">libuv</a> 的一部分。libuv 是处理线程池的开源库，用于处理信号，以及异步任务执行所必要的其他东西。一开始是为 Node.js 开发的，不过目前也有<a href="https://github.com/libuv/libuv/wiki/Projects-that-use-libuv" target="_blank">很多其他项目</a>在使用。</p> <p>为了深入底层，我们需要引入两个新概念：事件循环（event loop）和任务队列（task queue）。</p> <h3 id="-">任务队列</h3> <p>Javascript 是单线程、事件驱动型语言。这意味着，我们可以为事件添加监听器，当某一事件触发时，监听器执行提供的回调。</p> <p>调用 <code>setTimeout</code>、<code>http.get</code> 或 <code>fs.readFile</code> 时，Node.js 将这些操作发送到另外一个线程，允许 V8 继续执行代码。计时完毕或 IO/http 操作完成后，Node 还会调用回调函数。</p> <p>然后这些回调也可以将其他任务入列，其余亦可依此类推。这样，在处理请求时还能读取文件，并根据读取的内容发送 http 请求，而不会阻塞正在处理的其他请求。</p> <p>尽管如此，我们只有一个主线程加一个调用栈，所以为避免在读取那个文件时又去处理另一个请求，回调函数需要等待调用栈变空。回调函数等待执行的中间状态被称为任务队列（又称作事件队列、消息队列）。一旦主线程结束此前工作，回调函数就会在一个无限循环当中被调用，因此叫作“事件循环”。（译者注：附原文如下）</p> <blockquote><p>However, we only have one main thread and one call-stack, so in case there is another request being served when the said file is read, its callback will need to wait for the stack to become empty. The limbo where callbacks are waiting for their turn to be executed is called the task queue (or event queue, or message queue). Callbacks are being called in an infinite loop whenever the main thread has finished its previous task, hence the name 'event loop'.</p></blockquote> <p>在上一个例子中，事件循环大概如下所述：</p> <ol><li><p>express 为“request”事件注册了一个处理程序，请求 “/” 时会被调用；</p></li> <li><p>跳过函数，开始监听 3000 端口；</p></li> <li><p>调用栈为空，等待“request”事件触发；</p></li> <li><p>请求到来，等待已久的事件触发，express 调用 <code>sendWeatherOfRandomCity</code>；</p></li> <li><p><code>sendWeatherOfRandomCity</code> 入栈；</p></li> <li><p><code>getWeatherOfRandomCity</code> 被调用并入栈；</p></li> <li><p>调用 <code>Math.floor</code> 和 <code>Math.random</code>，入栈、出栈，<code>cities</code> 中的某一个被赋值给 <code>city</code>；</p></li> <li><p>传入 <code>'wttr.in/${city}'</code> 调用 <code>superagent.get</code>，为 <code>end</code> 事件设置处理回调；</p></li> <li><p>发送 <code>http://wttr.in/${city}</code> http 请求到底层线程，继续向下执行；</p></li> <li><p>控制台打印 <code>'Fetching the weather, please be patient'</code>，<code>getWeatherOfRandomCity</code> 函数返回；</p></li> <li><p>调用 <code>sayHi</code>，控制台打印 <code>'Hi'</code>；</p></li> <li><p><code>sendWeatherOfRandomCity</code> 函数返回、出栈，调用栈变空；</p></li> <li><p>等待 <code>http://wttr.in/${city}</code> 发送响应；</p></li> <li><p>一旦响应返回，<code>end</code> 事件触发；</p></li> <li><p>传给 <code>.end()</code> 的匿名回调函数调用，带着其闭包内所有变量一起入栈，也就是说，其内部能够访问、修改 <code>express, superagent, app, CITIES, request, response, city</code> 以及我们定义的函数；</p></li> <li><p>调用 <code>response.send()</code>，状态码为 <code>200</code> 或 <code>500</code>，再次发送到底层线程，response stream 不会阻塞代码执行，匿名回调出栈。</p></li></ol> <p>这样我们就能理解一开始提到的 <code>setTimeout</code> hack 是如何工作的。尽管将时间设置为 0，但是会延迟到当前栈和任务队列为空后执行，以允许浏览器重新绘制 UI，或 Node 处理其他请求。</p> <h3 id="microtask-macrotask">Microtask 与 Macrotask</h3> <p>实际上，不止一个任务队列，microtask（小型任务） 与 macrotask（巨型任务）各有一个任务队列。</p> <p>Microtask 如：</p> <ul><li><p><code>process.nextTick</code></p></li> <li><p><code>promises</code></p></li> <li><p><code>Object.observe</code></p></li></ul> <p>Macrotask 如：</p> <ul><li><p><code>setTimeout</code></p></li> <li><p><code>setInterval</code></p></li> <li><p><code>setImmediate</code></p></li> <li><p><code>I/O</code></p></li></ul> <p>看看下面的代码：</p> <pre><code class="hljs lang-javascript"><span class="hljs-built_in">console</span>.log(<span class="hljs-string">'script start'</span>)
+
+<span class="hljs-keyword">const</span> interval = setInterval(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'setInterval'</span>)
+}, <span class="hljs-number">0</span>)
+
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'setTimeout 1'</span>)
+  <span class="hljs-built_in">Promise</span>.resolve().then(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'promise 3'</span>)
+  }).then(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'promise 4'</span>)
+  }).then(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+    setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'setTimeout 2'</span>)
+      <span class="hljs-built_in">Promise</span>.resolve().then(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'promise 5'</span>)
+      }).then(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'promise 6'</span>)
+      }).then(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+        clearInterval(interval)
+      })
+    }, <span class="hljs-number">0</span>)
+  })
+}, <span class="hljs-number">0</span>)
+
+<span class="hljs-built_in">Promise</span>.resolve().then(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'promise 1'</span>)
+}).then(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'promise 2'</span>)
+})</code></pre><p>控制台结果如下：</p> <pre><code class="hljs lang-bash">script start  
+promise1  
+promise2  
+setInterval  
+setTimeout1  
+promise3  
+promise4  
+setInterval  
+setTimeout2  
+setInterval  
+promise5  
+promise6</code></pre><p>按照 <a href="https://html.spec.whatwg.org/multipage/webappapis.html#task-queue" target="_blank">WHATWG</a> 规范，每一次事件循环（one cycle of the event loop），只处理一个 (macro)task。待该 macrotask 完成后，所有的 microtask 会在同一次循环中处理。处理这些 microtask 时，还可以将更多的 microtask 入队，它们会一一执行，直到整个 microtask 队列处理完。</p> <p>下图展示得更加清楚：</p> <p><img alt="The Node.js Event Loop"></p> <p>在上面的例子中：</p> <p><strong>Cycle 1:</strong></p> <ol><li><p><code>setInterval</code> 加入 macrotask 队列；</p></li> <li><p><code>setTimeout 1</code> 加入 macrotask 队列；</p></li> <li><p><code>Promise.resolve 1</code> 中，两个 <code>then</code> 加入 microtask 队列；</p></li> <li><p>调用栈变空，microtask 执行。</p></li></ol> <p>Macrotask queue: <code>setInterval</code>, <code>setTimeout 1</code></p> <p><strong>Cycle 2:</strong></p> <ol><li>microtask 队列为空，<code>setInteval</code> 回调执行，又一个 <code>setInterval</code> 加入 macrotask 队列，正好位于 <code>setTimeout 1</code> 之后；</li></ol> <p>Macrotask queue: <code>setTimeout 1</code>, <code>setInterval</code></p> <p><strong>Cycle 3:</strong></p> <ol><li><p>microtask 队列为空，<code>setTimeout 1</code> 回调执行，<code>promise 3</code> 和 <code>promise 4</code> 加入 microtask 队列；</p></li> <li><p><code>promise 3</code> 和 <code>promise 4</code> 执行，<code>setTimeout 2</code> 加入 macrotask 队列；</p></li></ol> <p>Macrotask queue: <code>setInterval</code>, <code>setTimeout 2</code></p> <p><strong>Cycle 4:</strong></p> <ol><li>microtask 队列为空，<code>setInteval</code> 回调执行，另一个 <code>setInterval</code> 加入 macrotask 队列，正好位于 <code>setTimeout 2</code> 之后；</li></ol> <p>Macrotask queue: <code>setTimeout 2</code>, <code>setInteval</code></p> <ol><li><code>setTimeout 2</code> 回调执行，<code>promise 5</code> 和 <code>promise 6</code> 加入 microtask 队列；</li></ol> <p>紧接着，<code>promise 5</code> 和 <code>promise 6</code> 的处理程序会清除 interval，但奇怪的是，<code>setInterval</code> 还是运行了一次。不过，如果在 Chrome 中运行代码，结果和预期是一致的。</p> <div class="tip"><strong>译者注</strong>：笔者实际测试发现，情况可能和上面的叙述有所不同。Node v5.12 执行的结果是符合预期的。而 Chrome 53 上，反而出现一些状况，<code>promise 4</code> 之后，<code>setInterval</code> 执行了两次，原因未详，有待进一步追踪（disqus 评论被墙，我的 VPN 也没戏）。
+</div> <p>使用 <code>process.nextTick</code> 和一些嵌套回调，在也 Node 中也能修复问题：</p> <pre><code class="hljs lang-javascript"><span class="hljs-built_in">console</span>.log(<span class="hljs-string">'script start'</span>)
+
+<span class="hljs-keyword">const</span> interval = setInterval(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'setInterval'</span>)
+}, <span class="hljs-number">0</span>)
+
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'setTimeout 1'</span>)
+  process.nextTick(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'nextTick 3'</span>)
+    process.nextTick(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'nextTick 4'</span>)
+      setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'setTimeout 2'</span>)
+        process.nextTick(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+          <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'nextTick 5'</span>)
+          process.nextTick(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+            <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'nextTick 6'</span>)
+            clearInterval(interval)
+          })
+        })
+      }, <span class="hljs-number">0</span>)
+    })
+  })
+})
+
+process.nextTick(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {  
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'nextTick 1'</span>)
+  process.nextTick(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'nextTick 2'</span>)
+  })
+})</code></pre><p>这和上面的逻辑基本一样，只是看起来比较可怕。至少工作按照预期完成了。</p> <h3 id="-">驯服异步怪兽！</h3> <p>如前所见，在编写 Node.js 应用时，需要管理、留心两个任务队列和事件循环 —— 如果想要发挥它们全部的理力量，如果需要避免耗时任务阻塞主线程。</p> <p>事件循环的概念一开始可能不太好掌握，一旦掌握之后就再也离不开了。可能导致回调地狱的延续传递风格看起来很丑，不过我们有 Promise，很快还有 async-await 在手... 在等待 async-await 的时候，还可以使用 <a href="https://github.com/tj/co" target="_blank">co</a>、<a href="http://koajs.com/" target="_blank">koa</a> 这些工具。</p> <p>最后一点建议：</p> <p>了解了 Node.js 和 V8 如何处理长时间任务，可以开始尝试使用。你之前可能听说过，应当将耗时循环放入任务队列。可以手动去做，或者借助 <a href="http://caolan.github.io/async/" target="_blank">async.js</a>。</p> <p>祝你搬砖愉快！如果有什么问题或想法，请在评论中提出。</p></div></article> <nav class="pagination"><a href="/post/fishing-for-spider" title="快来上钩哈哈哈" class="prev">« 快来上钩哈哈哈</a> <a href="/post/algo-bubble-sort" title="算法学习：冒泡排序" class="next">算法学习：冒泡排序 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/ba0f2b473ff3259458fe.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

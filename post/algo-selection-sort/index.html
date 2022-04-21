@@ -1,0 +1,64 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">算法学习：选择排序 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,JavaScript,算法"><meta data-n-head="true" name="description" content="算法学习：选择排序"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-11-06</div></div> <h1 class="title">算法学习：选择排序</h1> <div class="entry-content"><!----> <p>所谓“选择排序”，基本思路就是不断从数组中选择出最小的数。</p> <p>还是以扑克牌为例。假设有 N 张扑克牌，记扑克牌集合为 cards，则我们的基本操作如下：</p> <p>首先，从手中拿出左侧第 0 张牌 cardA；</p> <p>第二步，将 cardA 向右<strong>依次</strong>与剩下的  (N - 1) 张牌进行对比，找出最小的那张牌所在的位置 minIndex；</p> <p>第三步，对比完成后，若 minIndex 不等于 1，则说明 cardA 不是最小的，将 cards[minIndex] 与 cardA 进行位置交换。</p> <p>第四步，从第二张牌开始，重复前面的步骤……</p> <p>……</p> <p>最后得到的数组即是排序好的。</p> <p>实现如下：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 选择排序</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">selectionSort</span>(<span class="hljs-params">cards</span>) </span>{
+  cards = cards.slice(<span class="hljs-number">0</span>);
+  <span class="hljs-keyword">var</span> len = cards.length;
+  <span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>;
+  <span class="hljs-keyword">var</span> j = <span class="hljs-number">0</span>;
+  <span class="hljs-keyword">var</span> minIndex = <span class="hljs-number">0</span>;
+  <span class="hljs-keyword">var</span> temp = <span class="hljs-number">0</span>;
+
+  <span class="hljs-keyword">for</span> (i = <span class="hljs-number">0</span>; i &lt; len - <span class="hljs-number">1</span>; i++) {
+    <span class="hljs-comment">// 将当前的数字与后面子序列中最小数进行换位</span>
+    <span class="hljs-comment">// 这样每次拿到前面的都是最小的数字</span>
+    minIndex = i;
+
+    <span class="hljs-comment">// 寻找子序列中最小数的索引</span>
+    <span class="hljs-comment">// 每一轮得比较 n - i 次</span>
+    <span class="hljs-keyword">for</span> (j = i + <span class="hljs-number">1</span>; j &lt; len; j++) {
+      <span class="hljs-keyword">if</span> (cards[j] &lt; cards[minIndex]) {
+        minIndex = j;
+      }
+    }
+
+    <span class="hljs-comment">// 如果当前数比后面子序列最小元素大</span>
+    <span class="hljs-comment">// 则进行换位处理</span>
+    <span class="hljs-keyword">if</span> (minIndex !== i) {
+      temp = cards[i];
+      cards[i] = cards[minIndex];
+      cards[minIndex] = temp;
+    }
+  }
+  <span class="hljs-keyword">return</span> cards;
+}</code></pre><p>来粗略看下时间复杂度的问题。</p> <p>实际上，这个算法，<strong>不存在最好的情况和最坏的情况</strong>。因为每次通过比较寻找最小数时，必须将所有剩余数字对比个遍。</p> <p>第一次需要与 (N - 1) 个数进行对比；第二次需要与 (N - 2 个数) 对比，直到最后。总的计算次数为 <code>(N - 1) + (N - 2) + ... + 1 + 0 = N * (N - 1) / 2</code>。不难看出，<strong>时间复杂度是 <code>O(n^n)</code></strong>。</p> <p>在 JavaScript 中，与<a href="../algo-insertion-sort/">插入排序</a>比较，感觉选择排序比较好的一点是，没有频繁的元素位置调换，每次只会进行一次交换这一点上，性能应该会好很多（尤其是数组较大的情况下）。可以参考 <a href="https://jsfiddle.net/wemlin/hf4bz4mc/" target="_blank">测试Demo</a>。</p> <p>每次使用的数组都长度为 1000、元素为在 (0, 10000) 区间中的整数的随机数组，每种方法分别测试 10000次，最终取计算时间平均值。结果插入排序每次时间大约在 0.9 毫秒左右，而选择排序在 0.6 毫秒左右，但注意，这里的时间<strong>包含</strong>生成随机数组的时间。</p> <p>也可以用 node 来测试（排序函数代码略）：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> times = <span class="hljs-number">10000</span>;
+
+<span class="hljs-keyword">var</span> t = times;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'selectionSort'</span>);
+<span class="hljs-keyword">while</span> (t--) {
+    selectionSort(getRandArray(<span class="hljs-number">1000</span>));
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'selectionSort'</span>);
+
+
+t = times;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'insertionSort'</span>);
+<span class="hljs-keyword">while</span> (t--) {
+  insertionSort(getRandArray(<span class="hljs-number">1000</span>));
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'insertionSort'</span>);
+
+<span class="hljs-comment">// 获取指定长度的元素大小在 0 到 10000 之间的随机数组</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getRandArray</span>(<span class="hljs-params">len</span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function">(<span class="hljs-params"><span class="hljs-keyword">new</span> <span class="hljs-built_in">Array</span>(len</span>)).<span class="hljs-params">fill</span>(<span class="hljs-params"><span class="hljs-number">0</span></span>).<span class="hljs-params">map</span>(<span class="hljs-params">(i</span>) =></span> <span class="hljs-built_in">Math</span>.random() * <span class="hljs-number">10000</span> | <span class="hljs-number">0</span>);
+}</code></pre></div></article> <nav class="pagination"><a href="/post/algo-bubble-sort" title="算法学习：冒泡排序" class="prev">« 算法学习：冒泡排序</a> <a href="/post/using-html-form-validation-in-pure-javascript" title="[译] HTML 表单验证" class="next">[译] HTML 表单验证 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/6042626107b0d7e2fab2.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

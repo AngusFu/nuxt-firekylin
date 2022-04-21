@@ -1,0 +1,232 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] Node.js 中的队列 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,Node.js"><meta data-n-head="true" name="description" content="Node.js 中的队列"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-06-25</div></div> <h1 class="title">[译] Node.js 中的队列</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="http://blog.yld.io/author/pedro/">Pedro Teixeira</a> <br>原文地址:
+          <a target="_blank" href="http://blog.yld.io/2016/05/10/introducing-queues/">http://blog.yld.io/2016/05/10/introducing-queues/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/queues-in-node.js">http://www.wemlion.com/post/queues-in-node.js</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>这是深入探索 Node.js 中使用工作队列（work queues）管理异步工作流的系列文章的第一篇，来自<a href="http://nodepatternsbooks.com/" target="_blank">the Node Patterns series</a>。</p> <p><img alt="Node.js 中的队列"></p> <p>开始享受吧!</p> <hr> <p>很常见的是，在应用程序流中，应用有着可以异步处理的工作负载。一个常见的例子是发送邮件。比方说，新用户注册时，可能需要给 Ta 发送一封确认邮件来确认用户刚刚输入的 email 地址是 Ta 自己的。这包括从模板中生成消息，向电子邮件服务提供商发送请求，解析结果，处理任何可能发送的最终错误，重试，等等…… 这个流程可能比较复杂，容易出错，或者在 HTTP 服务器的周期中花费太长时间。不过也有另外一个选择，可以向持久化存储中插入一个文档，该文档描述我们有一条待发送给这个用户的消息。另一个进程可能拿到这个文档，做一些比较重的工作：从模板生成消息，向服务器发送请求，解析错误，并在必要的情况下重排这个工作。</p> <p>此外，系统需要和其他系统整合的情况也很常见。在我曾做过的一些项目中，需要不同的系统之间的进行用户配置文件的双向同步：当用户在一个系统中更新了个人资料，这些变化需要传递给其他系统，反之亦然。如果两个系统之间不需要很强的一致性，资料同步之间有一个小的延迟也许是可接受的，那这项工作就可以使用另一个进程异步处理。</p> <p>更一般地说，在整个系统中有一个工作队列将工作生产者和消费者分开，这是一种常见的模式。生产者往工作队列中插入工作，消费者从队列中拿到工作并执行需要的任务。</p> <p><img alt="工作队列"></p> <p>使用这样的拓扑结构有许多原因和优点，如：</p> <ul><li><p>解耦工作生产者和消费者</p></li> <li><p>使重试逻辑更易于实现</p></li> <li><p>跨时间分配工作负载</p></li> <li><p>跨空间（nodes 节点）分配工作负载</p></li> <li><p>异步工作</p></li> <li><p>使外部系统更容易整合（最终的一致性）</p></li></ul> <p>让我们来分析一下其中的一些问题吧。</p> <h2 id="-isolate-">独立 （Isolate）</h2> <p>发送邮件是许多应用需要做的工作。一个例子是，用户修改了密码，一些应用很友好地发送邮件通知用户有人（最好不是其他人）修改了密码。现在发送邮件，通常是通过调用第三方邮件提供商提供的 HTTP API来完成的。如果服务缓慢或无法访问时候会怎样？你可不想就因为一封邮件发布出去就把密码给回滚了。当然，你也不想就因为在处理请求失败时碰到了工作中的一个非重要的部分，使得密码更改请求就这样崩掉了。密码修改后希望可以很快就发送出这封邮件，但不能有如此的代价。</p> <h2 id="-retry-">重试 （Retry）</h2> <p>还有，修改密码意味着，你要为这个用户在两个系统中都做更改：一个中央用户数据库和一个遗留系统（legacy system）。（我知道这很恶心啊，不过我可不止见过一次 —— 现实就这么骨感。）假如第一个成功了、第二个失败了，咋办？</p> <p>在这些情形下，你可以想一直重试直至成功：在遗留系统中更改密码是一个可以多次重复的结果相同的操作，而邮件也可以重复发送多次。</p> <blockquote><p>举例子，假如遗留系统修改密码了但未能成功返回通知，如果操作是幂等的，你可以稍后重试。</p> <p>甚至，非幂等操作也可以从工作队列处理中尝到甜头。比如，你可以将一次货币交易插入到工作队列中 ：给每次交易一个通用唯一标识符（UUID, universal unique identifier），稍后接收交易请求的系统可以保证不会发生重复交易。</p> <p>在这个例子中，你基本只需要担心工作队列提供的必要的持久性保证：如果系统故障，你希望将交易丢失的风险降到最低。</p></blockquote> <h2 id="-distribute-and-scale-">分布及规模 （Distribute and scale）</h2> <p>另一个将工作生产者和消费者解耦的原因是，你可能想将工作集群规模化：如果任务消耗大量资源，如果任务是重 CPU 型的或者需要大量内存或操作系统资源，你可以将其与应用其他部分分离出来，放到工作队列中。</p> <p>在任何应用中，一些操作比其他的要重。这可能会在整个节点引入有差异的工作负载：一个不幸的节点可能因处理太多的高并发业务而负担过重，而其它节点却被闲置。使用工作队列，将具体工作平均分配，可以将影响最小化。</p> <p>工作队列的另一个效果是吸收工作峰（absorb work peaks）：你可以为工作集群计划给定的最大容量，并确保容量永远不会超过。如果工作数量在短时间内急剧上升，工作队列完全可以解决，远离工作峰的压力。</p> <blockquote><p>系统监控在这里起到重要作用：你应当持续监控工作队列的长度，工作时间（完成一项任务的时间），工作占用，以及容量，以确定在高峰时间保证令人满意的操作时间需要的最佳、最小的资源。</p></blockquote> <h2 id="-survive-crashes-">防止崩溃 （Survive crashes）</h2> <p>如果你不需要以上任何一点东西，使用持久化工作队列的一个理由是防止崩溃。即使是同一个进程中的内存队列也能满足你的应用需求，持续的队列使你的应用在进程重启的时候更具弹性。</p> <p>好了，理论讲得差不多了 —— 我们来看具体实现。</p> <p>可以设计出的最简单的工作队列是一个内存队列。实现内存队列可能是个学校的练习（留给读者）。这里我们使用 Async 的 queue。</p> <p>假设你在做的这个演示应用和一个控制你的房子的硬件单元相连接。你的 Node.js 应用和该单元通过一个串行端口对话，且有线协议只能同时接受一个挂起的命令。</p> <p>这个协议被包装在我们的 <code>domotic.js</code> 模块中，模块暴露三个函数：</p> <ul><li><p><code>.connect()</code> - 连接 domotic 模块</p></li> <li><p><code>.command()</code> - 发送命令，等待响应</p></li> <li><p><code>.disconnect()</code> - 切断与模块的连接</p></li></ul> <p>下面的代码模拟了这样一个模块：</p> <p><strong>domotic.js:</strong></p> <pre><code class="hljs lang-javascript">exports.connect = connect;  
+exports.command = command;  
+exports.disconnect = disconnect;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">connect</span>(<span class="hljs-params">cb</span>) </span>{  
+  setTimeout(cb, <span class="hljs-number">100</span>); <span class="hljs-comment">// simulate connection</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">command</span>(<span class="hljs-params">cmd, options, cb</span>) </span>{  
+  <span class="hljs-keyword">if</span> (succeeds()) {
+    setTimeout(cb, <span class="hljs-number">100</span>); <span class="hljs-comment">// simulate command</span>
+  } <span class="hljs-keyword">else</span> {
+    setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">var</span> err = <span class="hljs-built_in">Error</span>(<span class="hljs-string">'error connecting'</span>);
+      err.code = <span class="hljs-string">'ECONN'</span>;
+      cb(err);
+    }, <span class="hljs-number">100</span>);
+  }
+
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">disconnect</span>(<span class="hljs-params">cb</span>) </span>{  
+  <span class="hljs-keyword">if</span> (cb) setTimeout(cb, <span class="hljs-number">100</span>); <span class="hljs-comment">// simulate disconnection</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">succeeds</span>(<span class="hljs-params"></span>) </span>{  
+  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Math</span>.random() > <span class="hljs-number">0.5</span>;
+}</code></pre><blockquote><p>注意我们并没有和任何 domotic 模块交互；我们只是假装，100 毫秒后成功调用回调函数。</p> <p>同样， <code>.command</code> 函数模拟了连接错误： 如果 <code>succeeds()</code> 返回 <code>false</code>，连接失败，命令失败，这有 50% 的可能性（我们的 domotic 串行连接很容易出错）。这使我们能够测试在发生失败之后，我们的应用是否会成功重连并重试命令。</p></blockquote> <p>然后我们新建另一个模块，可以在队列后面发出命令。</p> <p><strong>domotic_queue.js:</strong></p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> <span class="hljs-keyword">async</span> = <span class="hljs-built_in">require</span>(<span class="hljs-string">'async'</span>);  
+<span class="hljs-keyword">var</span> Backoff = <span class="hljs-built_in">require</span>(<span class="hljs-string">'backoff'</span>);  
+<span class="hljs-keyword">var</span> domotic = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./domotic'</span>);
+
+<span class="hljs-keyword">var</span> connected = <span class="hljs-literal">false</span>;
+
+<span class="hljs-keyword">var</span> queue = <span class="hljs-keyword">async</span>.queue(work, <span class="hljs-number">1</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">work</span>(<span class="hljs-params">item, cb</span>) </span>{  
+  ensureConnected(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    domotic.command(item.command, item.options, callback);
+  });
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">callback</span>(<span class="hljs-params">err</span>) </span>{
+    <span class="hljs-keyword">if</span> (err && err.code == <span class="hljs-string">'ECONN'</span>) {
+      connected = <span class="hljs-literal">false</span>;
+      work(item);
+    } <span class="hljs-keyword">else</span> cb(err);
+  }
+}
+
+<span class="hljs-comment">/// command</span>
+
+exports.command = pushCommand;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">pushCommand</span>(<span class="hljs-params">command, options, cb</span>) </span>{  
+  <span class="hljs-keyword">var</span> work = {
+    <span class="hljs-attr">command</span>: command,
+    <span class="hljs-attr">options</span>: options
+  };
+
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'pushing command'</span>, work);
+
+  queue.push(work, cb);
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ensureConnected</span>(<span class="hljs-params">cb</span>) </span>{  
+  <span class="hljs-keyword">if</span> (connected) {
+    <span class="hljs-keyword">return</span> cb();
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-keyword">var</span> backoff = Backoff.fibonacci();
+    backoff.on(<span class="hljs-string">'backoff'</span>, connect);
+    backoff.backoff();
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">connect</span>(<span class="hljs-params"></span>) </span>{
+    domotic.connect(connected);
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">connected</span>(<span class="hljs-params">err</span>) </span>{
+    <span class="hljs-keyword">if</span> (err) {
+      backoff.backoff();
+    } <span class="hljs-keyword">else</span> {
+      connected = <span class="hljs-literal">true</span>;
+      cb();
+    }
+  }
+}
+
+<span class="hljs-comment">/// disconnect</span>
+
+exports.disconnect = disconnect;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">disconnect</span>(<span class="hljs-params"></span>) </span>{  
+  <span class="hljs-keyword">if</span> (! queue.length()) {
+    domotic.disconnect();
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'waiting for the queue to drain before disonnecting'</span>);
+    queue.drain = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'disconnecting'</span>);
+      domotic.disconnect();
+    };
+  }
+}</code></pre><p>做了不少工作 —— 我们来一段段地分析。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> <span class="hljs-keyword">async</span> = <span class="hljs-built_in">require</span>(<span class="hljs-string">'async'</span>);  
+<span class="hljs-keyword">var</span> Backoff = <span class="hljs-built_in">require</span>(<span class="hljs-string">'backoff'</span>);  
+<span class="hljs-keyword">var</span> domotic = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./domotic'</span>);</code></pre><p>这里我们引入了一些包： </p> <ul><li><p><code>async</code> - 提供内存队列的实现</p></li> <li><p><code>backoff</code> - 让我们增加每一次失败后尝试重新连接的时间间隔</p></li> <li><p><code>./domotic</code> - 模拟 domotic 的模块</p></li></ul> <p>我们的模块从连接断开状态开始启动：</p> <pre><code class="hljs lang-javascript"><span class="hljs-string">`var connected = false;`</span></code></pre><p>建立我们的 async 队列：</p> <pre><code class="hljs lang-javascript"><span class="hljs-string">`var queue = async.queue(work, 1);`</span></code></pre><p>这里提供一个叫做 <code>worker</code> 的工作函数（在代码中进一步定义的）和一个最大并发量 1。我们在这里强制设置，是因为我们定义了 domotic 模块协议一次只允许一个命令。</p> <p>然后定义 <code>worker</code> 函数，它每次处理一个队列元素：</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">work</span>(<span class="hljs-params">item, cb</span>) </span>{  
+  ensureConnected(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    domotic.command(item.command, item.options, callback);
+  });
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">callback</span>(<span class="hljs-params">err</span>) </span>{
+    <span class="hljs-keyword">if</span> (err && err.code == <span class="hljs-string">'ECONN'</span>) {
+      connected = <span class="hljs-literal">false</span>;
+      work(item);
+    } <span class="hljs-keyword">else</span> cb(err);
+  }
+}</code></pre><p>当我们的 <code>async</code> 队列加入另一个工作项目，会调用 <code>work</code> 函数，传递该工作项目和一个当工作完成时候为我们所调用的回调函数。</p> <p>对每个工作项目来说，我们要确认已经连接了。一旦连接上，使用工作项目中会有的 <code>command</code> 和 <code>options</code> 属性，来用 domotic 模块来执行命令。传的最后一次参数是一个回调函数，当命令成功或失败之后会立即被调用。</p> <p>回调函数中，我们明确地处理连接错误的情况，设置 <code>connected</code> 状态为 <code>false</code>，并再次调用 <code>work</code>重连。</p> <p>如果没有发生错误，调用回调函数 <code>cb</code> 结束当前工作项目。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">ensureConnected</span>(<span class="hljs-params">cb</span>) </span>{  
+  <span class="hljs-keyword">if</span> (connected) {
+    <span class="hljs-keyword">return</span> cb();
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-keyword">var</span> backoff = Backoff.fibonacci();
+    backoff.on(<span class="hljs-string">'backoff'</span>, connect);
+    backoff.backoff();
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">connect</span>(<span class="hljs-params"></span>) </span>{
+    domotic.connect(connected);
+  }
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">connected</span>(<span class="hljs-params">err</span>) </span>{
+    <span class="hljs-keyword">if</span> (err) {
+      backoff.backoff();
+    } <span class="hljs-keyword">else</span> {
+      connected = <span class="hljs-literal">true</span>;
+      cb();
+    }
+  }
+}</code></pre><p><code>ensureConnected</code> 函数现在负责处于连接状态时调用回调或相反情况下尝试连接。尝试连接的时候，使用 <code>backoff</code> 增加每次重连的时间间隔。 每次 <code>domotic.connect</code> 函数带着错误被调用，在 <code>backoff</code> 事件触发之前增加间隔时间。触发 <code>backoff</code> 时，尝试连接。一旦连接成功，调用 <code>cb</code> 回调；否则保持重试。</p> <p>这个模块暴露一个 <code>.command</code> 函数：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/// command</span>
+
+exports.command = pushCommand;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">pushCommand</span>(<span class="hljs-params">command, options, cb</span>) </span>{  
+  <span class="hljs-keyword">var</span> work = {
+    <span class="hljs-attr">command</span>: command,
+    <span class="hljs-attr">options</span>: options
+  };
+
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'pushing command'</span>, work);
+
+  queue.push(work, cb);
+}</code></pre><p>这个命令简单的解析一个工作项目并将其推入队列。</p> <p>最后，这个模块同样暴露出 <code>.disconnect</code> 函数。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/// disconnect</span>
+
+exports.disconnect = disconnect;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">disconnect</span>(<span class="hljs-params"></span>) </span>{  
+  <span class="hljs-keyword">if</span> (! queue.length()) {
+    domotic.disconnect();
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'waiting for the queue to drain before disonnecting'</span>);
+    queue.drain = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'disconnecting'</span>);
+      domotic.disconnect();
+    };
+  }
+}</code></pre><p>这里我们只是确保在调用 domotic 模块的 <code>disconnected</code> 方法之前队列是空的。如果队列非空，在真正断开连接之前会等待其耗尽（drain）。</p> <blockquote><p>可选：在队列未被耗尽的情况下，您可以设置一个超时时间，然后强制断开连接。</p></blockquote> <p>然后我们来新建一个 domotic 客户端：</p> <p><strong>client.js:</strong></p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> domotic = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./domotic_queue'</span>);
+
+<span class="hljs-keyword">for</span>(<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span> ; i &lt; <span class="hljs-number">20</span>; i ++) {  
+  domotic.command(<span class="hljs-string">'toggle light'</span>, i, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err</span>) </span>{
+    <span class="hljs-keyword">if</span> (err) <span class="hljs-keyword">throw</span> err;
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'command finished'</span>);
+  });
+}
+
+domotic.disconnect();</code></pre><p>这里我们并行得向 domotic 模块添加了 20 个  <code>settime</code> 命令，同时传递了回调函数，当命令完成时就会被调用。如果有命令出错，简单地抛出错误并中断执行。</p> <p>添加所有命令之后我们马上断开连接，不过模块会等待所有命令被执行之后才会真正将其断开。</p> <p>让我们在命令行中试一下：</p> <pre><code class="hljs lang-bash">$ node client.js
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 0 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 1 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 2 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 3 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 4 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 5 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 6 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 7 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 8 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 9 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 10 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 11 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 12 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 13 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 14 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 15 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 16 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 17 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 18 }  
+pushing <span class="hljs-built_in">command</span> { <span class="hljs-built_in">command</span>: <span class="hljs-string">'toggle light'</span>, options: 19 }  
+waiting <span class="hljs-keyword">for</span> the queue to drain before disonnecting  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+<span class="hljs-built_in">command</span> finished  
+disconnecting</code></pre><p>这里我们可以看到，所有命令被立即放到队列中，并且命令是被一些随机时间间隔着有序完成的。最后，所有命令完成之后连接切断。</p> <h2 id="-">下一篇文章</h2> <p>本系列的下一篇文章，我们将探索如何避免崩溃以及通过持久化工作项目来限制内存影响。</p></div></article> <nav class="pagination"><a href="/post/client-side-storage" title="[译] 客户端存储" class="prev">« [译] 客户端存储</a> <a href="/post/no-websockets-over-http2" title="[译] No WebSockets Over HTTP2" class="next">[译] No WebSockets Over HTTP2 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/edbc031ed992ebeea519.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

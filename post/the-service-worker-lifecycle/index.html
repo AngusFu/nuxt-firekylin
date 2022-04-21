@@ -1,0 +1,81 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] Service Worker 生命周期 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,Service Worker"><meta data-n-head="true" name="description" content="Service Worker 生命周期"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-07-25</div></div> <h1 class="title">[译] Service Worker 生命周期</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://twitter.com/ireaderinokun">@Ire Aderinokun</a> <br>原文地址:
+          <a target="_blank" href="https://bitsofco.de/the-service-worker-lifecycle/">https://bitsofco.de/the-service-worker-lifecycle/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/the-service-worker-lifecycle">http://www.wemlion.com/post/the-service-worker-lifecycle</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>如果使用过 Service Worker，之前你可能遇到过这样的问题，原来的 Service Worker 还在起作用，即使文件本身已经更新过。其中的原因在于 Service Worker 生命周期中的一些微妙之处；它可能会被安装，而且是有效的，但实际上却没有被 document 纳入控制。</p> <p>Service Worker 可能拥有以下六种状态的一种：<strong>解析成功（parsed）</strong>，<strong>正在安装（installing）</strong>，<strong>安装成功（installed）</strong>，<strong>正在激活（activating）</strong>，<strong>激活成功（activated）</strong>，<strong>废弃（redundant）</strong>。</p> <p><img alt="Service Worker 状态"></p> <h2 id="-parsed-">解析成功（Parsed）</h2> <p>首次注册 Service Worker 时，浏览器解决脚本并获得入口点。如果解析成功（而且满足其他条件，如 HTTPS 协议），就可以访问到 Service Worker 注册对象（registration object），其中包含 Service Worker 的状态及其作用域。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* In main.js */</span>
+<span class="hljs-keyword">if</span> (<span class="hljs-string">'serviceWorker'</span> <span class="hljs-keyword">in</span> navigator) {  
+    navigator.serviceWorker.register(<span class="hljs-string">'./sw.js'</span>)
+    .then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">registration</span>) </span>{
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Service Worker Registered"</span>, registration);
+    })
+    .catch(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err</span>) </span>{
+        <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"Service Worker Failed to Register"</span>, err);
+    })
+}</code></pre><p>Service Worker 注册成功，并不意味着它已经完成安装，也不能说明它已经激活，仅仅是脚本被成功解析，与 document 同源，而且源协议是 HTTPS。一旦完成注册，Service Worker 将进入下一状态。</p> <h2 id="-installing-">正在安装（Installing）</h2> <p>Service Worker 脚本解析完成后，浏览器会试着安装，进入下一状态，“installing”。在 Service Worker <code>注册（registration）</code> 对象中，我们可以通过 <code>installing</code> 子对象检查该状态。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* In main.js */</span>
+navigator.serviceWorker.register(<span class="hljs-string">'./sw.js'</span>).then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">registration</span>) </span>{  
+    <span class="hljs-keyword">if</span> (registration.installing) {
+        <span class="hljs-comment">// Service Worker is Installing</span>
+    }
+})</code></pre><p>在 installing 状态中，Service Worker 脚本中的 <code>install</code> 事件被执行。我们通常在安装事件中，为 document 缓存静态文件。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* In sw.js */</span>
+self.addEventListener(<span class="hljs-string">'install'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{  
+  event.waitUntil(
+    caches.open(currentCacheName).then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">cache</span>) </span>{
+      <span class="hljs-keyword">return</span> cache.addAll(arrayOfFilesToCache);
+    })
+  );
+});</code></pre><p>若事件中有 <code>event.waitUntil()</code> 方法，则 installing 事件会一直等到该方法中的 Promise 完成之后才会成功；若 Promise 被拒，则安装失败，Service Worker 直接进入<strong>废弃（redundant）</strong>状态。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* In sw.js */</span>
+self.addEventListener(<span class="hljs-string">'install'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{  
+  event.waitUntil(
+   <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.reject(); <span class="hljs-comment">// Failure</span>
+  );
+}); 
+<span class="hljs-comment">// Install Event will fail</span></code></pre><h2 id="-installed-waiting-">安装成功/等待中（Installed/Waiting）</h2> <p>如果安装成功，Service Worker 进入<strong>安装成功（installed）</strong>（也称为<strong>等待中[waiting]</strong>）状态。在此状态中，它是一个有效的但尚未激活的 worker。它尚未纳入 document 的控制，确切来说是在等待着从当前 worker 接手。</p> <p>在 Service Worker <code>注册（registration）</code> 对象中，可通过 <code>waiting</code> 子对象检查该状态。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* In main.js */</span>
+navigator.serviceWorker.register(<span class="hljs-string">'./sw.js'</span>).then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">registration</span>) </span>{  
+    <span class="hljs-keyword">if</span> (registration.waiting) {
+        <span class="hljs-comment">// Service Worker is Waiting</span>
+    }
+})</code></pre><p>这是通知 App 用户升级新版本或自动升级的好时机。</p> <h2 id="-activating-">正在激活（Activating）</h2> <p>处于 waiting 状态的 Service Worker，在以下之一的情况下，会被触发 <strong>activating</strong> 状态。</p> <ul><li><p>当前已无激活状态的 worker</p></li> <li><p>Service Worker 脚本中的 <code>self.skipWaiting()</code> 方法被调用</p></li> <li><p>用户已关闭 Service Worker 作用域下的所有页面，从而释放了此前处于激活态的 worker</p></li> <li><p>超出指定时间，从而释放此前处于激活态的 worker</p></li></ul> <p>处于 activating 状态期间，Service Worker 脚本中的 <code>activate</code> 事件被执行。我们通常在 activate 事件中，清理 cache 中的文件。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* In sw.js */</span>
+self.addEventListener(<span class="hljs-string">'activate'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{  
+  event.waitUntil(
+    <span class="hljs-comment">// 获取所有 cache 名称</span>
+    caches.keys().then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">cacheNames</span>) </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.all(
+        <span class="hljs-comment">// 获取所有不同于当前版本名称 cache 下的内容</span>
+        cacheNames.filter(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">cacheName</span>) </span>{
+          <span class="hljs-keyword">return</span> cacheName != currentCacheName;
+        }).map(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">cacheName</span>) </span>{
+          <span class="hljs-comment">// 删除内容</span>
+          <span class="hljs-keyword">return</span> caches.delete(cacheName);
+        })
+      ); <span class="hljs-comment">// end Promise.all()</span>
+    }) <span class="hljs-comment">// end caches.keys()</span>
+  ); <span class="hljs-comment">// end event.waitUntil()</span>
+});</code></pre><p>与 install 事件类似，如果 activate 事件中存在 <code>event.waitUntil()</code> 方法，则在其中的 Promise 完成之后，激活才会成功。如果 Promise 被拒，激活事件失败，Service Worker 进入<strong>废弃（redundant）</strong>状态。</p> <h2 id="-activated-">激活成功（Activated）</h2> <p>如果激活成功，Service Worker 进入 <strong>active</strong> 状态。在此状态中，其成为接受 document 全面控制的激活态 worker。在 Service Worker <code>注册（registration）</code> 对象中，可以通过 <code>active</code> 子对象检查此状态。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* In main.js */</span>
+navigator.serviceWorker.register(<span class="hljs-string">'./sw.js'</span>).then(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">registration</span>) </span>{  
+    <span class="hljs-keyword">if</span> (registration.active) {
+        <span class="hljs-comment">// Service Worker is Active</span>
+    }
+})</code></pre><p>如果 Service Worker 处于激活态，就可以应对事件性事件 —— <code>fetch</code> 和 <code>message</code>。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* In sw.js */</span>
+
+self.addEventListener(<span class="hljs-string">'fetch'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{  
+  <span class="hljs-comment">// Do stuff with fetch events</span>
+});
+
+self.addEventListener(<span class="hljs-string">'message'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>) </span>{  
+  <span class="hljs-comment">// Do stuff with postMessages received from document</span>
+});</code></pre><h2 id="-redundant-">废弃（Redundant）</h2> <p>Service Worker 可能以下之一的原因而被<strong>废弃</strong>（redundant，原意为“多余的，累赘的”）——</p> <ul><li><p>installing 事件失败</p></li> <li><p>activating 事件失败</p></li> <li><p>新的 Service Worker 替换其成为激活态 worker</p></li></ul> <p>如果 Service Worker 因前两个原因失败，我们可以通过开发者工具看到信息（以及其他相关信息）——</p> <p><img alt="Service Worker Redundant in DevTools"></p> <p>如果已存在前一版本的激活态 Service Worker，它会继续保持对 document 的控制。</p></div></article> <nav class="pagination"><a href="/post/browse-ebay-with-style-and-speed-ebay" title="[译] eBay：style & speed" class="prev">« [译] eBay：style & speed</a> <a href="/post/understanding-es6-modules-via-their-history" title="[译] 从发展历史理解 ES6 Module" class="next">[译] 从发展历史理解 ES6 Module »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/326de3d63b7de3f33114.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

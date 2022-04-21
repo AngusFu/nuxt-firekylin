@@ -1,0 +1,87 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 手把手教你写一个 Javascript 框架：沙箱求值 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,JavaScript,ES6"><meta data-n-head="true" name="description" content="关于沙箱求值，ES6，Proxy，Symbol，WeakMap"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-11-18</div></div> <h1 class="title">[译] 手把手教你写一个 Javascript 框架：沙箱求值</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://blog.risingstack.com/author/bertalan/">Bertalan Miklos</a> <br>原文地址:
+          <a target="_blank" href="https://blog.risingstack.com/writing-a-javascript-framework-sandboxed-code-evaluation/">https://blog.risingstack.com/writing-a-javascript-framework-sandboxed-code-evaluation/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/sandbox-code-evaluation">http://www.wemlion.com/post/sandbox-code-evaluation</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p><strong>本文是“编写 JavaScript 框架”系列的第三章。在本章中，我将介绍浏览器中对代码求值的几种不同方式及其存在的问题，也会介绍一种依赖 JavaScript 新特性的方法。</strong></p> <p>本系列主要是如何开发一个开源的客户端框架，框架名为 NX。我将在本系列中分享框架编写过程中如何克服遇到的主要困难。对 NX 感兴趣的朋友可以点击 NX 项目<a href="http://nx-framework.com/" target="_blank">主页</a>查看。</p> <p>本系列章节如下：</p> <ul><li><a href="/post/nx-project-structure/">项目结构（Project structuring）</a></li> <li><a href="/post/execution-timing/">执行调度(Execution timing)</a></li> <li>沙箱求值（本章）</li> <li><a href="/post/data-bind-dirty-checking">数据绑定简介</a></li> <li><a href="/post/es6-proxy-data-binding/">ES6 Proxy 实现数据绑定</a></li> <li>自定义元素</li> <li>客户端路由</li></ul> <h2 id="-eval">邪恶 eval</h2> <blockquote><p><code>eval()</code> 函数用来对字符串形式的 JavaScript 代码进行求值。</p></blockquote> <p>常见的代码求值方法是使用 <code>eval()</code> 函数。通过 <code>eval()</code> 执行的代码可以访问闭包和全局作用域，所以可能导致<a href="https://en.wikipedia.org/wiki/Code_injection" target="_blank">代码注入(code injection)</a>，正因此 <code>eval()</code> 成为 JavaScript 中最臭名昭著的特性之一。</p> <p>抛开上述缺点不说，<code>eval()</code> 在某些情况下还是很有用的。多数现代前端框架都需要 <code>eval()</code> 的这种功能，但是往往又因前述问题畏手畏脚。因此出现许多字符串求值方案，在沙箱而非全局作用域中进行操作。沙箱可以阻止代码访问与安全相关的数据，它通常是一个简单对象，用于替换代码中的全局对象。</p> <h2 id="-">常见做法</h2> <p>替代 <code>eval()</code> 最常见的方式是彻底重新实现。重新实现的过程由解析（parsing）、解释（interpreting）两步组成。首先由解析器创建<a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank">抽象语法树</a>，然后由解释器遍历语法树，将其译为运行在沙箱中的代码。</p> <p>这种方案使用广泛，但可谓是杀鸡拿了把牛刀。放弃修补 <code>eval()</code>，选择从零开始重写，带来的后果就是，许多 bug 蠢蠢欲动，准备伺机而出。而随着语言的升级更新，也不得不频繁修改源码。</p> <h2 id="-">另一种思路</h2> <p><a href="http://nx-framework.com" target="_blank">NX</a>  尽可能避免了重新实现代码，采用一个很小的库处理求值，该库使用了一些较可能少为人知的新特性。</p> <p>这一节逐步介绍这些特性，并使用它们解释用于代码求值的 <a href="https://github.com/RisingStack/nx-compile" target="_blank">nx-compile</a> 库。这个库有一个名为 <code>compileCode()</code> 的函数，工作方式如下：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> code = compileCode(<span class="hljs-string">'return num1 + num2'</span>)
+
+<span class="hljs-comment">// 控制台打印 17</span>
+<span class="hljs-built_in">console</span>.log(code({<span class="hljs-attr">num1</span>: <span class="hljs-number">10</span>, <span class="hljs-attr">num2</span>: <span class="hljs-number">7</span>}))
+
+<span class="hljs-keyword">const</span> globalNum = <span class="hljs-number">12</span>  
+<span class="hljs-keyword">const</span> otherCode = compileCode(<span class="hljs-string">'return globalNum'</span>)
+
+<span class="hljs-comment">// 访问全局作用域被禁止</span>
+<span class="hljs-comment">// 控制台打印 undefined</span>
+<span class="hljs-built_in">console</span>.log(otherCode({<span class="hljs-attr">num1</span>: <span class="hljs-number">2</span>, <span class="hljs-attr">num2</span>: <span class="hljs-number">3</span>}))</code></pre><p>待到本文结束，我们会用不到 20 行的代码实现 <code>compileCode()</code> 函数。</p> <h3 id="-new-function-"><code>new Function()</code></h3> <blockquote><p>Function 构造函数用于创建新的 Function 对象。在 JavaScript 中，所有函数都是 Function 对象。</p></blockquote> <p>Function 构造函数可以达到 <code>eval()</code> 同样的目的。<code>new Function(...args, 'funcBody')</code> 对传入的 <code>'funcBody'</code> 字符进行求值，并返回执行这段代码的函数。<code>new Function()</code> 与 <code>eval()</code> 的不同主要体现在以下两方面：</p> <ul><li><p><code>new Function()</code> 方法只会对传入的代码求值一次。调用返回函数时，只会运行代码，而不会重新求值。</p></li> <li><p><code>new Function()</code> 方法无法访问闭包中的本地变量；不过还是可以访问全局作用域。</p></li></ul> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">compileCode</span> (<span class="hljs-params">src</span>) </span>{  
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(src)
+}</code></pre><p>对我们来说，<code>new Function()</code> 要优于 <code>eval()</code>。它性能更好，也更安全。不过要使其完全可用，还需要阻止其访问全局作用域。</p> <h3 id="-with-"><code>with</code> 关键词</h3> <blockquote><p><code>with</code> 能够扩展声明的作用域链。</p></blockquote> <p>JavaScript 中，<code>with</code> 关键词较少露面。<code>with</code> 可以帮我们半沙箱化地执行代码。<code>with</code> 语句块首先会试着从传递的沙箱对象检索变量，如果没有找到，则会到闭包和全局作用域中寻找。前面说过，<code>new Function()</code> 能够阻止访问闭包中的变量，故现在只需考虑全局作用域的问题。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">compileCode</span> (<span class="hljs-params">src</span>) </span>{
+  src = <span class="hljs-string">'with (sandbox) {'</span> + src + <span class="hljs-string">'}'</span>
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(<span class="hljs-string">'sandbox'</span>, src)
+}</code></pre><p>在内部实现中，<code>with</code> 使用了 <code>in</code> 操作。对于语句块中的所有变量访问，都会使用 <code>variable in sandbox</code> 条件进行判断。若条件为真，则从沙箱对象中读取变量；否则会去全局变量中寻找变量。在 <code>with</code> 操作过程中，我们可以让 <code>variable in sandbox</code> 永远返回 true，这样就能阻止访问全局变量。</p> <p><img alt="Sandboxed code evaluation: Simple 'with' statement"></p> <h3 id="es6-proxy">ES6 Proxy</h3> <blockquote><p>Proxy 对象用于自定义 Object 的一些基本操作，如属性读取、赋值等行为。</p></blockquote> <p>ES6 <code>Proxy</code> 封装对象，并定义一些 trap 函数，这些函数可以拦截该对象的基本操作行为。操作对象时，就会调用相应的 trap 函数。使用 <code>Proxy</code> 封装沙箱对象，定义一个 <code>has</code> 操作 trap，即可覆盖 <code>in</code> 操作符的默认行为。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">compileCode</span> (<span class="hljs-params">src</span>) </span>{
+  src = <span class="hljs-string">'with (sandbox) {'</span> + src + <span class="hljs-string">'}'</span>
+  <span class="hljs-keyword">const</span> code = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(<span class="hljs-string">'sandbox'</span>, src)
+
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">sandbox</span>) </span>{
+    <span class="hljs-keyword">const</span> sandboxProxy = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(sandbox, {has})
+    <span class="hljs-keyword">return</span> code(sandboxProxy)
+  }
+}
+
+<span class="hljs-comment">// 用于拦截对 sandboxProxy 的 'in' 操作</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">has</span> (<span class="hljs-params">target, key</span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>
+}</code></pre><p>上面的代码耍了 <code>with</code> 代码块一把。<code>variable in sandbox</code> 将永远为真，因为 <code>has</code> trap 函数总是返回 true。<code>width</code> 代码块中的代码永远无法访问全局对象。</p> <p><img alt="Sandboxed code evaluation: 'with' statement and proxies"></p> <h3 id="-symbol-unscopables-"><code>Symbol.unscopables</code></h3> <blockquote><p>Symbol 是一种唯一的、不可变的数据类型，可用作对象属性标识符。</p></blockquote> <p><code>Symbol.unscopables</code> 是一个驰名 symbol（<a href="https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Global_Objects/Symbol" target="_blank">Well-known symbol</a>）。所谓“驰名 symbol”，实际上是一些内置 JavaScript <code>Symbol</code>，代表某些内部语言行为。驰名 symbol 可以用于添加或重写一些行为，如数据的迭代、基本类型转换。</p> <blockquote><p>Symbol.unscopables 用于指定对象的一些固有和继承属性，这些属性被排除在 <code>with</code> 所绑定的环境之外无法读取。</p></blockquote> <p><code>Symbol.unscopables</code> 用于定义对象的 unscopable 属性（译者：不译，请自行领会）。<code>with</code> 声明中的沙箱对象的 unscopable 属性无法读取，这些属性会从闭包、全局作用域中读取。通常极少需要用到 <code>Symbol.unscopables</code>。在<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol/unscopables" target="_blank">这里</a>可以看到引入 <code>Symbol.unscopables</code> 的原因。</p> <p><img alt="Sandboxed code evaluation: 'with' statement and proxies. A security issue."></p> <p>我们为沙箱对象 proxy 添加一个<code>get</code> trap 函数，拦截检索 <code>Symbol.unscopables</code> 属性的行为，总是返回 undefined。这样会骗到 <code>with</code> 代码块，使其认为沙箱对象没有任何 unscopable 属性。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">compileCode</span> (<span class="hljs-params">src</span>) </span>{
+  src = <span class="hljs-string">'with (sandbox) {'</span> + src + <span class="hljs-string">'}'</span>
+  <span class="hljs-keyword">const</span> code = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(<span class="hljs-string">'sandbox'</span>, src)
+
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">sandbox</span>) </span>{
+    <span class="hljs-keyword">const</span> sandboxProxy = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(sandbox, {has, get})
+    <span class="hljs-keyword">return</span> code(sandboxProxy)
+  }
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">has</span> (<span class="hljs-params">target, key</span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get</span> (<span class="hljs-params">target, key</span>) </span>{
+  <span class="hljs-keyword">if</span> (key === <span class="hljs-built_in">Symbol</span>.unscopables) <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>
+  <span class="hljs-keyword">return</span> target[key]
+}</code></pre><p><img alt="Sandboxed code evaluation: 'with' statement and proxies. Has and get traps."></p> <h3 id="-weakmap-">使用 WeakMap 进行缓存</h3> <p>代码现在是安全的，但性能还有可提升之处：可以看到，每次调用返回的函数时都会新建一个 <code>Proxy</code>。通过缓存可以避免该问题，每次调用时，若沙箱对象相同，则可以使用同一个 <code>Proxy</code> 对象。</p> <p>Proxy 对象与沙箱对象一一对应，故可以单纯地将其作为沙箱对象的一个属性。不过，这可能会对外暴露代码实现细节。另外，若使用的是 <code>Object.freeze()</code> 冻结之后的不可变沙箱对象也不行。所以采用 <code>WeakMap</code> 才是更好的选择。</p> <blockquote><p>WeakMap 对象是一个键值对集合。键为弱引用，必须是对象；值可以为任意类型。</p></blockquote> <p><code>WeakMap</code> 可在不直接扩展对象属性的情况下为该对象附加数据。通过 <code>WeakMap</code> 间接为沙箱对象添加缓存的 <code>Proxy</code>。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> sandboxProxies = <span class="hljs-keyword">new</span> <span class="hljs-built_in">WeakMap</span>()
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">compileCode</span> (<span class="hljs-params">src</span>) </span>{
+  src = <span class="hljs-string">'with (sandbox) {'</span> + src + <span class="hljs-string">'}'</span>
+  <span class="hljs-keyword">const</span> code = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Function</span>(<span class="hljs-string">'sandbox'</span>, src)
+
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">sandbox</span>) </span>{
+    <span class="hljs-keyword">if</span> (!sandboxProxies.has(sandbox)) {
+      <span class="hljs-keyword">const</span> sandboxProxy = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(sandbox, {has, get})
+      sandboxProxies.set(sandbox, sandboxProxy)
+    }
+    <span class="hljs-keyword">return</span> code(sandboxProxies.get(sandbox))
+  }
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">has</span> (<span class="hljs-params">target, key</span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get</span> (<span class="hljs-params">target, key</span>) </span>{
+  <span class="hljs-keyword">if</span> (key === <span class="hljs-built_in">Symbol</span>.unscopables) <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>
+  <span class="hljs-keyword">return</span> target[key]
+}</code></pre><p>这样一来，只会为每个沙箱对象新建一次 <code>Proxy</code> 对象。</p> <h3 id="-">最后一点</h3> <p>上面的 <code>compileCode()</code> 例子仅 19 行代码，已经是一个可以工作的沙箱代码求值工具。如果有兴趣看看 nx-compile 的完整代码，可以访问 <a href="https://github.com/RisingStack/nx-compile" target="_blank">Github 仓库</a>。</p> <p>除解释代码求值外，本章的主要目的是展示一些 ES6 新特性，用它们替代原有方式。贯穿整个例子，我试图展示了 <code>Proxy</code> 和 <code>Symbol</code> 的强大力量。</p> <h2 id="-">写在最后</h2> <p>如果对 NX 框架感兴趣，请访问 <a href="http://nx-framework.com/" target="_blank">主页</a>。胆大的读者还可以在 Github 上查看 <a href="https://github.com/RisingStack/nx-framework" target="_blank">NX 源码</a> 和 <a href="https://github.com/RisingStack/nx-observe" target="_blank">nx-observe 源码</a>。</p> <p>希望你喜欢这篇文章。下一章我们将讨论 <a href="https://blog.risingstack.com/writing-a-javascript-framework-data-binding-dirty-checking/" target="_blank">数据绑定</a>。</p></div></article> <nav class="pagination"><a href="/post/nx-project-structure" title="[译] 手把手教你写一个 Javascript 框架：项目结构" class="prev">« [译] 手把手教你写一个 Javascript 框架：项目结构</a> <a href="/post/execution-timing" title="[译] 手把手教你写一个 Javascript 框架：执行调度" class="next">[译] 手把手教你写一个 Javascript 框架：执行调度 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/5d39fa18e4c19f0803be.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,51 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">某度 2014 年秋招前端笔试 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,面试"><meta data-n-head="true" name="description" content><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2014-09-21</div></div> <h1 class="title">某度 2014 年秋招前端笔试</h1> <div class="entry-content"><!----> <p>今晚跑去华工参加百度 Web 前端的笔试，做完之后交卷，本来感觉是“为之四顾，为之踌躇满志”的。然而……</p> <p>其中一道题目是关于数组的，回来在电脑上面一敲，顿时为自己的智商和知识羞愧了。</p> <p>多话不说，直接上题目吧。大概是酱紫的：</p> <p>代码如下，请写出输出的结果。 </p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> str = <span class="hljs-string">'john'</span>;
+<span class="hljs-keyword">var</span> str2 = <span class="hljs-string">'angus'</span>;
+
+<span class="hljs-keyword">var</span> arr1 = str.split(<span class="hljs-string">''</span>);
+<span class="hljs-keyword">var</span> arr2 = arr1.reverse();
+<span class="hljs-keyword">var</span> arr = str2.split(<span class="hljs-string">''</span>);
+<span class="hljs-keyword">var</span> arr3 = arr2.push(arr);
+
+<span class="hljs-built_in">console</span>.log(arr1.length, arr1.slice(<span class="hljs-number">-1</span>));
+<span class="hljs-built_in">console</span>.log(arr3.length, arr3.slice(<span class="hljs-number">-1</span>));</code></pre><p>先说答案：第一次打印，<code>5, [ Array[5] ]</code>；第二次不仅没有结果，还报错了。</p> <p>你，猜到了吗？博主没有猜到两点：</p> <p>1.第一次显示 arr1 的 length 是 “5”；</p> <p>2.第二次居然没有任何输出，还报错，博主试了 N++ 次都不敢相信。</p> <p>下面解释下这些问题。</p> <p>第一个问题，见博客园中的<a href="http://www.cnblogs.com/0banana0/archive/2011/11/17/2252639.html" target="_blank">这篇博文</a>：</p> <blockquote><p>结论:js数组是引用类型,它只允许通过索引来获取或改变数组的值。引用类型的东西都是不能通过(它赋值过的外部变量)所改变的。也就是(它赋值过的外部变量)这个值改变了原数组不会有任何变化。</p></blockquote> <p>所以虽然我们是在arr3上应用push()方法，但最终影响的还是arr1、arr2、arr3共同指向的数组。</p> <p>上述博文一楼评论说得很明白：</p> <blockquote>
+JS 中没有指针，只有传值（value)与传址（reference引用）的区别。
+
+<code>javascript
+var a = [1,2,3,4] // a 不仅是数组，还是个对象，实际上 a 就是对 [1,2,3,4] 的引用
+var b = a
+var c = a
+// 以上两条赋值语句建立了 b 与 c 对 a 即 [1,2,3,4] 的引用
+// 无论改变 a 还是 b 抑或 c 都是对 [1,2,3,4] 的操作
+// 这就是传址(堆中操作)
+
+// 把 a[1] 的值"1"传递给 d
+// 对 d 的改变则不会影响 a[1]
+// 即所谓的传值(栈中操作)
+var d = a[1]</code></blockquote> <p>第二个问题是第11行代码报错的问题。这涉及到 Array 的可变方法不可变方法。</p> <ul><li><code>unshift()</code> 方法可向数组的开头添加一个或更多元素，并返回新的长度;</li> <li><code>push()</code> 方法可向数组的末尾添加一个或多个元素，并返回新的长度;</li> <li><code>pop()</code> 方法用于删除并返回数组的最后一个元素;</li> <li><code>shift()</code> 方法用于把数组的第一个元素从其中删除，并返回第一个元素的值。</li></ul> <p>So，一定一定要记住，这四个方法是有返回值的。</p> <p>另外，array.splice() 方法也是有返回值的，返回的含有被删除的元素的数组（如果木有元素被删除，辣么返回空数组）。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> str = <span class="hljs-string">'john'</span>;
+<span class="hljs-keyword">var</span> str2 = <span class="hljs-string">'angus'</span>;
+<span class="hljs-keyword">var</span> a = str.split(<span class="hljs-string">''</span>);
+<span class="hljs-keyword">var</span> b = str2.split(<span class="hljs-string">''</span>);
+<span class="hljs-keyword">var</span> c = a.splice(<span class="hljs-number">2</span>,<span class="hljs-number">1</span>,<span class="hljs-string">"test"</span>);
+
+<span class="hljs-built_in">console</span>.log(a); <span class="hljs-comment">// Array [ "j", "o", "test", "n" ] </span>
+<span class="hljs-built_in">console</span>.log(b); <span class="hljs-comment">// Array [ "a", "n", "g", "u", "s" ] </span>
+<span class="hljs-built_in">console</span>.log(c); <span class="hljs-comment">// Array [ "h" ]</span></code></pre><p>还得提到 reverse()、sort() 这两个操作是会影响到原来的数组的：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> str = <span class="hljs-string">'john'</span>;
+<span class="hljs-keyword">var</span> a = str.split(<span class="hljs-string">''</span>);
+<span class="hljs-keyword">var</span> c = a.sort();
+
+<span class="hljs-built_in">console</span>.log(c); <span class="hljs-comment">// Array [ "h", "j", "n", "o" ]</span>
+<span class="hljs-built_in">console</span>.log(a); <span class="hljs-comment">// Array [ "h", "j", "n", "o" ]</span></code></pre><p>而 concat()、slice() 操作则对数组都不影响。。。。</p> <p>说到concat()方法，想到了昨天看到的<strong>高效复制数组</strong>的方法：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> newArr = rr.slice(<span class="hljs-number">0</span>)
+<span class="hljs-comment">// or</span>
+<span class="hljs-keyword">var</span> newArr = arr.concat()</code></pre><p>记下来备用吧。。。</p> <p>这是作为前端新手的第一篇博文。继续加油~</p></div></article> <nav class="pagination"><a href="/post/xease-campus-2014-note" title="某易 2014 校招面试总结" class="prev">« 某易 2014 校招面试总结</a> <!----></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/f1e8234eef90fd888f17.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

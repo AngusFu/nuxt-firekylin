@@ -1,0 +1,340 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">关于前端常见算法面试题的一些思考 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="算法,JavaScript,原创"><meta data-n-head="true" name="description" content="关于前端常见算法面试题的一些思考"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-10-26</div></div> <h1 class="title">关于前端常见算法面试题的一些思考</h1> <div class="entry-content"><!----> <p>今天上班时间，读了 <a href="http://www.jackpu.com/" target="_blank">@JackPu</a> 的新文章<a href="http://www.jackpu.com/qian-duan-mian-shi-zhong-de-chang-jian-de-suan-fa-wen-ti/" target="_blank">《前端面试中的常见的算法问题》</a>。内容虽然看起挺基础，但可以有不少思考，同时也是一次挺好的复习。</p> <p>其中，有几个问题，想出了一些不同的解决办法，做了下笔记，并且进行了简单的性能测试。关于排序，这次没有深看。接下来有空时，再研究一番。</p> <h2 id="-palindromic-words-">判断回文(Palindromic Words)</h2> <p>结果是，使用循环来判断，性能远高于数组方法。接下来，在其他一些例子中也能看到，借用数组方法，往往很耗性能。</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-comment">// Array methods</span>
+<span class="hljs-keyword">const</span> isPalindromicA = <span class="hljs-function"><span class="hljs-params">w</span> =></span> w === w.split(<span class="hljs-string">''</span>).reverse().join(<span class="hljs-string">''</span>);
+
+<span class="hljs-comment">// while loop</span>
+<span class="hljs-keyword">const</span> isPalindromicB = <span class="hljs-function">(<span class="hljs-params">w</span>) =></span> {
+
+    <span class="hljs-keyword">let</span> len = w.length;
+    <span class="hljs-comment">// 感谢 @拉比克魔王 的指点</span>
+    <span class="hljs-keyword">let</span> start = <span class="hljs-built_in">Math</span>.ceil(len / <span class="hljs-number">2</span>);
+    <span class="hljs-keyword">while</span> (start &lt; len) {
+      <span class="hljs-keyword">if</span> (w[start] !== w[len - start - <span class="hljs-number">1</span>]) {
+            <span class="hljs-keyword">return</span> <span class="hljs-literal">false</span>;
+       }
+       start++;
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">true</span>;
+};
+
+<span class="hljs-comment">// -------------------------------------------------</span>
+<span class="hljs-comment">// perf test</span>
+<span class="hljs-comment">// first let's generate a fake word with, say 20 chars</span>
+<span class="hljs-keyword">var</span> word = (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">var</span> len = <span class="hljs-number">20</span>;
+    <span class="hljs-keyword">var</span> arr = [];
+    <span class="hljs-keyword">while</span> (len--) {
+        arr.push(<span class="hljs-number">97</span> + ((<span class="hljs-built_in">Math</span>.random()* <span class="hljs-number">26</span>) | <span class="hljs-number">0</span>));
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">String</span>.fromCharCode.apply(<span class="hljs-built_in">String</span>, arr);
+})();
+
+<span class="hljs-comment">// times</span>
+<span class="hljs-keyword">var</span> t = <span class="hljs-number">2e4</span>;
+<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>;
+
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'Array method'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    isPalindromicA(word);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'Array method'</span>);
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'Loop'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    isPalindromicB(word);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'Loop'</span>);</code></pre><h2 id="-">数组去重</h2> <p>ES 5 方法性能更好，高一倍以上。不过笔试、面试时，附上 <code>Set</code> 的办法，肯定会更好。</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-comment">// ES 5</span>
+<span class="hljs-keyword">const</span> uniqueES5 = <span class="hljs-function">(<span class="hljs-params">arr</span>) =></span> {
+    <span class="hljs-keyword">var</span> cache = {};
+    <span class="hljs-keyword">return</span> arr.filter(<span class="hljs-function">(<span class="hljs-params">item</span>) =></span> {
+        <span class="hljs-keyword">return</span> cache[item] ? <span class="hljs-literal">false</span> : (cache[item] = <span class="hljs-literal">true</span>);
+    });
+};
+
+<span class="hljs-comment">// ES6 method</span>
+<span class="hljs-comment">// 为啥用了 Array.from 呢，保持类型一致啊</span>
+<span class="hljs-keyword">const</span> uniqueES6 = <span class="hljs-function">(<span class="hljs-params">arr</span>) =></span> <span class="hljs-built_in">Array</span>.from(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>(arr));
+
+
+<span class="hljs-comment">// -------------------------------------------------</span>
+<span class="hljs-comment">// perf test</span>
+
+<span class="hljs-comment">// times</span>
+<span class="hljs-keyword">var</span> t = <span class="hljs-number">2e4</span>;
+<span class="hljs-keyword">var</span> i;
+<span class="hljs-keyword">var</span> array = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>, <span class="hljs-number">3</span>, <span class="hljs-number">2</span>, <span class="hljs-number">4</span>, <span class="hljs-number">5</span>, <span class="hljs-number">4</span>];
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'ES5 filter + cache'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    uniqueES5(array);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'ES5 filter + cache'</span>);
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'ES6 Set'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    uniqueES6(array);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'ES6 Set'</span>);</code></pre><h2 id="-">统计一个字符串出现最多的字母</h2> <p>正则表达式的办法，临时想起来的，运行起来还是要慢，至少慢了一半。所以有时候还是要老老实实写代码，奇淫巧技少用。</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-comment">// 黑科技</span>
+<span class="hljs-keyword">const</span> findMaxDuplicateCharRegex = <span class="hljs-function">(<span class="hljs-params">chars</span>) =></span> {
+    <span class="hljs-comment">// 先对字符进行排序</span>
+    chars = chars.split(<span class="hljs-string">''</span>).sort().join(<span class="hljs-string">''</span>);
+    <span class="hljs-comment">// 获取相同字符序列</span>
+    <span class="hljs-keyword">let</span> regex = <span class="hljs-regexp">/(.)(\1)+/g</span>;
+
+    <span class="hljs-keyword">let</span> temp = <span class="hljs-literal">null</span>;
+    <span class="hljs-keyword">let</span> max = <span class="hljs-number">0</span>;
+    <span class="hljs-keyword">let</span> char = <span class="hljs-string">''</span>;
+
+    <span class="hljs-keyword">while</span> (temp = regex.exec(chars)) {
+        <span class="hljs-keyword">if</span> (temp[<span class="hljs-number">0</span>].length > max) {
+            char = temp[<span class="hljs-number">1</span>];
+            max = temp[<span class="hljs-number">0</span>].length;
+        }
+    }
+    <span class="hljs-keyword">return</span> char;
+};
+
+<span class="hljs-comment">// see http://www.jackpu.com/qian-duan-mian-shi-zhong-de-chang-jian-de-suan-fa-wen-ti/</span>
+<span class="hljs-keyword">var</span> findMaxDuplicateCharNormal = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">str</span>) </span>{
+    <span class="hljs-keyword">if</span> (str.length == <span class="hljs-number">1</span>) {
+        <span class="hljs-keyword">return</span> str;
+    }
+    <span class="hljs-keyword">let</span> charObj = {};
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; str.length; i++) {
+        <span class="hljs-keyword">if</span> (!charObj[str.charAt(i)]) {
+            charObj[str.charAt(i)] = <span class="hljs-number">1</span>;
+        } <span class="hljs-keyword">else</span> {
+            charObj[str.charAt(i)] += <span class="hljs-number">1</span>;
+        }
+    }
+    <span class="hljs-keyword">let</span> maxChar = <span class="hljs-string">''</span>,
+        maxValue = <span class="hljs-number">1</span>;
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> k <span class="hljs-keyword">in</span> charObj) {
+        <span class="hljs-keyword">if</span> (charObj[k] >= maxValue) {
+            maxChar = k;
+            maxValue = charObj[k];
+        }
+    }
+    <span class="hljs-keyword">return</span> maxChar;
+};
+
+
+<span class="hljs-comment">// -------------------------------------------------</span>
+<span class="hljs-comment">// perf test</span>
+
+<span class="hljs-comment">// first let's generate a random string with 30 chars</span>
+<span class="hljs-keyword">var</span> chars = (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">var</span> len = <span class="hljs-number">30</span>;
+    <span class="hljs-keyword">var</span> arr = [];
+    <span class="hljs-keyword">while</span> (len--) {
+        arr.push(<span class="hljs-number">97</span> + ((<span class="hljs-built_in">Math</span>.random()* <span class="hljs-number">26</span>) | <span class="hljs-number">0</span>));
+    }
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">String</span>.fromCharCode.apply(<span class="hljs-built_in">String</span>, arr);
+})();
+
+<span class="hljs-comment">// times</span>
+<span class="hljs-keyword">var</span> t = <span class="hljs-number">2e4</span>;
+<span class="hljs-keyword">var</span> i;
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'正常方法'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    findMaxDuplicateCharNormal(chars);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'正常方法'</span>);
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'正则方法'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    findMaxDuplicateCharRegex(chars);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'正则方法'</span>);</code></pre><h2 id="-">不借助临时变量，进行两个整数的交换</h2> <p>三种方式均可。没有做性能测试。</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-keyword">let</span> a = <span class="hljs-number">1</span>;
+<span class="hljs-keyword">let</span> b = <span class="hljs-number">2</span>;
+
+<span class="hljs-comment">// ES 6</span>
+[a, b] = [b, a];
+
+<span class="hljs-comment">// 加减法</span>
+a = a - b;
+b = b + a;
+a = b - a;
+
+<span class="hljs-comment">// 异或</span>
+a = a ^ b;
+b = a ^ b;
+a = b ^ a;</code></pre><h2 id="-">斐波那契数列</h2> <p>联想到了三种方式：动态规划；<a href="http://es6.ruanyifeng.com/#docs/function#尾递归" target="_blank">尾递归</a>；generator（算不上一个解决方案，只是临时想到的）。</p> <p>上述三种方式中，动态规划最快，计算 fib(1000) 20000 次耗时 170 ms；尾递归耗时 200 ms 左右，generator 耗时 2800 ms 左右。</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-comment">// 动态规划</span>
+<span class="hljs-keyword">const</span> fibonacciDynamic = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">n</span>) </span>{
+    <span class="hljs-keyword">let</span> array = [<span class="hljs-number">0</span>, <span class="hljs-number">1</span>];
+
+    <span class="hljs-keyword">for</span>(<span class="hljs-keyword">let</span> i = <span class="hljs-number">2</span>; i &lt; n + <span class="hljs-number">1</span>; i++){
+        array[i] = array[i - <span class="hljs-number">1</span>] + array[i - <span class="hljs-number">2</span>];
+    }
+
+    <span class="hljs-keyword">return</span> array[n];
+};
+
+<span class="hljs-comment">// 尾递归</span>
+<span class="hljs-keyword">const</span> fibonacciTailCall = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">n , ac1 = <span class="hljs-number">1</span> , ac2 = <span class="hljs-number">1</span></span>) </span>{
+    <span class="hljs-keyword">if</span>( n &lt;= <span class="hljs-number">1</span> ) {
+        <span class="hljs-keyword">return</span> ac2
+    }
+    <span class="hljs-keyword">return</span> fibonacciTailCall(n - <span class="hljs-number">1</span>, ac2, ac1 + ac2);
+};
+
+<span class="hljs-comment">// generator</span>
+<span class="hljs-keyword">const</span> fibonacciGenerator = (<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-function"><span class="hljs-keyword">function</span> *<span class="hljs-title">fib</span>(<span class="hljs-params"></span>) </span>{
+        <span class="hljs-keyword">let</span> a = <span class="hljs-number">0</span>, b = <span class="hljs-number">1</span>, sum = <span class="hljs-number">0</span>;
+
+        <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+            sum = a + b;
+            b = a;
+            a = sum;
+            <span class="hljs-keyword">yield</span> sum;
+        }
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">n</span>) </span>{
+        <span class="hljs-keyword">var</span> iterator = fib();
+        <span class="hljs-keyword">let</span> result = <span class="hljs-number">0</span>;
+
+        <span class="hljs-keyword">while</span> (n--) {
+            result = iterator.next();
+        }
+        <span class="hljs-keyword">return</span> result.value;
+    };
+}());
+
+
+<span class="hljs-comment">// -------------------------------------------------</span>
+<span class="hljs-comment">// perf test</span>
+<span class="hljs-comment">// calculate fib(1000) 20000 times</span>
+
+<span class="hljs-keyword">var</span> t = <span class="hljs-number">2e4</span>;
+<span class="hljs-keyword">var</span> n = <span class="hljs-number">1000</span>;
+<span class="hljs-keyword">var</span> i;
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'动态规划'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    fibonacciDynamic(n);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'动态规划'</span>);
+
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'尾递归'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    fibonacciTailCall(n);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'尾递归'</span>);
+
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'generator'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    fibonacciGenerator(n);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'generator'</span>);</code></pre><h2 id="-">正数组的最大差值</h2> <p>出乎意料地，这次 Math 方法竟然败给看 for 循环。不用说，reduce 超级慢，比 Math 还慢近十倍。</p> <p>声明：Math 只是在本案例中比 for 循环慢，实际上如果只是单独取数组中的最大值或最小值，Math 还是很厉害的。实测：随机生成一个长度为 20 的数组（100 以内的正整数），寻找最大值，运行 10^6 次，Math 完胜，不到 1s 搞定，for 循环直接卡死。所以还是得看具体情况。</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-comment">// 使用 Math </span>
+<span class="hljs-keyword">const</span> getMaxGap = <span class="hljs-function">(<span class="hljs-params">array</span>) =></span> <span class="hljs-built_in">Math</span>.max.apply(<span class="hljs-built_in">Math</span>, array) - <span class="hljs-built_in">Math</span>.min.apply(<span class="hljs-built_in">Math</span>, array);
+
+<span class="hljs-comment">// 使用 reduce</span>
+<span class="hljs-keyword">const</span> getMaxDiff = <span class="hljs-function">(<span class="hljs-params">array</span>) =></span> {
+    <span class="hljs-keyword">if</span> (array.length &lt; <span class="hljs-number">1</span>) <span class="hljs-keyword">return</span> arrary[<span class="hljs-number">0</span>];
+
+    array = array.reduce(<span class="hljs-function">(<span class="hljs-params">[max, min], el</span>) =></span> {
+       max = el > max ? el : max;
+       min = el &lt; min ? el : min;
+       <span class="hljs-keyword">return</span> [max, min];
+    }, array);
+
+    <span class="hljs-keyword">return</span> array[<span class="hljs-number">0</span>] - array[<span class="hljs-number">1</span>];
+};
+
+<span class="hljs-comment">// see http://www.jackpu.com/qian-duan-mian-shi-zhong-de-chang-jian-de-suan-fa-wen-ti/</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getMaxProfit</span>(<span class="hljs-params">arr</span>) </span>{
+    <span class="hljs-keyword">var</span> minPrice = arr[<span class="hljs-number">0</span>];
+    <span class="hljs-keyword">var</span> maxProfit = <span class="hljs-number">0</span>;
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; arr.length; i++) {
+        <span class="hljs-keyword">var</span> currentPrice = arr[i];
+
+        minPrice = <span class="hljs-built_in">Math</span>.min(minPrice, currentPrice);
+
+        <span class="hljs-keyword">var</span> potentialProfit = currentPrice - minPrice;
+
+        maxProfit = <span class="hljs-built_in">Math</span>.max(maxProfit, potentialProfit);
+    }
+
+    <span class="hljs-keyword">return</span> maxProfit;
+}
+
+
+<span class="hljs-comment">// -------------------------------------------------</span>
+<span class="hljs-comment">// perf test</span>
+<span class="hljs-comment">// 2000000 times: Math ~= 100ms; Reduce ~= 1100ms; Normal ~= 25ms</span>
+
+<span class="hljs-keyword">let</span> array = [<span class="hljs-number">10</span>,<span class="hljs-number">5</span>,<span class="hljs-number">11</span>,<span class="hljs-number">7</span>,<span class="hljs-number">8</span>,<span class="hljs-number">9</span>];
+
+<span class="hljs-keyword">var</span> t = <span class="hljs-number">2e6</span>;
+<span class="hljs-keyword">var</span> n = <span class="hljs-number">1000</span>;
+<span class="hljs-keyword">var</span> i;
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'Math'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    getMaxGap(array);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'Math'</span>);
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'Reduce'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    getMaxDiff(array);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'Reduce'</span>);
+
+
+i = <span class="hljs-number">0</span>;
+<span class="hljs-built_in">console</span>.time(<span class="hljs-string">'Normal'</span>);
+<span class="hljs-keyword">while</span> (i &lt; t) {
+    getMaxProfit(array);
+    i++;
+}
+<span class="hljs-built_in">console</span>.timeEnd(<span class="hljs-string">'Normal'</span>);</code></pre><p>对算法的了解还十分浅薄，错误肯定有，希望读者指教。还需要钻研更多。感谢 <a href="http://www.jackpu.com/" target="_blank">@JackPu</a> 的文章带来的启发和思考。</p> <div class="tip">
+补注：<br>
+本文在描述测试结果会进行一些对比，也会使用一些“失败”“不如”等字眼，但测试比较主要是满足好奇心。实际工作中，多数人应该不会碰到那么大的计算量，因此几乎不用担心（多数情况下），多关注其他方面的优化吧。<br>
+另外，请不要对某些说法（正数组的差值例子中所说 Math 败给 for 循环）产生刻板印象（我自己就是，这次之后总感觉 Math 是不是不给力。被自己误会到了囧），具体情况具体分析，另外，多操作，多做实验。<br>
+如果本文一些不严谨的说法给您的学习、工作造成负面影响，还请谅解。如有问题，欢迎随时和我联系。
+</div></div></article> <nav class="pagination"><a href="/post/js-set-immediate" title="关于 setImmediate" class="prev">« 关于 setImmediate</a> <a href="/post/javascript-weekly-306-notes" title="JavaScript Weekly 306 阅读笔记" class="next">JavaScript Weekly 306 阅读笔记 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/8da21cfcb5258589988b.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,160 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 小两百行 JavaScript 打造 lambda 演算解释器 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,JavaScript"><meta data-n-head="true" name="description" content="小两百行 JavaScript 打造lambda 演算解释器"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-06-27</div></div> <h1 class="title">[译] 小两百行 JavaScript 打造 lambda 演算解释器</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="http://tadeuzagallo.com/blog/about/">Tadeu Zagallo</a> <br>原文地址:
+          <a target="_blank" href="http://tadeuzagallo.com/blog/writing-a-lambda-calculus-interpreter-in-javascript/">http://tadeuzagallo.com/blog/writing-a-lambda-calculus-interpreter-in-javascript/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/writing-a-lambda-calculus-interpreter-in-javascript">http://www.wemlion.com/post/writing-a-lambda-calculus-interpreter-in-javascript</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>最近，我发了一条<a href="https://twitter.com/tadeuzagallo/status/742836038264098817" target="_blank">推特</a>，我喜欢上 lambda 演算了，它简单、强大。</p> <p>我当然听说过 lambda 演算，但直到我读了这本书 <a href="https://www.cis.upenn.edu/~bcpierce/tapl" target="_blank">《类型和编程语言》（Types and Programming Languages）</a> 我才体会到其中美妙。</p> <p>已经有许多编译器/解析器/解释器（compiler / parser / interpreter）的教程，但大多数不会引导你完整实现一种语言，因为实现完全的语言语义，通常需要很多工作。不过在本文中， lambda 演算（译者注：又写作“λ 演算”，为统一行文，下文一律作 “lambda 演算”）是如此简单，我们可以搞定一切！</p> <p>首先，什么是 lambda 演算呢？<a href="https://en.wikipedia.org/wiki/Lambda_calculus" target="_blank">维基百科</a>是这样描述的:</p> <blockquote><p>lambda 演算（又写作 “λ 演算”）是表达基于功能抽象和使用变量绑定和替代的应用计算数学逻辑形式系统。这是一个通用的计算模型，可以用来模拟单带图灵机，在 20 世纪 30 年代，由数学家奥隆索·乔奇第一次引入，作为数学基础的调查的一部分。</p></blockquote> <p>这是一个非常简单的 lambda 演算程序的模样：</p> <pre><code class="hljs lang-haskell">(λx. λy. x) (λy. y) (λx. x)</code></pre><p>lambda 演算中只有两个结构，函数抽象（也就是函数声明）和应用（即函数调用），然而可以拿它做任何计算。</p> <h2 id="1-">1. 语法</h2> <p>编写解析器之前，我们需要知道的第一件事是我们将要解析的语言的语法是什么，这是 <a href="https://en.wikipedia.org/wiki/Backus%E2%80%93Naur_Form" target="_blank">BNF</a>（译者注：Backus–Naur Form，巴科斯范式， 上下文无关的语法的标记技术） 表达式：</p> <pre><code class="hljs lang-javascript">Term ::= Application
+        | LAMBDA LCID DOT Term
+
+Application ::= Application Atom
+               | Atom
+
+Atom ::= LPAREN Term RPAREN
+        | LCID</code></pre><p>语法告诉我们如何在分析过程中寻找 token 。但是等一下，token 是什么鬼？</p> <h2 id="2-tokens">2. Tokens</h2> <p>正如你可能已经知道的，解析器不会操作源代码。在开始解析之前，先通过 <code>词法分析器（lexer）</code> 运行源码，这会将源码打散成 token（语法中全大写的部分）。我们可以从上面的语法中提取的如下的 token ：</p> <pre><code class="hljs lang-javascript">LPAREN: <span class="hljs-string">'('</span>
+RPAREN: <span class="hljs-string">')'</span>
+LAMBDA: <span class="hljs-string">'λ'</span> <span class="hljs-comment">// 为了方便也可以使用 “\”</span>
+DOT: <span class="hljs-string">'.'</span>
+LCID: <span class="hljs-regexp">/[a-z][a-zA-Z]*/</span> <span class="hljs-comment">// LCID 表示小写标识符</span>
+                       <span class="hljs-comment">// 即任何一个小写字母开头的字符串</span></code></pre><p>我们来建一个可以包含 <code>type</code> （以上的任意一种）的 <code>Token</code> 类，以及一个可选的 value (比如 <code>LCID</code> 的字符串)。</p> <pre><code class="hljs lang-javascript"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Token</span> </span>{
+  <span class="hljs-keyword">constructor</span>(type, value) {
+    <span class="hljs-keyword">this</span>.type = type;
+    <span class="hljs-keyword">this</span>.value = value;
+  }
+};</code></pre><h2 id="3-lexer-">3. 词法分析器( Lexer )</h2> <p>现在我们可以拿上面定义的 token 来写 <code>词法分析器（Lexer）</code> 了， 为解析器解析程序提供一个很棒的 <em>API</em> 。</p> <p>词法分析器的 token 生成的部分不是很好玩：这是一个大的 switch 语句，用来检查源代码中的下一个字符：</p> <pre><code class="hljs lang-javascript">_nextToken() {
+  <span class="hljs-keyword">switch</span> (c) {
+    <span class="hljs-keyword">case</span> <span class="hljs-string">'λ'</span>:
+    <span class="hljs-keyword">case</span> <span class="hljs-string">'\\'</span>:
+      <span class="hljs-keyword">this</span>._token = <span class="hljs-keyword">new</span> Token(Token.LAMBDA);
+      <span class="hljs-keyword">break</span>;
+
+    <span class="hljs-keyword">case</span> <span class="hljs-string">'.'</span>:
+      <span class="hljs-keyword">this</span>._token = <span class="hljs-keyword">new</span> Token(Token.DOT);
+      <span class="hljs-keyword">break</span>;
+
+    <span class="hljs-keyword">case</span> <span class="hljs-string">'('</span>:
+      <span class="hljs-keyword">this</span>._token = <span class="hljs-keyword">new</span> Token(Token.LPAREN);
+      <span class="hljs-keyword">break</span>;
+
+    <span class="hljs-comment">/* ... */</span>
+  }
+}</code></pre><p>下面这些方法是处理 token 的辅助方法：</p> <ul><li><code>next(Token)</code>: 返回下一个 token 是否匹配 <code>Token</code></li> <li><code>skip(Token)</code>: 和 <code>next</code> 一样, 但如果匹配的话会跳过</li> <li><code>match(Token)</code>: 断言 <code>next</code> 方法返回 true 并 <code>skip</code></li> <li><code>token(Token)</code>: 断言 <code>next</code> 方法返回 true 并返回 token</li></ul> <p>OK，现在来看 “解析器”！</p> <h2 id="4-">4. 解析器</h2> <p>解析器基本上是语法的一个副本。我们基于每个 production 规则的名称（<code>::=</code> 的左侧）为其创建一个方法，再来看右侧内容 —— 如果是全大写的单词，说明它是一个 <em>终止符</em> （即一个 token ），词法分析器会用到它。如果是一个大写字母开头的单词，这是另外一段，所以同样为其调用 production 规则的方法。遇到 “/” （读作 “或”）的时候，要决定使用那一侧，这取决于基于哪一侧匹配我们的 token。</p> <p>这个语法有点棘手的地方是：手写的解析器通常是<a href="https://en.wikipedia.org/wiki/Recursive_descent_parser" target="_blank">递归下降（recursive descent）</a>的（我们的就是），它们无法处理左侧递归。你可能已经注意到了， <code>Application</code> 的右侧开头包含 <code>Application</code> 本身。所以如果我们只是遵循前面段落说到的流程，调用我们找到的所有 production，会导致无限递归。</p> <p>幸运的是左递归可以用一个简单的技巧移除掉：</p> <pre><code class="hljs lang-javascript">Application ::= Atom Application'
+
+Application' ::= Atom Application'
+                | ε  # empty</code></pre><h3 id="4-1-ast-">4.1. 抽象语法树 （AST）</h3> <p>进行分析时，需要以存储分析出的信息，为此要建立 <a href="https://en.wikipedia.org/wiki/Abstract_syntax_tree" target="_blank">抽象语法树 ( AST )</a> 。lambda 演算的 AST 非常简单，因为我们只有 3 种节点： Abstraction （抽象）， Application （应用）以及 Identifier （标识符）（译者注： 为方便理解，这三个单词不译）。</p> <p><em>Abstraction</em> 持有其参数（param） 和主体（body）； <em>Application</em> 则持有语句的左右侧； <em>Identifier</em> 是一个叶节点，只有持有该标识符本身的字符串表示形式。</p> <p>这是一个简单的程序及其 AST:</p> <pre><code class="hljs lang-javascript">(λx. x) (λy. y)
+
+Application {
+  <span class="hljs-attr">abstraction</span>: Abstraction {
+    <span class="hljs-attr">param</span>: Identifier { <span class="hljs-attr">name</span>: <span class="hljs-string">'x'</span> },
+    <span class="hljs-attr">body</span>: Identifier { <span class="hljs-attr">name</span>: <span class="hljs-string">'x'</span> }
+  },
+  <span class="hljs-attr">value</span>: Abstraction {
+    <span class="hljs-attr">param</span>: Identifier { <span class="hljs-attr">name</span>: <span class="hljs-string">'y'</span> },
+    <span class="hljs-attr">body</span>: Identifier { <span class="hljs-attr">name</span>: <span class="hljs-string">'y'</span> }
+  }
+}</code></pre><h3 id="4-2-">4.2. 解析器的实现</h3> <p>现在有了我们的 AST 节点，可以拿它们来建构真正的树了。下面是基于语法中的生成规则的分析方法：</p> <pre><code class="hljs lang-javascript">term() {
+  <span class="hljs-comment">// Term ::= LAMBDA LCID DOT Term</span>
+  <span class="hljs-comment">//        | Application</span>
+  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.lexer.skip(Token.LAMBDA)) {
+    <span class="hljs-keyword">const</span> id = <span class="hljs-keyword">new</span> AST.Identifier(<span class="hljs-keyword">this</span>.lexer.token(Token.LCID).value);
+    <span class="hljs-keyword">this</span>.lexer.match(Token.DOT);
+    <span class="hljs-keyword">const</span> term = <span class="hljs-keyword">this</span>.term();
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> AST.Abstraction(id, term);
+  }  <span class="hljs-keyword">else</span> {
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.application();
+  }
+}
+
+application() {
+  <span class="hljs-comment">// Application ::= Atom Application'</span>
+  <span class="hljs-keyword">let</span> lhs = <span class="hljs-keyword">this</span>.atom();
+  <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+    <span class="hljs-comment">// Application' ::= Atom Application'</span>
+    <span class="hljs-comment">//                | ε</span>
+    <span class="hljs-keyword">const</span> rhs = <span class="hljs-keyword">this</span>.atom();
+    <span class="hljs-keyword">if</span> (!rhs) {
+      <span class="hljs-keyword">return</span> lhs;
+    } <span class="hljs-keyword">else</span> {
+      lhs = <span class="hljs-keyword">new</span> AST.Application(lhs, rhs);
+    }
+  }
+}
+
+atom() {
+  <span class="hljs-comment">// Atom ::= LPAREN Term RPAREN</span>
+  <span class="hljs-comment">//        | LCID</span>
+  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.lexer.skip(Token.LPAREN)) {
+    <span class="hljs-keyword">const</span> term = <span class="hljs-keyword">this</span>.term(Token.RPAREN);
+    <span class="hljs-keyword">this</span>.lexer.match(Token.RPAREN);
+    <span class="hljs-keyword">return</span> term;
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-keyword">this</span>.lexer.next(Token.LCID)) {
+    <span class="hljs-keyword">const</span> id = <span class="hljs-keyword">new</span> AST.Identifier(<span class="hljs-keyword">this</span>.lexer.token(Token.LCID).value);
+    <span class="hljs-keyword">return</span> id;
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>;
+  }
+}</code></pre><h2 id="5-evaluation-">5. 求值（Evaluation）</h2> <p>现在，我们可以用 AST 来给程序求值了。不过想知道我们的解释器长什么样子，还得先看看 lambda 的求值规则。</p> <h3 id="5-1-">5.1. 求值规则</h3> <p>首先，我们需要定义，什么是形式（terms）（从语法可以推断），什么是值（values）。</p> <p>我们的 term 是:</p> <pre><code class="hljs lang-javascript">t1 t2   # Application
+
+λx. t1  # Abstraction
+
+x       # Identifier</code></pre><p>是的，这些几乎和我们的 AST 节点一模一样！但这其中哪些是 value？</p> <p>value 是最终的形式，也就是说，它们不能再被求值了。在这个例子中，唯一的既是 term 又是 value 的是 abstraction（不能对函数求值，除非它被调用）。</p> <p>实际的求值规则如下：</p> <pre><code class="hljs lang-javascript">1)       t1 -> t1'
+     _________________
+
+      t1 t2 -> t1' t2
+
+2)       t2 -> t2'
+     ________________
+
+      v1 t2 -> v1 t2'
+
+3)    (λx. t12) v2 -> [x -> v2]t12</code></pre><p>我们可以这样解读每一条规则：</p> <ol><li>如果 <code>t1</code> 是值为 <code>t1'</code> 的项， <code>t1 t2</code> 求值为 <code>t1' t2</code>。即一个 application 的左侧先被求值。</li> <li>如果 <code>t2</code> 是值为 <code>t2'</code> 的项， <code>v1 t2</code> 求值为 <code>v1 t2'</code>。注意这里左侧的是 <code>v1</code> 而非 <code>t1</code>， 这意味着它是 value，不能再一步被求值，也就是说，只有左侧的完成之后，才会对右侧求值。</li> <li>application <code>(λx. t12) v2</code> 的结果，和 <code>t12</code> 中出现的所有 <code>x</code> 被有效替换之后是一样的。注意在对 application 求值之前，两侧必须都是 value。</li></ol> <h3 id="5-2-">5.2. 解释器</h3> <p>解释器遵循求值规则，将一个程序归化为 value。现在我们将上面的规则用 JavaScript 写出来：</p> <p>首先定义一个工具，当某个节点是 value 的时候告诉我们：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> isValue = <span class="hljs-function"><span class="hljs-params">node</span> =></span> node <span class="hljs-keyword">instanceof</span> AST.Abstraction;</code></pre><p>好了，如果 node 是 abstraction，它就是 value；否则就不是。</p> <p>接下来是解释器起作用的地方：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> <span class="hljs-built_in">eval</span> = <span class="hljs-function">(<span class="hljs-params">ast, context={}</span>) =></span> {
+  <span class="hljs-keyword">while</span> (<span class="hljs-literal">true</span>) {
+    <span class="hljs-keyword">if</span> (ast <span class="hljs-keyword">instanceof</span> AST.Application) {
+      <span class="hljs-keyword">if</span> (isValue(ast.lhs) && isValue(ast.rhs)) {
+        context[ast.lhs.param.name] = ast.rhs;
+        ast = <span class="hljs-built_in">eval</span>(ast.lhs.body, context);
+      } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (isValue(ast.lhs)) {
+        ast.rhs = <span class="hljs-built_in">eval</span>(ast.rhs, <span class="hljs-built_in">Object</span>.assign({}, context));
+      } <span class="hljs-keyword">else</span> {
+        ast.lhs = <span class="hljs-built_in">eval</span>(ast.lhs, context);
+      }
+    } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (ast <span class="hljs-keyword">instanceof</span> AST.Identifier) {
+       ast = context[ast.name];
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-keyword">return</span> ast;
+    }
+  }
+};</code></pre><p>代码有点密，但睁大眼睛好好看下，可以看到编码后的规则：</p> <ul><li>首先检测其是否为 application，如果是，则对其求值：<ul><li>若 abstraction 的两侧都是值，只要将所有出现的 <code>x</code> 用给出的值替换掉； (3)</li> <li>否则，若左侧为值，给右侧求值；(2)</li> <li>如果上面都不行，只对左侧求值；(1)</li></ul></li> <li>现在，如果下一个节点是 identifier，我们只需将它替换为它所表示的变量绑定的值。</li> <li>最后，如果没有规则适用于AST，这意味着它已经是一个 value，我们将它返回。</li></ul> <p>另外一个值得提出的是上下文（context）。上下文持有从名字到值（AST节点）的绑定，举例来说，调用一个函数时，就说你说传的参数绑定到函数需要的变量上，然后再对函数体求值。</p> <p>克隆上下文能保证一旦我们完成对右侧的求值，绑定的变量会从作用域出来，因为我们还持有原来的上下文。</p> <p>如果不克隆上下文， application 右侧引入的绑定可能泄露并可以在左侧获取到 —— 这是不应当的。考虑下面的代码：</p> <pre><code class="hljs lang-haskell">(λx. y) ((λy. y) (λx. x))</code></pre><p>这显然是无效程序： 最左侧 abstraction 中的标识符 <code>y</code>没有被绑定。来看下如果不克隆上下文，求值最后变成什么样。</p> <p>左侧已经是一个 value，所以对右侧求值。这是个 application，所以会将 <code>(λx .x)</code> 与 <code>y</code> 绑定，然后对 <code>(λy. y)</code> 求值，而这就是 <code>y</code> 本身。所以最后的求值就成了 <code>(λx. x)</code>。</p> <p>到目前，我们完成了右侧，它是 value，而 <code>y</code> 超出了作用域，因为我们退出了 <code>(λy. y)</code>， 如果求值的时候不克隆上下文，我们会得到一个变化过的的上下文，绑定就会泄漏，<code>y</code> 的值就是 <code>(λx. x)</code>，最后得到错误的结果。</p> <h2 id="6-printing">6. Printing</h2> <p>OK， 现在差不多完成了：已经可以将一个程序归化为 value，我们要做的就是想办法将这个 value 表示出来。</p> <p>一个简单的 办法是为每个AST节点添加 <code>toString方法</code>：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* Abstraction */</span> toString() {
+  <span class="hljs-keyword">return</span> <span class="hljs-string">`(λ<span class="hljs-subst">${<span class="hljs-keyword">this</span>.param.toString()}</span>. <span class="hljs-subst">${<span class="hljs-keyword">this</span>.body.toString()}</span>)`</span>;
+}
+
+<span class="hljs-comment">/* Application */</span> toString() {
+  <span class="hljs-keyword">return</span> <span class="hljs-string">`<span class="hljs-subst">${<span class="hljs-keyword">this</span>.lhs.toString()}</span> <span class="hljs-subst">${<span class="hljs-keyword">this</span>.rhs.toString()}</span>`</span>;
+}
+
+<span class="hljs-comment">/* Identifier */</span> toString() {
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.name;
+}</code></pre><p>现在我们可以在结果的根节点上调用 <code>toString</code>方法，它会递归打印所有子节点， 以生成字符串表示形式。</p> <h2 id="7-">7. 组合起来</h2> <p>我们需要一个脚本，将所有这些部分连接在一起，代码看起来是这样的：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// assuming you have some source</span>
+<span class="hljs-keyword">const</span> source = <span class="hljs-string">'(λx. λy. x) (λx. x) (λy. y)'</span>;
+
+<span class="hljs-comment">// wire all the pieces together</span>
+<span class="hljs-keyword">const</span> lexer = <span class="hljs-keyword">new</span> Lexer(source);
+<span class="hljs-keyword">const</span> parser = <span class="hljs-keyword">new</span> Parser(lexer);
+<span class="hljs-keyword">const</span> ast = parser.parse();
+<span class="hljs-keyword">const</span> result = Interpreter.eval(ast);
+
+<span class="hljs-comment">// stringify the resulting node and print it</span>
+<span class="hljs-built_in">console</span>.log(result.toString());</code></pre><h2 id="-">源代码</h2> <p>完整实现可以在 Github 上找到： <a href="https://github.com/tadeuzagallo/lc-js" target="_blank">github.com/tadeuzagallo/lc-js</a></p> <h4 id="-">完成了！</h4> <p>感谢阅读，一如既往地欢迎你的反馈！</p></div></article> <nav class="pagination"><a href="/post/infinite-scrolling-best-practices" title="[译] 无限滚动加载最佳实践" class="prev">« [译] 无限滚动加载最佳实践</a> <a href="/post/javascript-argument" title="关于JavaScript 函数传参" class="next">关于JavaScript 函数传参 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/c27413145d3075bebf5a.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

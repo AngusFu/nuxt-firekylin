@@ -1,0 +1,1 @@
+(window.webpackJsonp=window.webpackJsonp||[]).push([[6],{260:function(t,n,e){"use strict";e.r(n);var c={data:function(){return{posts:e(151)}}},o=e(3),component=Object(o.a)(c,function(){var t=this.$createElement;return(this._self._c||t)("collection",{attrs:{data:this.posts,type:"cate"}})},[],!1,null,null,null);n.default=component.exports}}]);

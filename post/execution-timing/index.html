@@ -1,0 +1,54 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 手把手教你写一个 Javascript 框架：执行调度 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,JavaScript,Event Loop"><meta data-n-head="true" name="description" content="手把手教你写一个 Javascript 框架：执行调度"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-11-14</div></div> <h1 class="title">[译] 手把手教你写一个 Javascript 框架：执行调度</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://blog.risingstack.com/author/bertalan/">Bertalan Miklos</a> <br>原文地址:
+          <a target="_blank" href="https://blog.risingstack.com/writing-a-javascript-framework-execution-timing-beyond-settimeout/">https://blog.risingstack.com/writing-a-javascript-framework-execution-timing-beyond-settimeout/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/execution-timing">http://www.wemlion.com/post/execution-timing</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p><strong>本文是“编写 JavaScript 框架”系列的第二章。在本章中，我将介绍 JavaScript 中异步执行代码的几种不同方式。你会读到关于事件循环相关的内容，以及像 setTimeout 和 Promise 等时间调度（timing）技术之间的差异。</strong></p> <p>本系列主要是如何开发一个开源的客户端框架，框架名为 NX。我将在本系列中分享框架编写过程中如何克服遇到的主要困难。对 NX 感兴趣的朋友可以点击 NX 项目<a href="http://nx-framework.com/" target="_blank">主页</a>查看。</p> <p>本系列章节如下：</p> <ul><li><a href="/post/nx-project-structure/">项目结构（Project structuring）</a></li> <li>执行调度（Execution timing)（本章）</li> <li><a href="/post/sandbox-code-evaluation/">沙箱求值（Sandboxed code evaluation）</a></li> <li><a href="/post/data-bind-dirty-checking">数据绑定简介</a></li> <li><a href="/post/es6-proxy-data-binding/">ES6 Proxy 实现数据绑定</a></li> <li>自定义元素</li> <li>客户端路由</li></ul> <h2 id="-">异步执行代码</h2> <p>说到异步执行代码，恐怕大部分人都很熟悉 <code>Promise</code>、<code>process.nextTick()</code>、<code>setTimeout()</code> 以及 <code>requestAnimationFrame()</code> 等方式吧。它们在内部都使用了事件循环（Event Loop），但就时间精确度而言，它们的表现却截然不同。</p> <p>本章将解释它们之间的差异，并介绍如何实现像 NX 这样的现代框架所需要的时间调度系统。不必重造轮子，使用原生的事件循环就可以达到目的。</p> <h2 id="-">事件循环</h2> <p>所谓事件循环，实际 <a href="http://www.ecma-international.org/ecma-262/6.0/" target="_blank">ES6 标准</a> 完全没有提到。JavaScript 自身只有任务、任务队列。更复杂的事件循环，分别由 NodeJS 和 <a href="https://www.w3.org/TR/2016/CR-html51-20160621/webappapis.html#event-loops" target="_blank">HTML5 标准</a> 各自说明。因为本系列是关于前端的，我将在此阐释后者。</p> <p>事件循环之所以称为循环，是由原因的。它是一个寻找新任务并执行任务的无限循环。一次循环被称为一个 tick。单个 tick 内执行的代码称作任务（task）。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">while</span> (eventLoop.waitForTask()) {
+  eventLoop.processNextTask()
+}</code></pre><p>所谓任务，是指那些可能在循环中安排其他任务的同步的代码片段。一种安排新任务的简单方式是使用 <code>setTimeout(taskFn)</code>。不过，任务也可能来自其他地方，如用户事件、网络请求或 DOM 操作。</p> <p><img alt="Execution timing: Event loop with tasks"></p> <h3 id="-">任务队列</h3> <p>来点更复杂的。事件循环中可以有多个任务队列，但有两个限制：来源相同的事件必须归属于同一队列；每个队列中的任务按照插入顺序执行。除此之外，浏览器是完全自由的。比如说，它可以自己决定接下来执行哪一个任务队列。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">while</span> (eventLoop.waitForTask()) {
+  <span class="hljs-keyword">const</span> taskQueue = eventLoop.selectTaskQueue()
+  <span class="hljs-keyword">if</span> (taskQueue.hasNextTask()) {
+    taskQueue.processNextTask()
+  }
+}</code></pre><p>这个模型放松了对时间的精确控制。浏览器在执行我们用 <code>setTimeout()</code> 设置的任务之前，可能决定先处理完其他队列。</p> <p><img alt="Execution timing: Event loop with task queues"></p> <h3 id="microtask-">Microtask 队列</h3> <p>幸运的是，事件循环中还有一个单线队列。每个 tick 内，当前任务完成后，microtask 队列被完全清空。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">while</span> (eventLoop.waitForTask()) {
+  <span class="hljs-keyword">const</span> taskQueue = eventLoop.selectTaskQueue()
+  <span class="hljs-keyword">if</span> (taskQueue.hasNextTask()) {
+    taskQueue.processNextTask()
+  }
+
+  <span class="hljs-keyword">const</span> microtaskQueue = eventLoop.microTaskQueue
+  <span class="hljs-keyword">while</span> (microtaskQueue.hasNextMicrotask()) {
+    microtaskQueue.processNextMicrotask()
+  }
+}</code></pre><p>设置 microtask 最简单的方式是 <code>Promise.resolve().then(microtaskFn)</code>。microtask 按照插入顺序执行，因为只有一个 microtask 队列，故不会造成混乱。</p> <p>此外，在一个 microtask 中还能设置新的 microtask，它们会被插在同一个队列中，在同一 tick 中执行。</p> <p><img alt="Execution timing: Event loop with microtask queue"></p> <h3 id="-">渲染</h3> <p>还有一件事是渲染进度（rendering schedule）。不同于事件处理和解析，渲染不是由单独的背景任务完成的，而是由算法决定，<strong>可能</strong>会在每次 tick 末尾执行。</p> <p>在这方面，浏览器自由度很大：可能在每个任务之后渲染，但也可能一直执行数百个任务而不进行渲染。</p> <p>还是很幸运，我们有 <code>requestAnimationFrame()</code>，它会在下一次渲染之前执行传入的函数。最终我们的事件循环模型如下所示：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">while</span> (eventLoop.waitForTask()) {  
+  <span class="hljs-keyword">const</span> taskQueue = eventLoop.selectTaskQueue()
+  <span class="hljs-keyword">if</span> (taskQueue.hasNextTask()) {
+    taskQueue.processNextTask()
+  }
+
+  <span class="hljs-keyword">const</span> microtaskQueue = eventLoop.microTaskQueue
+  <span class="hljs-keyword">while</span> (microtaskQueue.hasNextMicrotask()) {
+    microtaskQueue.processNextMicrotask()
+  }
+
+  <span class="hljs-keyword">if</span> (shouldRender()) {
+    applyScrollResizeAndCSS()
+    runAnimationFrames()
+    render()
+  }
+}</code></pre><p><img alt="Execution timing: Event loop with rendering"></p> <p>接下来使用上面的这些知识，构建一个时间调度系统吧！</p> <h2 id="-">使用事件循环</h2> <p>和大多现代框架一样，<a href="http://nx-framework.com" target="_blank">NX</a> 专注于处理幕后 DOM 操作和数据绑定。它将操作分批异步执行，以提高性能。为正确调度这些任务，它依赖于 <code>Promises</code>、<code>MutationObservers</code> 和 <code>requestAnimationFrame()</code>。</p> <p>最佳的时间安排是这样的：</p> <ol><li>开发者编写的代码</li> <li>NX 进行数据绑定、响应 DOM 操作</li> <li>开发者定义的钩子</li> <li>浏览器渲染</li></ol> <h3 id="step-1">Step 1</h3> <p>NX 使用 <a href="https://ponyfoo.com/articles/es6-proxies-in-depth" target="_blank">ES6 Proxy</a> 同步注册对象变动，使用 <a href="https://davidwalsh.name/mutationobserver-api" target="_blank">MutationObserver</a> 同步注册 DOM 操作（下一章会谈更多）。为优化性能，NX 将推迟响应（reaction），将其作为 mircotask 放到第二步。延迟响应对象变化由 <code>Promise.resolve().then(reaction)</code> 实现的，而 MutationObserver 会自动处理，因为其内部就使用了 microtask 。</p> <h3 id="step-2">Step 2</h3> <p>来自开发者的代码（任务）运行完成。NX 注册的 microtask 响应开始执行。因为是 microtask，所以它们会按顺序执行。请注意，目前还是在同一个 tick 中。</p> <h3 id="step-3">Step 3</h3> <p>NX 使用 <code>requestAnimationFrame(hook)</code> 运行开发者传过来的钩子。这可能发生在之后一次 tick 中。重点还是在于，这些钩子在下次渲染之前，所有数据、DOM、CSS 变动之后运行。</p> <h3 id="step-4">Step 4</h3> <p>浏览器渲染下一视图。也可能发生在稍后的 tick 中，但绝不会在上一步之前。</p> <h2 id="-">注意事项</h2> <p>基于原生事件循环，我们实现了一个简单而有效率的时间调度系统。理论上工作起来会很不错，不过时间调度是一件很微妙的事，小小的错误都可能导致一些奇怪的 bug。</p> <p>在复杂系统中，很有必要设置一些关于时间调度的规则并在开发中遵守它们。以 NX 为例，我遵循了以下规则：</p> <ol><li>内部操作中绝对不要使用 <code>setTimeout(fn, 0)</code></li> <li>使用同一种方式注册 microtask</li> <li>仅将 microtask 只于内部操作</li> <li>不要将开发者钩子执行的时间窗口与其他东西混在一起</li></ol> <h3 id="rule-1-and-2">Rule 1 and 2</h3> <p>对数据操作和 DOM 操作的响应，应当按照操作发生的顺序执行。只要不将顺序搞混，延迟它们都是可以的。搞混执行顺序会让事情变得难以预测，也难以寻找问题原因。</p> <p><code>setTimeout(fn, 0)</code> 完全无法预测。使用几种不同方法注册 microtask 也会导致执行顺序混乱。比如下面的例子中，<code>microtask2</code> 会错误地先于 <code>microtask1</code> 执行：</p> <pre><code class="hljs lang-javascript"><span class="hljs-built_in">Promise</span>.resolve().then().then(microtask1) 
+<span class="hljs-built_in">Promise</span>.resolve().then(microtask2)</code></pre><p><img alt="Execution timing: Microtask registration method"></p> <h3 id="rule-3-and-4">Rule 3 and 4</h3> <p>将开发者代码执行的时间窗口与内部操作隔离开非常重要。将两者混在一起，会导致一些看似无法预测的行为，并最终迫使开发者学习框架内部工作机制。想必很多开发者都有类似的经历。</p> <h2 id="-">写在最后</h2> <p>如果对 NX 框架感兴趣，请访问 <a href="http://nx-framework.com/" target="_blank">主页</a>。胆大的读者还可以在Github 上查看 <a href="https://github.com/RisingStack/nx-framework" target="_blank">NX 源码</a> 和 <a href="https://github.com/RisingStack/nx-observe" target="_blank">nx-observe 源码</a>。</p> <p>希望你喜欢这篇文章。下一章我们将讨论沙箱求值。</p></div></article> <nav class="pagination"><a href="/post/sandbox-code-evaluation" title="[译] 手把手教你写一个 Javascript 框架：沙箱求值" class="prev">« [译] 手把手教你写一个 Javascript 框架：沙箱求值</a> <a href="/post/data-bind-dirty-checking" title="[译] 手把手教你写一个 Javascript 框架：数据绑定" class="next">[译] 手把手教你写一个 Javascript 框架：数据绑定 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/616046a59a9855263418.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

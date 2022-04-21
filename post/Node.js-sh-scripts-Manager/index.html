@@ -1,0 +1,60 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">Node.js .sh scripts Manager | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,Node.js,命令行工具"><meta data-n-head="true" name="description" content="【nshm】 Node.js .sh scripts Manager"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-07-12</div></div> <h1 class="title">Node.js .sh scripts Manager</h1> <div class="entry-content"><!----> <h2 id="-">命令行也有苦恼</h2> <p>不知身为前端er的你是不是还在使用 Windows 开发？反正我是。使用 Git？使用 npm scripts？好吧，命令行是少不了的吧？想必很多同学和我一样，使用 Git Bash 作为命令行终端吧。</p> <p>可是每次都要敲，累不累？想想一次简单的 Git 提交需要几个步骤？</p> <pre><code class="hljs lang-bash">$ git add -A
+$ git commit -m <span class="hljs-string">'commit'</span>
+$ git push</code></pre><p>图简便的你可能会在 package.json 中这样配置：</p> <pre><code class="hljs lang-javascript">{
+    <span class="hljs-comment">// ...</span>
+    <span class="hljs-string">"scripts"</span>: {
+       <span class="hljs-comment">// ...</span>
+       <span class="hljs-string">"push"</span>: <span class="hljs-string">"git add -A && git commit -m 'commit' && git push"</span>
+    }
+}
+<span class="hljs-comment">// ...</span></code></pre><p>然后再敲 <code>npm run push</code>。啊啊心好累。</p> <p>用过 <code>browser-sync cli</code> 吗？反正为了图简便，我是经常用的。敲过最变态的是下面这一行：</p> <pre><code class="hljs lang-bash">browser-sync start --server --files <span class="hljs-string">"dist/*"</span>\
+    --index <span class="hljs-string">"dist/index.html"</span>\
+    --open <span class="hljs-string">"external"</span>\
+    --reload-debounce --no-notify</code></pre><h2 id="-bat-sh-">.bat/.sh 的故事</h2> <p>敲过一次之后，发誓再也不这么玩了。索性在桌面保存了一个 <code>bs.bat</code> 文件，把上面的内容放进去。每次都从桌面 copy 到工作目录中去，双击完事。</p> <p>后来玩 github 稍微勤了一些，commit、pull 的时候，命令行敲起来固然爽得不行，可是累啊。在上一家公司做 react-native 应用的时候，对 <code>react-native run start</code> <code>cd android && ./gradlew assembleRelease</code> 也是深恶痛绝。最后无不以 bat、sh文件收尾。</p> <h2 id="nshm-">nshm 的由来</h2> <p>前些时间接触到一个管理 <code>npm registry</code> 的 package，叫 <code>nrm</code>，用起来真是爽。<code>nrm use taobao</code> <code>nrm add xx url</code>简单就能解决问题。这让我萌生一个想法：能不能不要每次都从桌面 copy 那些简单的脚本啊，来个简单的命令行自己把文件写目录不就 OK 了吗？</p> <p>酝酿了一段时间。迟迟不肯动手。今天中午下楼抽烟，灵机一动，思路来了，花了半下午时间，边写边重构，最终做出来一个略嫌简陋但还能凑合用的工具，名之曰 “nshm”，取 “Node.js .sh scripts Manager” 的缩写，放在 Github 上了，<a href="https://github.com/AngusFu/nshm" target="_blank">https://github.com/AngusFu/nshm</a>。</p> <p>使用起来很简单，看文档就行。</p> <h2 id="-">安装</h2> <pre><code class="hljs lang-bash">
+$ npm install nshm -g
+
+$ nshm &lt;<span class="hljs-built_in">command</span>> [args...]</code></pre><h2 id="-">添加一条自定义命令</h2> <pre><code class="hljs lang-bash">$ nshm add &lt;command_name> -[t|f] [text|path]
+
+<span class="hljs-comment"># add file content</span>
+$ nshm add commit --file ./my-commit.sh
+<span class="hljs-comment"># or</span>
+$ nshm add commit -f ./my-commit.sh
+
+<span class="hljs-comment"># add text content</span>
+$ nshm add pull --text <span class="hljs-string">"git pull"</span>
+<span class="hljs-comment"># or</span>
+$ nshm add pull -t <span class="hljs-string">"git pull"</span></code></pre><h2 id="-">多个命令合并成一条命令</h2> <pre><code class="hljs lang-bash">$ nshm co &lt;command_name> [<span class="hljs-built_in">command</span>|text] [<span class="hljs-built_in">command</span>|text] [<span class="hljs-built_in">command</span>|text] [...]
+
+$ nshm co git commit pull <span class="hljs-string">"git status"</span></code></pre><h2 id="-">删除缓存的命令</h2> <pre><code class="hljs lang-bash">$ nshm rm &lt;command_name> &lt;command_name> &lt;...> 
+
+$ nshm rm commit pull git</code></pre><h2 id="-">清除所有缓存的命令</h2> <pre><code class="hljs lang-bash">$ nshm clean</code></pre><h2 id="-">列出现有的命令</h2> <pre><code class="hljs lang-bash"><span class="hljs-comment"># view all names</span>
+$ nshm ls
+
+<span class="hljs-comment"># view all details</span>
+$ nshm ls -a</code></pre><h2 id="example-01">Example 01</h2> <pre><code class="hljs lang-bash">$ nshm add add -t <span class="hljs-string">"git add -A"</span>
+$ nshm add commit -t <span class="hljs-string">"git commit -m 'push'"</span>
+$ nshm add pull -t <span class="hljs-string">"git push"</span>
+
+$ nshm co git add commit pull
+
+<span class="hljs-comment"># init my directory</span>
+<span class="hljs-comment"># then we'll get `add.sh` `commit.sh` `pull.sh`</span>
+$ nshm git</code></pre><h2 id="example-02">Example 02</h2> <pre><code class="hljs lang-bash"><span class="hljs-comment"># browserSync cli </span>
+<span class="hljs-comment"># here we use `${}` as placeholders</span>
+<span class="hljs-comment"># for necessary params</span>
+$ nshm add bs -t <span class="hljs-string">"browser-sync start --server --files \"<span class="hljs-variable">${files}</span>\" --index \"<span class="hljs-variable">${index}</span>\" --open \"external\" --reload-debounce --no-notify"</span>
+
+<span class="hljs-comment"># now we get the `bs.sh` file under our working directory</span>
+$ nshm bs --file <span class="hljs-string">'**'</span> --index <span class="hljs-string">'index.html'</span></code></pre><h2 id="-">结尾</h2> <p>工具默认自带了 Git 相关的 <code>commit</code> <code>pull</code> 及集成两者的 <code>git</code> 命令，还有上面提到的 <code>browser-sync</code> 的命令（简称作<code>bs</code>）。也可以使用 <code>nshm add</code> 的形式自己添加。</p> <p>微不足道的工具，自娱自乐一下，虽然显得 low 了点，也能解决自己的一点问题。</p> <p>That's all。</p> <p>PS: 今晚开始看 WebRTC 的内容，小有收获，学习的生活捡起来！</p></div></article> <nav class="pagination"><a href="/post/backdoor-service-worker" title="[译] 给 Service Worker 开后门" class="prev">« [译] 给 Service Worker 开后门</a> <a href="/post/todo-api-with-unit-test" title="[译] 测试驱动开发：使用 Node.js 和 MongoDB 构建 Todo API" class="next">[译] 测试驱动开发：使用 Node.js 和 MongoDB 构建 Todo API »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/eea0adfb5298ca7713c9.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

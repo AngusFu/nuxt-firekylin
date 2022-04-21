@@ -1,0 +1,148 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 函数式 TypeScript | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,TypeScript,函数式编程"><meta data-n-head="true" name="description" content="函数式 TypeScript"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-09-28</div></div> <h1 class="title">[译] 函数式 TypeScript</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://twitter.com/victorsavkin">@Victor Savkin</a> <br>原文地址:
+          <a target="_blank" href="https://vsavkin.com/functional-typescript-316f0e003dc6#.h1njvc96o">https://vsavkin.com/functional-typescript-316f0e003dc6#.h1njvc96o</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/functional-refactor-typescript">http://www.wemlion.com/post/functional-refactor-typescript</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p><img alt=""></p> <p>谈到函数式编程时，我们常提到机制、方法，而不是核心原则。函数式编程不是关于 Monad、Monoid 和 Zipper 这些概念的，虽然它们确实很有用。从根本上来说，函数式编程就是关于如使用通用的可复用函数进行组合编程。<strong>本文是我在重构 TypeScript 代码时使用函数式的一些思考的结果。</strong></p> <p>首先，我们需要用到以下几项技术：</p> <ul><li>尽可能使用函数代替简单值</li> <li>数据转换过程管道化</li> <li>提取通用函数</li></ul> <p>来，开始吧！</p> <p>假设我们有两个类，Employee 和 Department。Employee 有 name 和 salary 属性，Department 只是 Employee 的简单集合。</p> <pre><code class="hljs lang-javascript"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Employee</span> </span>{
+  <span class="hljs-keyword">constructor</span>(public name: string, public salary: number) {}
+}
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Department</span> </span>{
+  <span class="hljs-keyword">constructor</span>(public employees: Employee[]) {}
+
+  works(employee: Employee): boolean {
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>.employees.indexOf(employee) > <span class="hljs-number">-1</span>;
+  }
+}</code></pre><p>我们要重构的是 averageSalary 函数。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">averageSalary</span>(<span class="hljs-params">employees: Employee[], minSalary: number, department?: Department</span>): <span class="hljs-title">number</span> </span>{
+   <span class="hljs-keyword">let</span> total = <span class="hljs-number">0</span>;
+   <span class="hljs-keyword">let</span> count = <span class="hljs-number">0</span>;
+
+   employees.forEach(<span class="hljs-function">(<span class="hljs-params">e</span>) =></span> {
+     <span class="hljs-keyword">if</span>(minSalary &lt;= e.salary && (department === <span class="hljs-literal">undefined</span> || department.works(e))){
+       total += e.salary;
+       count += <span class="hljs-number">1</span>;
+     }
+   });
+
+  <span class="hljs-keyword">return</span> total === <span class="hljs-number">0</span> ? <span class="hljs-number">0</span> : total / count;
+ }</code></pre><p>averageSalary 函数接收 employee 数组、最低薪资 minSalary 以及可选的 department 作为参数。如果传了 department 参数，函数会计算该部门中所有员工的平均薪资；若不传，则对全部员工进行计算。</p> <p>该函数的使用方式如下：</p> <pre><code class="hljs lang-javascript">describe(<span class="hljs-string">"average salary"</span>, () => {
+  <span class="hljs-keyword">const</span> empls = [
+    <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">"Jim"</span>, <span class="hljs-number">100</span>),
+    <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">"John"</span>, <span class="hljs-number">200</span>),
+    <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">"Liz"</span>, <span class="hljs-number">120</span>),
+    <span class="hljs-keyword">new</span> Employee(<span class="hljs-string">"Penny"</span>, <span class="hljs-number">30</span>)
+  ];
+
+  <span class="hljs-keyword">const</span> sales = <span class="hljs-keyword">new</span> Department([empls[<span class="hljs-number">0</span>], empls[<span class="hljs-number">1</span>]]);
+
+  it(<span class="hljs-string">"calculates the average salary"</span>, () => {
+    expect(averageSalary(empls, <span class="hljs-number">50</span>, sales)).toEqual(<span class="hljs-number">150</span>);
+    expect(averageSalary(empls, <span class="hljs-number">50</span>)).toEqual(<span class="hljs-number">140</span>);
+  });
+});</code></pre><p>需求虽简单粗暴，可就算不提代码难以拓展，其混乱是显而易见的。若新增条件，函数签名及接口就不得不发生变动，if 语句也会也越来越臃肿可怕。</p> <p>我们一起用一些函数式编程的办法重构这个函数吧。</p> <h2 id="-">使用函数代替简单值</h2> <p><strong>使用函数代替简单值看起来似乎不太直观，但这却是整理归纳代码的强大办法。</strong>在我们的例子中，这样做，意味着要将 minSalary 和 department 参数替换成两个条件检验的函数。</p> <pre><code class="hljs lang-javascript">type Predicate = <span class="hljs-function">(<span class="hljs-params">e: Employee</span>) =></span> boolean;
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">averageSalary</span>(<span class="hljs-params">employees: Employee[], salaryCondition: Predicate,
+  departmentCondition?: Predicate</span>): <span class="hljs-title">number</span> </span>{
+  <span class="hljs-keyword">let</span> total = <span class="hljs-number">0</span>;
+  <span class="hljs-keyword">let</span> count = <span class="hljs-number">0</span>;
+
+  employees.forEach(<span class="hljs-function">(<span class="hljs-params">e</span>) =></span> {
+    <span class="hljs-keyword">if</span>(salaryCondition(e) && (departmentCondition === <span class="hljs-literal">undefined</span> || departmentCondition(e))){
+      total += e.salary;
+      count += <span class="hljs-number">1</span>;
+    }
+  });
+
+  <span class="hljs-keyword">return</span> total === <span class="hljs-number">0</span> ? <span class="hljs-number">0</span> : total / count;
+}
+
+<span class="hljs-comment">// ...</span>
+
+expect(averageSalary(empls, (e) => e.salary > <span class="hljs-number">50</span>, (e) => sales.works(e))).toEqual(<span class="hljs-number">150</span>);</code></pre><p><strong> 我们所做的就是将 salary、department 两个条件接口统一起来。</strong>而此前这两个条件是写死的，现在它们被明确定义了，并且遵循一致的接口。<strong>这次整合允许我们将所有条件作为数组传递。</strong></p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">averageSalary</span>(<span class="hljs-params">employees: Employee[], conditions: Predicate[]</span>): <span class="hljs-title">number</span> </span>{
+  <span class="hljs-keyword">let</span> total = <span class="hljs-number">0</span>;
+  <span class="hljs-keyword">let</span> count = <span class="hljs-number">0</span>;
+
+  employees.forEach(<span class="hljs-function">(<span class="hljs-params">e</span>) =></span> {
+    <span class="hljs-keyword">if</span>(conditions.every(<span class="hljs-function"><span class="hljs-params">c</span> =></span> c(e))){
+      total += e.salary;
+      count += <span class="hljs-number">1</span>;
+    }
+  });
+  <span class="hljs-keyword">return</span> (count === <span class="hljs-number">0</span>) ? <span class="hljs-number">0</span> : total / count;
+}
+
+<span class="hljs-comment">//...</span>
+
+expect(averageSalary(empls, [<span class="hljs-function">(<span class="hljs-params">e</span>) =></span> e.salary > <span class="hljs-number">50</span>, (e) => sales.works(e)])).toEqual(<span class="hljs-number">150</span>);</code></pre><p>条件数组只不过是组合的条件，可以用一个简单的组合器将它们放到一起，这样看起来更加明晰。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">and</span>(<span class="hljs-params">predicates: Predicate[]</span>): <span class="hljs-title">Predicate</span> </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function">(<span class="hljs-params">e</span>) =></span> predicates.every(<span class="hljs-function"><span class="hljs-params">p</span> =></span> p(e));
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">averageSalary</span>(<span class="hljs-params">employees: Employee[], conditions: Predicate[]</span>): <span class="hljs-title">number</span> </span>{
+  <span class="hljs-keyword">let</span> total = <span class="hljs-number">0</span>;
+  <span class="hljs-keyword">let</span> count = <span class="hljs-number">0</span>;
+
+  employees.forEach(<span class="hljs-function">(<span class="hljs-params">e</span>) =></span> {
+    <span class="hljs-keyword">if</span>(and(conditions)(e)){
+      total += e.salary;
+      count += <span class="hljs-number">1</span>;
+    }
+  });
+  <span class="hljs-keyword">return</span> (count == <span class="hljs-number">0</span>) ? <span class="hljs-number">0</span> : total / count;
+}</code></pre><p>值得注意的是，“and” 组合器是通用的，可以复用并且还可能拓展为库。</p> <p><strong>提起结果</strong></p> <p>现在，averageSalary 函数已健壮得多了。<strong>我们可以加入新条件，无需破坏函数接口或改变函数实现。</strong></p> <h2 id="-">数据转换过程管道化</h2> <p>函数式编程的另外一个很有用的实践是将所有数据转换过程变成管道。在本例中，就是将 filter 过程提取到循环外面。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">averageSalary</span>(<span class="hljs-params">employees: Employee[], conditions: Predicate[]</span>): <span class="hljs-title">number</span> </span>{
+  <span class="hljs-keyword">const</span> filtered = employees.filter(and(conditions));
+
+  <span class="hljs-keyword">let</span> total = <span class="hljs-number">0</span>
+  <span class="hljs-keyword">let</span> count = <span class="hljs-number">0</span>
+
+  filtered.forEach(<span class="hljs-function">(<span class="hljs-params">e</span>) =></span> {
+    total += e.salary;
+    count += <span class="hljs-number">1</span>;
+  });
+
+  <span class="hljs-keyword">return</span> (count == <span class="hljs-number">0</span>) ? <span class="hljs-number">0</span> : total / count;
+}</code></pre><p>这样一来计数的 count 就没什么用了。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">averageSalary</span>(<span class="hljs-params">employees: Employee[], conditions: Predicate[]</span>): <span class="hljs-title">number</span></span>{
+  <span class="hljs-keyword">const</span> filtered = employees.filter(and(conditions));
+
+  <span class="hljs-keyword">let</span> total = <span class="hljs-number">0</span>
+  filtered.forEach(<span class="hljs-function">(<span class="hljs-params">e</span>) =></span> {
+    total += e.salary;
+  });
+
+  <span class="hljs-keyword">return</span> (filtered.length == <span class="hljs-number">0</span>) ? <span class="hljs-number">0</span> : total / filtered.length;
+}</code></pre><p>接下来，如在叠加之前将 salary 摘取出来，求和过程就变成简单的 reduce 了。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">averageSalary</span>(<span class="hljs-params">employees: Employee[], conditions: Predicate[]</span>): <span class="hljs-title">number</span> </span>{
+  <span class="hljs-keyword">const</span> filtered = employees.filter(and(conditions));
+  <span class="hljs-keyword">const</span> salaries = filtered.map(<span class="hljs-function"><span class="hljs-params">e</span> =></span> e.salary);
+
+  <span class="hljs-keyword">const</span> total = salaries.reduce(<span class="hljs-function">(<span class="hljs-params">a,b</span>) =></span> a + b, <span class="hljs-number">0</span>);
+  <span class="hljs-keyword">return</span> (salaries.length == <span class="hljs-number">0</span>) ? <span class="hljs-number">0</span> : total / salaries.length;
+}</code></pre><h2 id="-">提取通用函数</h2> <p>接着我们发现，最后两行代码和当前域完全没什么关系。其中不包含任何与员工、部门相关的信息。仅仅只是一个计算平均数的函数。所以也将其提取出来。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">average</span>(<span class="hljs-params">nums: number[]</span>): <span class="hljs-title">number</span> </span>{
+  <span class="hljs-keyword">const</span> total = nums.reduce(<span class="hljs-function">(<span class="hljs-params">a,b</span>) =></span> a + b, <span class="hljs-number">0</span>);
+  <span class="hljs-keyword">return</span> (nums.length == <span class="hljs-number">0</span>) ? <span class="hljs-number">0</span> : total / nums.length;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">averageSalary</span>(<span class="hljs-params">employees: Employee[], conditions: Predicate[]</span>): <span class="hljs-title">number</span> </span>{
+  <span class="hljs-keyword">const</span> filtered = employees.filter(and(conditions));
+  <span class="hljs-keyword">const</span> salaries = filtered.map(<span class="hljs-function"><span class="hljs-params">e</span> =></span> e.salary);
+  <span class="hljs-keyword">return</span> average(salaries);
+}</code></pre><p>又一次，提取出的函数是完全通用的。</p> <p>最后，将所有 salary 部分提出来之后，我们得到终极方案。</p> <pre><code class="hljs lang-javascript">function employeeSalaries(employees: Employee[], conditions: Predicate[]): number[] {
+  const filtered = employees.filter(and(conditions));
+  return filtered.map(e => e.salary);
+}
+
+function averageSalary(employees: Employee[], conditions: Predicate[]): number {
+  return average(employeeSalaries(employees, conditions));
+}</code></pre><p>对比原始方案和终极方案，我敢说，毫无疑问，后者更棒。首先，它更通用（我们可以不破坏函数接口的情况下添加新类型的判断条件）。其次，我们从可变状态（mutable state）和 if 语句中解脱出来，这使代码更容易阅读、理解。</p> <h2 id="-">何时收手</h2> <p>函数式风格的编程中，我们会编写许多小型函数，它们接收一个集合，返回新的集合。这些函数能够以不同方式组合、复用 —— 棒极了。不过，这种风格的一个缺点是代码可能会变得过度抽象，导致难以读懂，那些函数组合在一起到底要干嘛？</p> <p>我喜欢使用乐高来类比：乐高积木能够以不同形式放在一起 —— 它们是可组合的。但注意，并不是所有积木都是一小块。所以，在使用本文所述技巧进行代码重构时，千万别妄图将一切都变成接收数组、返回数组的函数。诚然，这样一些函数组合使用极度容易，可它们也会显著降低我们对程序的理解能力。</p> <h2 id="-">小结</h2> <p>本文展示了如何使用函数式思维重构 TypeScript 代码。我所遵循的是以下几点规则：</p> <ul><li>尽可能使用函数代替简单值</li> <li>数据转换过程管道化</li> <li>提取通用函数</li></ul> <h2 id="-">了解更多</h2> <p>强烈推荐以下两本书：</p> <ul><li><a href="https://leanpub.com/javascript-allonge" target="_blank">“JavaScript Allonge” by Reginald Braithwaite</a></li> <li><a href="http://shop.oreilly.com/product/0636920028857.do" target="_blank">“Functional JavaScript” by Michael Fogus</a></li></ul> <hr> <p><a href="https://twitter.com/victorsavkin" target="_blank">关注 @victorsavkin</a>  获得更多关于 Angular 和 TypeScript 的知识。</p></div></article> <nav class="pagination"><a href="/post/npm-vs-yarn-cheat-sheet" title="[译] yarn 和 npm 命令行小抄" class="prev">« [译] yarn 和 npm 命令行小抄</a> <a href="/post/ts-note-on-global-reference" title="笔记：TypeScript 中引用全局变量" class="next">笔记：TypeScript 中引用全局变量 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/773a7248209acec33c84.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

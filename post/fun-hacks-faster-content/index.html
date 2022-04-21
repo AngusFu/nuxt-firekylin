@@ -1,0 +1,69 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 内容加速黑科技趣谈 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,JavaScript,性能"><meta data-n-head="true" name="description" content="内容加速黑科技趣谈"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2017-04-28</div></div> <h1 class="title">[译] 内容加速黑科技趣谈</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://jakearchibald.com/">@Jake Archibald</a> <br>原文地址:
+          <a target="_blank" href="https://jakearchibald.com/2016/fun-hacks-faster-content/">https://jakearchibald.com/2016/fun-hacks-faster-content/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/fun-hacks-faster-content">http://www.wemlion.com/post/fun-hacks-faster-content</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>数周前，在伦敦 Heathrow 机场等飞机的空闲中，我顺便处理了一些工作上的事情。不经意间发现 Github 在性能方面的一些问题，颇为诧异。通过新 tab 打开的页面，其加载速度竟然比直接点击链接打开的页面要快。不信请看视频（译者注：可能需要科学上网）：<a href="https://www.youtube.com/watch?v=4zG0AZRZD6Q" target="_blank">GitHub link click vs new tab</a>。</p> <p>点击链接的同时复制链接并在新的 tab 页中打开。可以看到，尽管先点击的是链接，但渲染更快的却是新 tab 中打开的页面。</p> <h2 id="-show-them-what-you-got-">有一说一（Show them what you got）</h2> <p>页面加载的时候，浏览器会接收网络数据流，并将其输出（pipe）给 HTML 解析器，HTML 解析器再将数据输出到文档。这意味着，页面是边加载边渲染的。对于一个 100k 的页面来说，浏览器很可能在接收到 20k 数据的时候就开始渲染出一些可用内容了。</p> <p>这个伟大又古老的特性，常常被开发者们有意无意地忽略了。多数提高加载性能的建议都归结于一点，即“展示你所拿到的东西” —— 别怕，千万不要傻傻等待一切加载完成之后再去展示内容。</p> <p>GitHub 当然是关注性能的，所以他们使用服务端渲染。但在同一个 tab 下浏览页面时，他们用 JavaScript 重新实现了导航（navigation）功能，类似下面这样：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// …一堆重新实现浏览器导航功能代码…</span>
+<span class="hljs-keyword">const</span> response = <span class="hljs-keyword">await</span> fetch(<span class="hljs-string">'page-data.inc'</span>);
+<span class="hljs-keyword">const</span> html = <span class="hljs-keyword">await</span> response.text();
+<span class="hljs-built_in">document</span>.querySelector(<span class="hljs-string">'.content'</span>).innerHTML = html;
+<span class="hljs-comment">// …加载更多重新实现导航功能的代码…</span></code></pre><p>这违反了规则，因为在 <code>page-data.inc</code> 下载完成之前什么事情都没干。而服务端渲染版完全不会这样囤积内容，其内容是流式的，这样就要快得多了。就 Github 的客户端渲染来说，很多 JavaScript 代码完全减慢了渲染过程。</p> <p>这里我仅仅只是拿 Github 举例子 —— 这种反模式在单页应用中比比皆是。</p> <p>在页面之内切换内容可能确实有些好处，特别是存在大量脚本的情况下，无需重新执行全部脚本即可更新内容。但我们能否在不放弃流的情况下完成这样的工作呢？我曾经常说 JavaScript 没有办法对流进行解析，但其实还是有的……</p> <h2 id="iframe-document-write-">iframe 和 document.write 大法</h2> <p><code>iframe</code> 早已跻身圈内最臭黑科技之列。但下面这个办法就使用了 <code>iframe</code> 和 <code>document.write()</code>，这样我们就能将内容以流的形式添加到页面中了。示例如下：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 创建 iframe:</span>
+<span class="hljs-keyword">const</span> iframe = <span class="hljs-built_in">document</span>.createElement(<span class="hljs-string">'iframe'</span>);
+
+<span class="hljs-comment">// 添加到 document 中 (记得隐藏起来):</span>
+iframe.style.display = <span class="hljs-string">'none'</span>;
+<span class="hljs-built_in">document</span>.body.appendChild(iframe);
+
+<span class="hljs-comment">// 等待 iframe 加载:</span>
+iframe.onload = <span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+  <span class="hljs-comment">// 忽略其他 onload 操作:</span>
+  iframe.onload = <span class="hljs-literal">null</span>;
+  <span class="hljs-comment">// 添加一个虚拟标签:</span>
+  iframe.contentDocument.write(<span class="hljs-string">'&lt;streaming-element>'</span>);
+  <span class="hljs-comment">// 引用该元素:</span>
+  <span class="hljs-keyword">const</span> streamingElement = iframe.contentDocument.querySelector(<span class="hljs-string">'streaming-element'</span>);
+  <span class="hljs-comment">// 将该元素从 iframe 中取出，并添加到文档中:</span>
+  <span class="hljs-built_in">document</span>.body.appendChild(streamingElement);
+  <span class="hljs-comment">// 写入一些内容 —— 这里应该是异步的:</span>
+  iframe.contentDocument.write(<span class="hljs-string">'&lt;p>Hello!&lt;/p>'</span>);
+  <span class="hljs-comment">// 继续写入内容，直到完成:</span>
+  iframe.contentDocument.write(<span class="hljs-string">'&lt;/streaming-element>'</span>);
+  iframe.contentDocument.close();
+};
+
+<span class="hljs-comment">//  iframe 初始化</span>
+iframe.src = <span class="hljs-string">''</span>;</code></pre><p>虽然 <code>Hello!</code> 是写到 iframe 中的，但它却出现在了父级的 document 中！这是因为<a href="https://html.spec.whatwg.org/multipage/syntax.html#parsing" target="_blank">解析器</a>维护了一个<a href="https://html.spec.whatwg.org/multipage/syntax.html#stack-of-open-elements" target="_blank">敞开元素栈（stack of open elements）</a>，新创建的元素会被压入栈中。就算我们把 <code>&lt;streaming-element/></code> 元素移出到 iframe 外面也不影响，就是这么任性。</p> <p>此外，这种技术处理起 HTML 来，要比 <code>innerHTML</code> 更接近标准的页面加载解析器。尤其是脚本依然会被下载，并在父级文档的上下文中执行 —— 只是在 Firefox 中完全不会执行，<del>但我认为这是个 bug</del><strong>更新：</strong> 其实<a href="https://html.spec.whatwg.org/multipage/syntax.html#scripts-that-modify-the-page-as-it-is-being-parsed" target="_blank">脚本根本不应该执行</a>（感谢 <a href="https://twitter.com/zcorpan/status/806150847184928768" target="_blank">Simon Pieters 指出这一点</a>），但 Edge、Safari、Chrome 都这么干。</p> <p>接下来我们只需要从服务端获取 HTML 数据流，每当一个部分的数据到达的时候，就调用 <code>iframe.contentDocument.write()</code>。流式传输和 <code>fetch()</code> 搭配起来会更好，但为了支持 Safari，我们还是<a href="https://github.com/jakearchibald/streaming-html/blob/master/streaming-iframe.js" target="_blank">使用 XHR 来 hack</a> 一下吧。</p> <p>我已经写好了一个 demo，可以拿来<a href="https://jakearchibald.github.io/streaming-html/" target="_blank">和 Github 进行对比</a>。下面是在 3G 网络下的测试结果：</p> <p><img alt=""></p> <p><a href="https://www.webpagetest.org/video/compare.php?tests=161206_N2_FJG-r,161206_JP_FPV-r:5-c:0" target="_blank">点击这里查看原始测试数据</a>。</p> <p>使用 iframe 进行流式渲染，页面加载速度提高了 <strong>1.5 s</strong>。头像也提前半秒钟加载完成 —— 流式渲染意味着浏览器可以更早发现它们，并与内容一起并行下载。</p> <p>上面的方法对 Github 来说还是有效的，因为它的服务器返回的是 HTML。如果你使用的是框架，由框架自己管理 DOM 的展示，那可能就麻烦一些了。这种情况下可以看看下面这个次优选项：</p> <h2 id="-json-newline-delimited-json-">换行符分隔的 JSON（Newline-delimited JSON）</h2> <p>许多网站使用 JSON 驱动动态内容。何其不幸，JSON 并不是一种对流友好的格式。尽管也有<a href="https://github.com/creationix/jsonparse" target="_blank">流式 JSON 解析器</a>，可用起来却并不那么简单。</p> <p>所以与其传输下面这样一大块 JSON 数据：</p> <pre><code class="hljs lang-javascript">{
+  <span class="hljs-string">"Comments"</span>: [
+    {<span class="hljs-string">"author"</span>: <span class="hljs-string">"Alex"</span>, <span class="hljs-string">"body"</span>: <span class="hljs-string">"…"</span>},
+    {<span class="hljs-string">"author"</span>: <span class="hljs-string">"Jake"</span>, <span class="hljs-string">"body"</span>: <span class="hljs-string">"…"</span>}
+  ]
+}</code></pre><p>还不如像下面这样一行输出一个 JSON 对象：</p> <pre><code class="hljs lang-javascript">{<span class="hljs-string">"author"</span>: <span class="hljs-string">"Alex"</span>, <span class="hljs-string">"body"</span>: <span class="hljs-string">"…"</span>}
+{<span class="hljs-string">"author"</span>: <span class="hljs-string">"Jake"</span>, <span class="hljs-string">"body"</span>: <span class="hljs-string">"…"</span>}</code></pre><p>这种被称为 “换行符分隔的 JSON” 是有标准的：<a href="http://specs.okfnlabs.org/ndjson/" target="_blank">ndjson</a>。给上面的内容写一个解析器就要简单多了。到了 2017 年，我们也许可以使用一系列组合变换流（composable transform streams）来描述（译者注：本文写作于 2016 年 12 月）：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 在 2017 年的某个时候可能会是这样：</span>
+<span class="hljs-keyword">const</span> response = <span class="hljs-keyword">await</span> fetch(<span class="hljs-string">'comments.ndjson'</span>);
+<span class="hljs-keyword">const</span> comments = response.body
+  <span class="hljs-comment">// 从字节到文本:</span>
+  .pipeThrough(<span class="hljs-keyword">new</span> TextDecoder())
+  <span class="hljs-comment">// 一直缓冲，直到遇到换行符:</span>
+  .pipeThrough(splitStream(<span class="hljs-string">'\n'</span>))
+  <span class="hljs-comment">// 将内容块解析为JSON:</span>
+  .pipeThrough(parseJSON());
+
+<span class="hljs-keyword">for</span> <span class="hljs-keyword">await</span> (<span class="hljs-keyword">const</span> comment <span class="hljs-keyword">of</span> comments) {
+  <span class="hljs-comment">// 处理每条评论，并将其添加到页面:</span>
+  <span class="hljs-comment">// (不管你使用的是什么模板或虚拟 DOM)</span>
+  addCommentToPage(comment);
+}</code></pre><p>在上面的代码中，<code>splitStream</code> 和 <code>parseJSON</code> 是<a href="https://gist.github.com/jakearchibald/c2052ef298459355963b8cfb79c71d1c" target="_blank">可复用变换流（reusable transform streams）</a>。与此同时，为了实现最大程度的兼容，我们可以<a href="https://github.com/jakearchibald/streaming-html/blob/master/xhr-ndjson.js" target="_blank">使用 XHR 进行 hack</a>。</p> <p>我再次新建了一个<a href="https://jakearchibald.github.io/streaming-html/" target="_blank">对比的 demo</a>，下面是 3G 网络下的结果：</p> <p><img alt=""></p> <p><a href="https://www.webpagetest.org/video/compare.php?tests=161206_X9_FNG-r,161206_V7_FPJ-r:1-c:0" target="_blank">点击这里查看原始测试数据</a>。</p> <p>与常规 JSON 相比，ND-JSON <strong>提前 1.5s</strong> 将内容渲染到页面上，尽管速度不如 iframe 方法那么快。在创建元素之前，必须等待完整的 JSON 对象出现。如果你的 JSON 文件体量巨大，可能会陷入对流的企盼之中。</p> <h2 id="-">单页应用？别着急</h2> <p>如前所述，Github 使用了大量的代码，然而却带来这样的性能问题。在客户端重新实现导航功能是困难的，如果你需要改变页面中的大块内容，这么做有可能并不值得。</p> <p>可以拿我们的尝试与<a href="https://jakearchibald.github.io/streaming-html/" target="_blank">简单浏览器导航</a>进行对比：</p> <p><img alt=""></p> <p><a href="https://www.webpagetest.org/video/compare.php?tests=161206_JP_FPV-r,161206_V7_FPJ-r,161206_8Y_FN3-r:8-c:0" target="_blank">点击这里查看原始测试数据</a>。</p> <p>打开一个简单的没有使用 JavaScript 浏览器导航的服务端渲染页面的速度差不多是一样的。但除去评论列表，测试页面实在太过简单。如果在不同页面之间存在有大量重复的复杂内容（主要是指可怕的广告脚本），结果可能因实际情况而有差异，但一定要记得进行测试！很可能你编写了一大堆代码，然而只能带来少的可怜的提升，甚至还可能减慢速度。</p> <p>鸣谢 <a href="https://twitter.com/ElliottZ?s=09" target="_blank">Elliott Sprehn</a> 关于 HTML 解析器工作原理的赐教！</p></div></article> <nav class="pagination"><a href="/post/prepack" title="Facebook 开源代码优化工具 Prepack" class="prev">« Facebook 开源代码优化工具 Prepack</a> <a href="/post/unicode-javascript-and-the-emoji-family" title="[译] Emoji.prototype.length  —— Unicode 字符那些事儿" class="next">[译] Emoji.prototype.length  —— Unicode 字符那些事儿 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/5899b80a4eb2119d84fe.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

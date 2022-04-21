@@ -1,0 +1,58 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] React 中的 AJAX 请求：获取数据的方法与时机 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,React"><meta data-n-head="true" name="description" content="React 中的 AJAX 请求：获取数据的方法与时机"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-12-07</div></div> <h1 class="title">[译] React 中的 AJAX 请求：获取数据的方法与时机</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://daveceddia.com/">Dave Ceddia</a> <br>原文地址:
+          <a target="_blank" href="https://daveceddia.com/ajax-requests-in-react/">https://daveceddia.com/ajax-requests-in-react/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/ajax-requests-in-react">http://www.wemlion.com/post/ajax-requests-in-react</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>React 新手一开始可能会问到这样一个问题，“在 React 中如何发送 AJAX 请求呢？”</p> <p>本文正要回答该问题。</p> <p>首先：React 本身对获取数据的方式并无任何特殊偏好。实际上，在 React 的图景中，根本就不知道“服务器”这种东西的存在。</p> <p>React 只是使用 <strong>props</strong> 和 <strong>state</strong> 两处的数据进行组件渲染。</p> <p>因此，想要使用来自服务端的数据，必须将数据放入组件的 props 或 state 中。</p> <p>你完全可以按照喜好使用服务、数据模型（额，“建立抽象”）完成这个过程，但归根结底只不过是通过 props 和 state 渲染组件。</p> <h4 id="-http-">选择 HTTP 工具库</h4> <p>要从服务端拿到数据，首先得有一个 HTTP 工具库。现成的轮子数都数不清。它们最终做的事情都一样，但在一些特性上有所不同。</p> <p>喜欢 Promise？那就试试  <a href="https://github.com/mzabriskie/axios" target="_blank">axios</a> 吧。</p> <p>不喜欢 Promise，对回调函数情有独钟？可以看一眼 <a href="https://github.com/visionmedia/superagent" target="_blank">superagent</a>。</p> <p>要不试试将要成为标准的一些工具？<a href="https://github.com/github/fetch" target="_blank">fetch</a> 可能是你的菜。</p> <p>这些其实根本不重要。没有“最佳”工具。</p> <p>有些人可能会说，<code>fetch</code> 是最好的，因为 fetch 差不多已经是标准了。但我敢打赌，就算fetch <strong>真正</strong>成为标准，还是会有人喜欢、使用一些与之匹敌的 HTTP 工具库。所以随你怎么选咯。</p> <p>我个人比较喜欢 <a href="https://github.com/mzabriskie/axios" target="_blank">axios</a>，这也是本文示例所使用的。不过，认真的说，如果你偏偏不喜欢它，那就选其他的呗。</p> <h4 id="-">获取数据</h4> <p>下面是一个简单的示例组件，它从 Reddit 站点获取文章列表。先看一眼，后面会讲述代码是如何工作的。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">import</span> React <span class="hljs-keyword">from</span> <span class="hljs-string">'react'</span>;
+<span class="hljs-keyword">import</span> ReactDOM <span class="hljs-keyword">from</span> <span class="hljs-string">'react-dom'</span>;
+<span class="hljs-keyword">import</span> axios <span class="hljs-keyword">from</span> <span class="hljs-string">'axios'</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">FetchDemo</span> <span class="hljs-keyword">extends</span> <span class="hljs-title">React</span>.<span class="hljs-title">Component</span> </span>{
+  <span class="hljs-keyword">constructor</span>(props) {
+    <span class="hljs-keyword">super</span>(props);
+
+    <span class="hljs-keyword">this</span>.state = {
+      <span class="hljs-attr">posts</span>: []
+    };
+  }
+
+  componentDidMount() {
+    axios.get(<span class="hljs-string">`http://www.reddit.com/r/<span class="hljs-subst">${<span class="hljs-keyword">this</span>.props.subreddit}</span>.json`</span>)
+      .then(<span class="hljs-function"><span class="hljs-params">res</span> =></span> {
+        <span class="hljs-keyword">const</span> posts = res.data.data.children.map(<span class="hljs-function"><span class="hljs-params">obj</span> =></span> obj.data);
+        <span class="hljs-keyword">this</span>.setState({ posts });
+      });
+  }
+
+  render() {
+    <span class="hljs-keyword">return</span> (
+      <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">div</span>></span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">h1</span>></span>{`/r/${this.props.subreddit}`}<span class="hljs-tag">&lt;/<span class="hljs-name">h1</span>></span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">ul</span>></span>
+          {this.state.posts.map(post =>
+            <span class="hljs-tag">&lt;<span class="hljs-name">li</span> <span class="hljs-attr">key</span>=<span class="hljs-string">{post.id}</span>></span>{post.title}<span class="hljs-tag">&lt;/<span class="hljs-name">li</span>></span>
+          )}
+        <span class="hljs-tag">&lt;/<span class="hljs-name">ul</span>></span>
+      <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>></span></span>
+    );
+  }
+}
+
+ReactDOM.render(
+  <span class="xml"><span class="hljs-tag">&lt;<span class="hljs-name">FetchDemo</span> <span class="hljs-attr">subreddit</span>=<span class="hljs-string">"reactjs"</span>/></span>,
+  document.getElementById('root')
+);</span></code></pre><h3 id="-">如何工作</h3> <p>首先引入 <code>axios</code>。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">import</span> axios <span class="hljs-keyword">from</span> <span class="hljs-string">'axios'</span>;</code></pre><p>constructor 方法非常标准，调用 <code>super</code>，然后初始化 state，设置一个空的 <code>posts</code> 数组。</p> <p>真正神奇的事情发生在 <code>componentDidMount</code> 方法中。组件首次“挂载”（mount）时，该方法就会执行。在组件生命周期中，该方法只会执行<strong>一次</strong>。</p> <p><strong>TL;DR:  在 <code>componentDidMount</code> 方法中获取服务端数据</strong></p> <p><code>componentDidMount</code> 方法中，根据传入的<code>subreddit</code>属性，调用 <code>axios.get</code> 方法获取数据。反引号中是 ES6 模板字符串，可能如你所想，<code>${...}</code> 部分会被其中表达式的值所替换，因此传给 <code>axios.get</code> 的 URL 实际上是 <code>http://www.reddit.com/r/reactjs.json</code>。</p> <p>此处需注意两点，和 Reddit 有关：</p> <ul><li><p>可以在 Reddit 网站下面所有的 URL 后面添加 <code>.json</code> 后缀，以获取 JSON 格式的内容。</p></li> <li><p>如果去掉 <code>www</code>，会产生 CORS 错误（至少我碰到了这个错误）。</p></li></ul> <p>因为 Axios 使用了 Promise，所以可以通过 <code>.then</code> 方法链式处理响应。经过一些处理后，<code>posts</code> 被提取出来了，紧接着是重点：</p> <p>传入新的 posts 数组，使用 <code>this.setState</code> 方法更新组件状态。这会导致重新渲染，接下来文章列表就显示出来了。</p> <p>这就是所有的一切啦哈哈！</p> <h3 id="-">思考题：添加加载指示</h3> <p>知道怎样修改代码，在请求尚未返回时添加一个 "Loading..." 消息吗？</p> <p>提示：在 state 中设置一个标志，一旦请求完成则将其切换其值。在 render 函数中使用这个标志显示加载提示。</p> <p>如果想看示例代码（包括加载提示以及附加奖励 <code>error state</code>~），可以点击<a href="https://daveceddia.com/freebies/react-ajax-example.zip" target="_blank">这里</a>下载可运行的例子，无需注册哟~</p> <p>解压文件，依次执行 <code>npm install</code> 和 <code>npm start</code>。示例基于棒棒哒 <a href="https://daveceddia.com/create-react-app-official-project-generator" target="_blank">Create React App</a> 创建。</p></div></article> <nav class="pagination"><a href="/post/javascript-performance-fundamentals-make-bluebird-fast" title="[译] Bluebird 高性能揭秘" class="prev">« [译] Bluebird 高性能揭秘</a> <a href="/post/accessible-modal" title="前端界面 Modal 的控制" class="next">前端界面 Modal 的控制 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/8140d5781c6742b28535.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

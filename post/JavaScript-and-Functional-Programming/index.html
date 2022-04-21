@@ -1,0 +1,196 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] JavaScript  与函数式编程 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,函数式编程,JavaScript"><meta data-n-head="true" name="description" content="JavaScript  与函数式编程"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-08-10</div></div> <h1 class="title">[译] JavaScript  与函数式编程</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://www.twitter.com/BethAllchurch">Beth Allchurch</a> <br>原文地址:
+          <a target="_blank" href="https://bethallchurch.github.io/JavaScript-and-Functional-Programming/">https://bethallchurch.github.io/JavaScript-and-Functional-Programming/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/JavaScript-and-Functional-Programming">http://www.wemlion.com/post/JavaScript-and-Functional-Programming</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <blockquote><p><strong>译者注：推荐一篇译文，<a href="http://pinggod.com/2016/函数式编程术语解析" target="_blank">《函数式编程术语解析》</a>。</strong></p></blockquote> <p><em>本文是我在 2016 年 7 月 29 号听 Kyle Simpson 精彩的课程<strong>《Functional-Light JavaScript》</strong>时所做的笔记（外加个人的深入研究）（<a href="https://speakerdeck.com/getify/functional-light-javascript" target="_blank">幻灯片在这</a>）。</em></p> <p>长久以来，面向对象在 JavaScript 编程范式中占据着主导地位。不过，最近人们对函数式编程的兴趣正在增长。函数式编程是一种编程风格，它强调将程序状态变化（即<em>副作用[side effect]</em>）的次数减到最小。因此，函数式编程鼓励使用<em>不可变</em>数据（immutable data）和纯函数（pure functions）（“纯”意味着没有副作用的）。它也更倾向于使用<em>声明式</em>的风格，鼓励使用命名良好的函数，这样就能使用在我们视线之外的那些打包好的细节实现，通过描述希望发生什么以进行编码。</p> <p>尽管面向对象编程与函数式编程之间有些矛盾，它们却并非互斥的关系。JavaScript 所拥有的工具，能支持这两种方式。甚至可以说，就算不把它孤立地当作函数式语言使用，还是有不少来自函数式方法的概念和最佳实践可以帮助我们，让代码更干净，可读性更强，推理起来更简单。</p> <h2 id="-">副作用最小化</h2> <p>所谓<em>副作用</em>，指的是函数内部产生了超出函数之外的变化。函数可能会做一些事，如操作 DOM、修改更高层作用域中的变量值，或者将数据写入数据库。这些带来的就是副作用。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 有副作用的函数</span>
+<span class="hljs-keyword">var</span> x = <span class="hljs-number">10</span>;
+
+<span class="hljs-keyword">const</span> myFunc = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> y </span>) </span>{
+  x = x + y;
+};
+
+myFunc( <span class="hljs-number">3</span> );
+<span class="hljs-built_in">console</span>.log( x ); <span class="hljs-comment">// 13</span>
+
+myFunc( <span class="hljs-number">3</span> );
+<span class="hljs-built_in">console</span>.log( x ); <span class="hljs-comment">// 16</span></code></pre><p>副作用并非天生邪恶。不产生任何副作用的程序也无法影响世界，因此也没有任何意义（除非是作为理论兴趣进行研究）。不过，副作用确实是危险的，应当尽量避免使用，除非绝对必要。</p> <p>当函数产生副作用的时候，仅凭借输入输出的内容，不足以明确函数究竟做了什么工作。必须了解上下文环境、程序状态的历史，这让函数更难理解。在不可预测的交互方式下，副作用可能带来一些 bug，且函数因上述依赖，测试起来也更困难。</p> <p>副作用最小化是函数式编程中最基础的原则，接下来的多数小节都可以当作是避免副作用的一些办法概要。</p> <h2 id="-immutable-">视数据为不可变（Immutable）</h2> <p>变动（mutation）指的是值在原位置上的变化（an in-place change to a value）。不可变值意味着，一旦创建出来，永远都不会变化。在 JavaScript 中，简单值如数字、字符串、布尔值这些是不可变的。不过，像对象、数组这样的数据结构都是可变的。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// push 方法改变了数组</span>
+<span class="hljs-keyword">const</span> x = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>];
+<span class="hljs-built_in">console</span>.log( x ); <span class="hljs-comment">// [1, 2]</span>
+
+x.push( <span class="hljs-number">3</span> );
+<span class="hljs-built_in">console</span>.log( x ); <span class="hljs-comment">// [1, 2, 3]</span></code></pre><p>为什么要避免变动数据呢？</p> <p>变动是一种副作用。程序中变化的东西越少，需要跟踪记录的也就越少，程序也就越简单。</p> <p>JavaScript 中维持对象、数组等数据结构不可变性的可用工具很有限。通过 <code>Object.freeze</code> 可以强制实现对象的不可变，但作用深度只有一层：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> frozenObject = <span class="hljs-built_in">Object</span>.freeze( { <span class="hljs-attr">valueOne</span> : <span class="hljs-number">1</span>, <span class="hljs-attr">valueTwo</span> : { <span class="hljs-attr">nestedValue</span> : <span class="hljs-number">1</span> } } );
+frozenObject.valueOne = <span class="hljs-number">2</span>; <span class="hljs-comment">// 不允许</span>
+frozenObject.valueTwo.nestedValue = <span class="hljs-number">2</span>; <span class="hljs-comment">// 竟然允许了!</span></code></pre><p>不过，还是有一些很棒的工具库解决了这些问题，其中最著名的要数 <a href="https://facebook.github.io/immutable-js/" target="_blank">Immutable</a> 了。</p> <p>对多数应用来说，使用工具库来保证不可变性有些矫枉过正。很多情况下，简单地将数据当作是不可变的，就能让我们受益良多。</p> <h3 id="-">避免变动：数组</h3> <p>JavaScript 数组方法可以被概括为<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/prototype#Mutator_methods" target="_blank">变动方法 (mutator methods) </a>和非变动方法。应当尽可能避免变动方法。</p> <p>举例来说，<code>concat</code> 方法可以用来替代 <code>push</code> 方法。<code>push</code> 改变了原数组；<code>concat</code> 返回由原数组和作为参数的数组组成的新数组，而原来的数组还是完整的。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// push 改变了数组</span>
+<span class="hljs-keyword">const</span> arrayOne = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
+arrayOne.push( <span class="hljs-number">4</span> );
+
+<span class="hljs-built_in">console</span>.log( arrayOne ); <span class="hljs-comment">// [1, 2, 3, 4]</span>
+
+<span class="hljs-comment">// concat 生成了新数组，原数组保持不变</span>
+<span class="hljs-keyword">const</span> arrayTwo = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
+<span class="hljs-keyword">const</span> arrayThree = arrayTwo.concat([ <span class="hljs-number">4</span> ]);
+
+<span class="hljs-built_in">console</span>.log( arrayTwo ); <span class="hljs-comment">// [1, 2, 3]</span>
+<span class="hljs-built_in">console</span>.log( arrayThree ); <span class="hljs-comment">// [1, 2, 3, 4]</span></code></pre><p>还有一些非变动方法，包括 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/map" target="_blank"><code>map</code></a>、<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/filter" target="_blank"><code>filter</code></a>、<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/reduce" target="_blank"><code>reduce</code></a> 等。</p> <h3 id="-">避免变动：对象</h3> <p>可以使用 <a href="https://developer.mozilla.org/en/docs/Web/JavaScript/Reference/Global_Objects/Object/assign" target="_blank"><code>Object.assign</code></a> 方法，而非直接编辑对象。该方法将源对象的属性复制到目标对象中，并将目标对象返回。如果总是用一个空对象作为目标对象，就能通过 <code>Object.assign</code> 避免直接编辑对象。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> objectOne = { <span class="hljs-attr">valueOne</span> : <span class="hljs-number">1</span> };
+<span class="hljs-keyword">const</span> objectTwo = { <span class="hljs-attr">valueTwo</span> : <span class="hljs-number">2</span> };
+
+<span class="hljs-keyword">const</span> objectThree = <span class="hljs-built_in">Object</span>.assign( {}, objectOne, objectTwo );
+
+<span class="hljs-built_in">console</span>.log( objectThree ); <span class="hljs-comment">// { valueOne : 1, valueTwo : 2 }</span></code></pre><h3 id="-const-">关于 <code>const</code></h3> <p><code>const</code> 很有用，却不会使数据不可变。它只能防止变量被重新赋值。这不能混为一谈。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> x = <span class="hljs-number">1</span>;
+x = <span class="hljs-number">2</span>; <span class="hljs-comment">// 不允许</span>
+
+<span class="hljs-keyword">const</span> myArray = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
+myArray = [<span class="hljs-number">0</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>]; <span class="hljs-comment">// 不允许</span>
+
+myArray[<span class="hljs-number">0</span>] = <span class="hljs-number">0</span>; <span class="hljs-comment">// 允许了!</span></code></pre><h2 id="-">书写纯函数</h2> <p><em>纯函数</em> 不会改变程序的状态，也不会产生可感知的副作用。纯函数的输出，仅仅取决于输入值。无论何时何地被调用，只要输入值相同，返回值也就一样。</p> <p>纯函数是最小化副作用的重要工具。另外，与上下文无关的特点，也让它们有了高可测试性和可复用性。</p> <p>前面讲副作用的小节中的代码里， <code>myFunc</code> 函数就是非纯函数，注意两次调用时输入相同但每次返回结果却不同。不过，它也能改写成纯函数：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 将全局变量变为局部变量</span>
+<span class="hljs-keyword">const</span> myFunc = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> y </span>) </span>{
+  <span class="hljs-keyword">const</span> x = <span class="hljs-number">10</span>;
+  <span class="hljs-keyword">return</span> x + y;
+}
+
+<span class="hljs-built_in">console</span>.log(myFunc( <span class="hljs-number">3</span> )); <span class="hljs-comment">// 13</span>
+<span class="hljs-built_in">console</span>.log(myFunc( <span class="hljs-number">3</span> )); <span class="hljs-comment">// 13</span></code></pre><pre><code class="hljs lang-javascript"><span class="hljs-comment">// 将 x 作为参数传递</span>
+<span class="hljs-keyword">const</span> x = <span class="hljs-number">10</span>;
+
+<span class="hljs-keyword">const</span> myFunc = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x, y </span>) </span>{
+  <span class="hljs-keyword">return</span> x + y;
+}
+
+<span class="hljs-built_in">console</span>.log(myFunc( x, <span class="hljs-number">3</span> )); <span class="hljs-comment">// 13</span>
+<span class="hljs-built_in">console</span>.log(myFunc( x, <span class="hljs-number">3</span> )); <span class="hljs-comment">// 13</span></code></pre><p>你的程序最终肯定还是会产生一些副作用。当副作用产生的时候，小心应对，尽可能地约束、限制它们的影响。</p> <h2 id="-function-generating-functions-">书写返回函数的函数（Function-Generating Functions）</h2> <p>找一些程经验的人，让他们猜猜下面的代码做了什么：</p> <p>例 1</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> numbers = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
+
+<span class="hljs-keyword">for</span> ( <span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; numbers.length; i++ ) {
+  <span class="hljs-built_in">console</span>.log( numbers[i] );
+}</code></pre><p>例 2</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> numbers = [<span class="hljs-number">1</span>, <span class="hljs-number">2</span>, <span class="hljs-number">3</span>];
+
+<span class="hljs-keyword">const</span> print = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> input </span>) </span>{
+  <span class="hljs-built_in">console</span>.log( input );
+};
+
+numbers.forEach( print );</code></pre><p>我测试过的所有人在例 2 上运气更好。例 1 展示的是<em>命令式</em>方法，将一列数字打印出来。例 2 展示的是<em>声明式</em>方法。将循环遍历数组、在控制台打印数字这些细节各种包装成 <code>forEach</code> 和 <code>print</code> 函数，无需知道<em>如何做</em>，就可以表达我们需要程序<em>做什么</em>。这让代码可读性更高。例 2 的最后一行看起来，很接近英语句子。</p> <p>采用这种方法，涉及到编写大量函数。利用现有函数编写生成新函数的函数，可以让这个过程中的重复（<a href="https://en.wikipedia.org/wiki/Don%27t_repeat_yourself" target="_blank">DRY</a>-er）更少。</p> <p>特别地，JavaScript 的两个特性让这种形式的函数生成变得可能。第一个是<em>闭包</em>。函数能够访问包含作用域中的变量，就算该作用域已不复存在，这就是闭包。第二个特性是，JavaScript 将函数当作值来对待。这使书写高阶函数成为可能，高阶函数可以接收函数作为参数，并/或返回函数。</p> <p>这些特性组合在一起，我们就可以编写返回函数的函数了。返回的函数能“记住”传给生成函数的参数，并在程序的其他地方使用这些参数。</p> <h3 id="-">函数组合</h3> <p>通过<em>函数组合</em>，可能将函数组合在一起形成新的函数。一起来看例子：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 通过 add 和 square 函数组合生成 addThenSquare</span>
+<span class="hljs-keyword">const</span> add = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x, y </span>) </span>{
+  <span class="hljs-keyword">return</span> x + y;
+};
+
+<span class="hljs-keyword">const</span> square = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x </span>) </span>{
+  <span class="hljs-keyword">return</span> x * x;
+};
+
+<span class="hljs-keyword">const</span> addThenSquare = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x, y </span>) </span>{
+  <span class="hljs-keyword">return</span> square(add( x, y ));
+};</code></pre><p>你可能会发现一直在重复这种利用更小的函数生成一个更复杂的函数的形式。通常编写一个组合函数会更有效率：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> add = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x, y </span>) </span>{
+  <span class="hljs-keyword">return</span> x + y;
+};
+
+<span class="hljs-keyword">const</span> square = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x </span>) </span>{
+  <span class="hljs-keyword">return</span> x * x;
+};
+
+<span class="hljs-keyword">const</span> composeTwo = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> f, g </span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x, y </span>) </span>{
+    <span class="hljs-keyword">return</span> g( f ( x, y ) );
+  };
+};
+
+<span class="hljs-keyword">const</span> addThenSquare = composeTwo( add, square );</code></pre><p>还可以走得更远，编写一个更一般化的组合函数：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 这个版本的 composeTwo 的初始化函数可以接收任意数量的参数</span>
+<span class="hljs-keyword">const</span> composeTwo = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> f, g </span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> ...args </span>) </span>{
+    <span class="hljs-keyword">return</span> g( f( ...args ) );
+  };
+};
+
+<span class="hljs-comment">// composeMany 可以接收任意数量的函数</span>
+<span class="hljs-comment">// 其初始化函数能接收任意数量的参数</span>
+<span class="hljs-keyword">const</span> composeMany = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> ...args </span>) </span>{
+  <span class="hljs-keyword">const</span> funcs = args;
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> ...args </span>) </span>{
+    funcs.forEach(<span class="hljs-function">(<span class="hljs-params"> func </span>) =></span> {
+      args = [func.apply( <span class="hljs-keyword">this</span>, args )]; 
+    });
+    <span class="hljs-keyword">return</span> args[<span class="hljs-number">0</span>];
+  };
+};</code></pre><p>组合函数的最终形式取决于你所需的通用性水平，以及偏好的 API 类型。</p> <h3 id="-partial-application-">偏函数（Partial Application）</h3> <p><em>Partial 函数应用</em> 指定函数参数中的一个或多个，然后返回一个稍后会被完整调用的函数。</p> <p>在下面的例子中，<code>double</code>、<code>triple</code> 和 <code>quadruple</code> 都是 <code>multiply</code> 函数的 partial 应用。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> multiply = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x, y </span>) </span>{
+  <span class="hljs-keyword">return</span> x * y;
+};
+
+<span class="hljs-keyword">const</span> partApply = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> fn, x </span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> y </span>) </span>{
+    fn( x, y );
+  };
+};
+
+<span class="hljs-keyword">const</span> double = partApply( multiply, <span class="hljs-number">2</span> );
+<span class="hljs-keyword">const</span> triple = partApply( multiply, <span class="hljs-number">3</span> );
+<span class="hljs-keyword">const</span> quadruple = partApply( multiply, <span class="hljs-number">4</span> );</code></pre><h3 id="-">柯里化</h3> <p><em>柯里化</em>是将接收多个参数的函数转换为一系列只接收一个参数的函数的过程。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> multiply = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x, y </span>) </span>{
+  <span class="hljs-keyword">return</span> x * y;
+};
+
+<span class="hljs-keyword">const</span> curry = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> fn </span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x </span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> y </span>) </span>{
+      <span class="hljs-keyword">return</span> fn( x, y );
+    };
+  };
+};
+
+<span class="hljs-keyword">const</span> curriedMultiply = curry( multiply );
+
+<span class="hljs-keyword">const</span> double = curriedMultiply( <span class="hljs-number">2</span> );
+<span class="hljs-keyword">const</span> triple = curriedMultiply( <span class="hljs-number">3</span> );
+<span class="hljs-keyword">const</span> quadruple = curriedMultiply( <span class="hljs-number">4</span> );
+
+<span class="hljs-built_in">console</span>.log(triple( <span class="hljs-number">6</span> )); <span class="hljs-comment">// 18</span></code></pre><p>柯里化和 partial 应用在概念上很相似（可能不会两个都需要使用），但仍然有所不同。主要区别在于，柯里化总是生成函数套链，每次只接收一个参数，而 partial 应用返回的函数可以一次接收多个参数。 比较它们作用于最少接收三个参数的函数时，这种差别就更明晰了：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> multiply = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x, y, z </span>) </span>{
+  <span class="hljs-keyword">return</span> x * y * z;
+};
+
+<span class="hljs-keyword">const</span> curry = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> fn </span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> x </span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> y </span>) </span>{
+      <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> z </span>) </span>{
+        <span class="hljs-keyword">return</span> fn( x, y, z );
+      };
+    };
+  };
+};
+
+<span class="hljs-keyword">const</span> partApply = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> fn, x </span>) </span>{
+  <span class="hljs-keyword">return</span> <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> y, z </span>) </span>{
+    <span class="hljs-keyword">return</span> fn( x, y, z );
+  };
+};
+
+<span class="hljs-keyword">const</span> curriedMultiply = curry( multiply );
+<span class="hljs-keyword">const</span> partiallyAppliedMultiply = partApply( multiply, <span class="hljs-number">10</span> );
+
+<span class="hljs-built_in">console</span>.log(curriedMultiply( <span class="hljs-number">10</span> )( <span class="hljs-number">5</span> )( <span class="hljs-number">2</span> )); <span class="hljs-comment">// 100</span>
+<span class="hljs-built_in">console</span>.log(partiallyAppliedMultiply( <span class="hljs-number">5</span>, <span class="hljs-number">2</span> )); <span class="hljs-comment">// 100</span></code></pre><h2 id="-">递归</h2> <p><em>递归</em>函数是这样一种函数，它会一直调用自身，直至满足基本条件。递归函数是高度声明式的。它们也很优雅，写起来很爽！</p> <p>下面是计算递归计算阶乘的例子：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> factorial = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> n </span>) </span>{
+  <span class="hljs-keyword">if</span> ( n === <span class="hljs-number">0</span> ) {
+    <span class="hljs-keyword">return</span> <span class="hljs-number">1</span>;
+  }
+  <span class="hljs-keyword">return</span> n * factorial( n - <span class="hljs-number">1</span> );
+};
+
+<span class="hljs-built_in">console</span>.log(factorial( <span class="hljs-number">10</span> )); <span class="hljs-comment">// 3628800</span></code></pre><p>在 JavaScript 中使用递归函数需要细心一些。每次函数调用都会向调用栈（call stack）中加入新的调用帧（call frame），当函数返回的时候，该调用帧从调用栈中弹出。递归函数调用在返回之前调用自身，所以很容易就会超出调用栈的限制，导致程序崩溃。</p> <p>不过，这可以通过<em>尾调用优化</em>来避免。</p> <h3 id="-">尾调用优化</h3> <p>尾调用指的是，某个函数的最后一步动作是调用函数。尾调用优化指的是，当语言编译器识别到尾调用的时候，会对其复用相同的调用帧。这意味着，在编写尾调用的递归函数时，调用帧的限制永远不会被超出，因为调用帧会被反复使用。</p> <p>下面是将前面的递归函数采用尾递归优化重写之后的例子:</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> factorial = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"> n, base </span>) </span>{
+  <span class="hljs-keyword">if</span> ( n === <span class="hljs-number">0</span> ) {
+    <span class="hljs-keyword">return</span> base;
+  }
+  base *= n;
+  <span class="hljs-keyword">return</span> factorial( n - <span class="hljs-number">1</span>, base );
+};
+
+<span class="hljs-built_in">console</span>.log(factorial( <span class="hljs-number">10</span>, <span class="hljs-number">1</span> )); <span class="hljs-comment">// 3628800</span></code></pre><p><a href="http://www.ecma-international.org/ecma-262/6.0/#sec-tail-position-calls" target="_blank">ES2015 语言规范</a>中已包含了适当的尾部调用的支持，但目前在大部分环境中尚未得到支持。可以在<a href="https://kangax.github.io/compat-table/es6/" target="_blank">这里</a>查看你能否使用。</p> <h2 id="-">小结</h2> <p>函数式编程容纳了许多思想，借助它们可以优化代码。纯函数和不可变数据将副作用的危害最小化，声明式编程让代码可读性大大提高。在与复杂性的斗争中，这些是我们应当拥抱的重要工具。</p> <h2 id="-">资源</h2> <h3 id="-">概述性</h3> <ul><li><p><a href="https://www.sitepoint.com/series/introduction-functional-javascript/" target="_blank">SitePoint: An Introduction to Functional JavaScript</a></p></li> <li><p><a href="http://www.cs.utexas.edu/~shmat/courses/cs345/whyfp.pdf" target="_blank">John Hughes: Why Functional Programming Matters</a></p></li> <li><p><a href="http://www.vasinov.com/blog/16-months-of-functional-programming/" target="_blank">Vasily Vasinov: 16 Months of Functional Programming</a></p></li> <li><p><a href="http://stephen-young.me.uk/2013/01/20/functional-programming-with-javascript.html" target="_blank">Stephen Young: Functional programming with Javascript</a></p></li> <li><p><a href="http://jrsinclair.com/articles/2016/gentle-introduction-to-functional-javascript-intro/" target="_blank">James Sinclair: A Gentle Introduction to Functional JavaScript</a></p></li></ul> <h3 id="-">副作用</h3> <ul><li><p><a href="https://en.wikipedia.org/wiki/Side_effect_(computer_science" target="_blank">Wikipedia: Side effect (computer science)</a>)</p></li> <li><p><a href="http://stackoverflow.com/questions/763835/are-side-effects-a-good-thing" target="_blank">Stack Overflow: Are side effects a good thing?</a></p></li></ul> <h3 id="-">不可变性</h3> <ul><li><p><a href="https://www.sitepoint.com/immutability-javascript/" target="_blank">Site Point: Immutability in JavaScript</a></p></li> <li><p><a href="https://auth0.com/blog/2016/03/23/intro-to-immutable-js/" target="_blank">Auth0: Introduction to Immutable.js and Functional Programming Concepts</a></p></li> <li><p><a href="http://programmers.stackexchange.com/questions/151733/if-immutable-objects-are-good-why-do-people-keep-creating-mutable-objects" target="_blank">Stack Exchange: If immutable objects are good, why do people keep creating mutable objects?</a></p></li> <li><p><a href="http://stackoverflow.com/questions/34385243/why-is-immutability-so-importantor-needed-in-javascript" target="_blank">Stack Overflow: Why is immutability so important(or needed) in javascript?</a></p></li> <li><p><a href="http://www.youtube.com/watch?v=I7IdS-PbEgI&t=14m8s" target="_blank">React.js Conf 2015 - Immutable Data and React (video)</a></p></li> <li><p><a href="https://egghead.io/lessons/javascript-redux-avoiding-array-mutations-with-concat-slice-and-spread" target="_blank">Redux: Avoiding Array Mutations with concat(), slice(), and …spread (video)</a></p></li> <li><p><a href="https://egghead.io/lessons/javascript-redux-avoiding-object-mutations-with-object-assign-and-spread" target="_blank">Redux: Avoiding Object Mutations with Object.assign() and …spread (video)</a></p></li></ul> <h3 id="-">纯函数</h3> <ul><li><a href="https://egghead.io/lessons/javascript-redux-pure-and-impure-functions" target="_blank">Redux: Pure and Impure Functions</a></li></ul> <h3 id="-">函数生成</h3> <ul><li><p><a href="http://eloquentjavascript.net/05_higher_order.html" target="_blank">Eloquent JavaScript: Higher-Order Functions</a></p></li> <li><p><a href="http://scott.sauyet.com/Javascript/Talk/Compose/2013-05-22/#slide-0" target="_blank">Scott Sauyet: Compose Yourself: Fun with Functions</a></p></li> <li><p><a href="http://www.vasinov.com/blog/on-currying-and-partial-function-application/" target="_blank">Vasily Vasinov: On Currying and Partial Function Application</a></p></li> <li><p><a href="http://www.2ality.com/2011/09/currying-vs-part-eval.html" target="_blank">2ality: Currying versus partial application</a></p></li></ul> <h3 id="-">递归</h3> <ul><li><p><a href="http://stackoverflow.com/questions/3021/what-is-recursion-and-when-should-i-use-it" target="_blank">Stack Overflow: What is recursion and when should I use it?</a></p></li> <li><p><a href="https://medium.com/functional-javascript/recursion-282a6abbf3c5#.i913o81g3" target="_blank">Medium: Recursion</a></p></li> <li><p><a href="http://benignbemine.github.io/2015/07/19/es6-tail-calls/" target="_blank">Kyle Owen: ES6 Tail Call Optimization Explained</a></p></li> <li><p><a href="https://taylodl.wordpress.com/2013/06/07/functional-javascript-tail-call-optimization-and-trampolines/" target="_blank">Don Taylor: Functional JavaScript – Tail Call Optimization and Trampolines</a></p></li> <li><p><a href="http://www.integralist.co.uk/posts/js-recursion.html" target="_blank">Mark McDonnell: Understanding recursion in functional JavaScript programming</a></p></li></ul></div></article> <nav class="pagination"><a href="/post/set-up-automated-cross-browser-javascript-unit-testing" title="[译] 自动化、跨浏览器的 JavaScript 单元测试" class="prev">« [译] 自动化、跨浏览器的 JavaScript 单元测试</a> <a href="/post/browse-ebay-with-style-and-speed-ebay" title="[译] eBay：style & speed" class="next">[译] eBay：style & speed »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/1d051306c4cc53aca4ac.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

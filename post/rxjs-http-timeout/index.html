@@ -1,0 +1,90 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">Angular 2 中的 HTTP 请求超时处理 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,笔记,RxJS,Angular 2"><meta data-n-head="true" name="description" content="Angular 2 中的 HTTP 请求超时处理"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2017-01-16</div></div> <h1 class="title">Angular 2 中的 HTTP 请求超时处理</h1> <div class="entry-content"><!----> <p>以前做 React Native 时，需要对请求进行超时处理。然而，React Native 提供的 <code>fetch</code> 方法，根本没有提供超时的选择。于是只能自己玩些如下的黑科技了，代码一看就很乱，还难以维护：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> TIME_OUT = <span class="hljs-number">3000</span>;
+
+<span class="hljs-keyword">let</span> reqErrror = <span class="hljs-literal">false</span>;
+<span class="hljs-keyword">let</span> reqDone   = <span class="hljs-literal">false</span>;
+
+<span class="hljs-keyword">let</span> timeout = setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+  <span class="hljs-comment">// 超时错误</span>
+  reqErrror = <span class="hljs-literal">true</span>;
+  <span class="hljs-comment">// 标记本次请求结束</span>
+  reqDone = <span class="hljs-literal">true</span>;
+}, TIME_OUT);
+
+fetch(<span class="hljs-string">'/api/test'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">res</span> =></span> res.json())
+  .then(<span class="hljs-function">(<span class="hljs-params">data</span>) =></span> {
+    clearTimeout(timeout);
+    <span class="hljs-comment">// 没有错误发生</span>
+    reqErrror = <span class="hljs-literal">false</span>;
+    <span class="hljs-comment">// 标记本次请求结束</span>
+    reqDone = <span class="hljs-literal">true</span>;
+    <span class="hljs-comment">// ...</span>
+  })
+  .catch(<span class="hljs-function">(<span class="hljs-params">e</span>) =></span> {
+    clearTimeout(timeout);
+
+    <span class="hljs-comment">// 发生某种错误</span>
+    reqErrror = <span class="hljs-literal">true</span>;
+    <span class="hljs-comment">// 标记本次请求结束</span>
+    reqDone = <span class="hljs-literal">true</span>;
+
+    <span class="hljs-built_in">console</span>.error(e);
+  });</code></pre><p>那会儿刚开始接触，团队的几个人对 ES6 这些东西基本处在一种边学边用的状态，所以上面的方法在当时解决了问题，也还不错。后来离开项目，也许至今还在保留着这种方式吧。唉，当初的代码写得是有多乱啊，竟然都不会封装一下囧。</p> <p>简单改写之后的代码如下：</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-keyword">const</span> fetchWithTimeout = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">url = <span class="hljs-string">''</span>, option = {}, timeout</span>) </span>{
+  <span class="hljs-keyword">if</span> (!timeout) {
+    <span class="hljs-keyword">return</span> fetch(url, option);
+  }
+
+  <span class="hljs-keyword">let</span> timeout = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve, reject</span>) </span>{
+    setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">let</span> err = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Error</span>(<span class="hljs-string">'timeout'</span>);
+      reject(err);
+    }, timeout);
+  });
+
+  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.race([
+    timeout,
+    fetch(url, option).then(<span class="hljs-function"><span class="hljs-params">res</span> =></span> res.json())
+  ]);
+};
+
+fetchWithTimeout(<span class="hljs-string">'/api/test'</span>, {}, TIME_OUT)
+  .then(<span class="hljs-function"><span class="hljs-params">res</span> =></span> res.json())
+  .then(<span class="hljs-function"><span class="hljs-params">data</span> =></span> {
+    <span class="hljs-comment">// ...</span>
+  })
+  .catch(<span class="hljs-function"><span class="hljs-params">e</span> =></span> {
+    <span class="hljs-comment">// ...</span>
+  });</code></pre><p>好了，言归正传，其实这次我是要记录 Angular 2 中的 http 超时处理的，事情缘由不再赘述，和前面差不多。</p> <p>同样我想到了 <code>race</code>。 不过在 stackoverflow 中有人提过这个问题，是用 <code>timeout</code> 操作符，但我使用的时候遇到了一些问题。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">import</span> { Observable } <span class="hljs-keyword">from</span> <span class="hljs-string">'rxjs/Observable'</span>;
+<span class="hljs-keyword">import</span> <span class="hljs-string">'rxjs/add/observable/of'</span>;
+
+<span class="hljs-keyword">import</span> <span class="hljs-string">'rxjs/add/operator/race'</span>;
+<span class="hljs-keyword">import</span> <span class="hljs-string">'rxjs/add/operator/delay'</span>;
+
+<span class="hljs-keyword">const</span> TIME_OUT = <span class="hljs-number">3000</span>;
+
+<span class="hljs-comment">// ...</span>
+<span class="hljs-keyword">let</span> cancel$ = Observable.of(<span class="hljs-literal">null</span>).delay(TIME_OUT);
+
+<span class="hljs-keyword">let</span> request$ = <span class="hljs-keyword">this</span>.http.get(url)
+  .map(<span class="hljs-function"><span class="hljs-params">res</span> =></span> res.json())
+  .catch(<span class="hljs-function"><span class="hljs-params">e</span> =></span> Observable.of(e));
+
+<span class="hljs-keyword">let</span> unsubscribe = request$.race(cancel$).subscribe(
+  <span class="hljs-function"><span class="hljs-params">data</span> =></span> <span class="hljs-built_in">console</span>.log(data),
+  err  => consoel.error(err),
+  ()   => <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'complete'</span>);
+);
+<span class="hljs-comment">// ...</span></code></pre><p>暂且记录成这样吧，有空再补充。</p></div></article> <nav class="pagination"><a href="/post/get-root-domain-of-a-site" title="笔记：如何获取网站根域名" class="prev">« 笔记：如何获取网站根域名</a> <a href="/post/timing-atack" title="关于时序攻击" class="next">关于时序攻击 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/b97d49c70e4266e1004e.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

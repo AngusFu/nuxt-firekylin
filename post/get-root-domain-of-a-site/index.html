@@ -1,0 +1,57 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">笔记：如何获取网站根域名 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="JavaScript,开发心得,原创"><meta data-n-head="true" name="description" content="笔记：如何获取网站根域名"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2017-04-26</div></div> <h1 class="title">笔记：如何获取网站根域名</h1> <div class="entry-content"><!----> <p>首先声明，这里所说的“根域名”，并不是指“全球共有13台根逻辑域名服务器”这句话中的“根域名”。而是指某一个站点的“根域名”（更新：或者也可以称之为“当前网站的主域名”，目前笔者并没有找到标准称呼）。</p> <p>百度搜索是“www.baidu.com”，百度翻译的域名是“fanyi.baidu.com”，百度地图的域名则是“map.baidu.com”。这些域名有共同的部分“baidu.com”。在本文中，我们将“baidu.com”这样的域名称为“根域名”。前端同学应该都知道，在“.baidu.com”这一域下的 cookie 可以在其他子站点下拿到（当然，前提是端口号和协议都保持一致）。</p> <p>最近开发的过程中遇上了一个小问题。无论访问哪个子站点，都要通过 js 将 cookie 存放到根域名下。</p> <p>一开始比较大意，直接拿正则匹配。问题是忽略了这世界上还存在“www.xxx.edu.cn”这样的站点。在这种情况下，显然我们不能认为”edu.cn“是根域名。想在一个叫“edu.cn”的域下存 cookie？对不起，浏览器做不到。（这句话很重要。）</p> <p>正则匹配是做不到了。搜索了一下，网上也没有什么特别好的解决方案。无非是枚举出国内常见的一些顶级域名，然后再进行处理，如下面这个 PHP 的例子：</p> <p><img alt=""></p> <p>但如何确保我们枚举出的例子一定是完全的无遗漏的呢？不完美，放弃。</p> <h2 id="psl">PSL</h2> <p>接着上 github 上去找例子。倒是发现了一些解决域名的工具。比如一个名为 <a href="https://github.com/wrangr/psl" target="_blank">psl</a> 的仓库。</p> <p><a href="http://publicsuffix.org/" target="_blank">PSL</a> 是 “Public Suffix List” 的缩写，这个“公共域名后缀列表”项目本来是供浏览器厂商使用的。可以访问<a href="https://publicsuffix.org/" target="_blank">官网</a>，另外建议看看这篇<a href="https://imququ.com/post/domain-public-suffix-list.html" target="_blank">《域名小知识：Public Suffix List》</a>。</p> <p><img alt=""></p> <p>我搜索到的这个 psl 仓库正是基于 PSL、使用 js 来解析域名的。粗略看了下，存放域名的 json 文件有 108 KB。吓死了。</p> <p><img alt=""></p> <p>另一款叫做 <a href="https://github.com/peerigon/parse-domain/" target="_blank">parse-domain</a> 的，光是生成的正则表达式文件就有 203 KB。</p> <p><img alt=""></p> <p>没办法，一个跑到浏览器上的前端脚本，本身不到 1500 行，为了一个判断引入上百 KB 的外部依赖，实在不划算。</p> <p>于是只能自己另起炉灶，想想别的办法。</p> <h2 id="document-domain">document.domain</h2> <p>首先想到的是 <code>document.domain</code>。在一些需要跨域的场景中，可能会见到这货的身影。比如<a href="http://www.tuicool.com/articles/jmY3Yr6" target="_blank">这篇文章</a> 所描述的，“相同主域名不同子域名下的页面，可以设置 document.domain 让它们同域”。</p> <p>经过测试发现，对于域名<code>c.example.edu.cn</code>下的页面，可以执行下面这句：</p> <pre><code class="hljs lang-javascript"><span class="hljs-built_in">document</span>.domain = <span class="hljs-string">'example.edu.cn'</span>;</code></pre><p>而在 Chrome 下，下面这句则无法执行：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// DOMException</span>
+<span class="hljs-built_in">document</span>.domain = <span class="hljs-string">'edu.cn'</span>;</code></pre><p>浏览器会抛出<code>DOMException</code>：</p> <blockquote><p>1 Uncaught DOMException: Failed to set the 'domain' property on 'Document': 'edu.cn' is not a suffix of 'c.example.edu.cn'.</p></blockquote> <p>IE 也会报出“参数无效”的错误；Firefox 下同样会抛出错误：</p> <blockquote><p>NS_ERROR_DOM_BAD_DOCUMENT_DOMAIN: Illegal document.domain value</p></blockquote> <p>从报错信息可以看到， DOMException 是可以捕获到的。那就好办了。</p> <p>将域名（或页面当前的 <code>document.domain</code>） split 成数据 <code>['x', 'example', 'edu', 'cn']</code>，从右向左逐次加上一个元素，每次将单词使用句点连接并赋值给 <code>document.domain</code>。如果 catch 到错误，则进行下一次操作。一旦赋值成功，即可 break 循环。</p> <p>上代码：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> domain = <span class="hljs-built_in">document</span>.domain;
+<span class="hljs-keyword">const</span> list = domain.split(<span class="hljs-string">'.'</span>);
+
+<span class="hljs-keyword">let</span> len = list.length;
+<span class="hljs-keyword">let</span> rootDomain = domain;
+
+<span class="hljs-keyword">while</span> (len--) {
+  <span class="hljs-keyword">try</span> {
+    <span class="hljs-built_in">document</span>.domain = list.slice(len).join(<span class="hljs-string">'.'</span>);
+    rootDomain = <span class="hljs-built_in">document</span>.domain;
+    <span class="hljs-keyword">break</span>;
+  } <span class="hljs-keyword">catch</span> (e) {}
+}
+
+<span class="hljs-comment">// 还得恢复原值，避免产生副作用</span>
+<span class="hljs-built_in">document</span>.domain = domain;
+
+<span class="hljs-built_in">console</span>.log(rootDomain);</code></pre><p>很好，经过简单测试，Chrome、IE 妥妥的。</p> <p>然而 Firefox 挂了。挂在最后的还原阶段。也就是说，Firefox 允许修改 <code>document.domain</code>，但不允许修改成上一级之后，再回退到下一级。</p> <p>此外（感谢老大），在 Safari 上测试发现，<code>document.domain = 'cn'</code> 不会报错！什么鬼？请移步<a href="https://imququ.com/post/document-domain-bug-in-webkit.html" target="_blank">《Webkit下最无敌的跨大域方案》</a>。</p> <p>功亏一篑。心好累啊。</p> <h2 id="cookie-">Cookie 救火</h2> <p>最后想起前面提到的一句，“想在一个叫 edu.cn 的域下存 cookie？对不起，浏览器做不到。”</p> <p>要不咱试试 cookie？动手！</p> <p>道理同上，每次尝试在手动拼接的 domain 下面存 cookie，然后检查 cookie 是否保存成功。一旦成功，则 break 循环，并清除该 cookie。没有副作用，只是多操作几次 cookie。</p> <p>换个思路，总算是解决了。</p> <p>代码被我放在了 <a href="https://github.com/AngusFu/browser-root-domain" target="_blank">Github</a> 上。顺手贴在这里：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> KEY = <span class="hljs-string">'__rT_dM__'</span> + (+<span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>());
+<span class="hljs-keyword">var</span> R = <span class="hljs-keyword">new</span> <span class="hljs-built_in">RegExp</span>(<span class="hljs-string">'(^|;)\\s*'</span> + KEY + <span class="hljs-string">'=1'</span>);
+<span class="hljs-keyword">var</span> Y1970 = (<span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(<span class="hljs-number">0</span>)).toUTCString();
+
+<span class="hljs-built_in">module</span>.exports = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">getRootDomain</span>(<span class="hljs-params"></span>) </span>{
+  <span class="hljs-keyword">var</span> domain = <span class="hljs-built_in">document</span>.domain || location.hostname;
+  <span class="hljs-keyword">var</span> list = domain.split(<span class="hljs-string">'.'</span>);
+  <span class="hljs-keyword">var</span> len = list.length;
+  <span class="hljs-keyword">var</span> temp = <span class="hljs-string">''</span>;
+  <span class="hljs-keyword">var</span> temp2 = <span class="hljs-string">''</span>;
+
+  <span class="hljs-keyword">while</span> (len--) {
+    temp = list.slice(len).join(<span class="hljs-string">'.'</span>);
+    temp2 = KEY + <span class="hljs-string">'=1;domain=.'</span> + temp;
+
+    <span class="hljs-comment">// try to set cookie</span>
+    <span class="hljs-built_in">document</span>.cookie = temp2;
+
+    <span class="hljs-keyword">if</span> (R.test(<span class="hljs-built_in">document</span>.cookie)) {
+      <span class="hljs-comment">// clear</span>
+      <span class="hljs-built_in">document</span>.cookie = temp2 + <span class="hljs-string">';expires='</span> + Y1970;
+      <span class="hljs-keyword">return</span> temp;
+    }
+  }
+};</code></pre><h2 id="-20170504">更新@20170504</h2> <p>今天在奇舞周刊的评论区看到有同学的评论。看来我遇到的问题，很早就有人遇到过了。
+顺着评论看了下，知乎的这个回答非常清晰：<a href="https://www.zhihu.com/question/20994750?sort=created" target="_blank">如何使用正则表达式得到一个 URL 中的主域名</a>。
+当初真没想到“主域名”这个词，满脑子都是“根域名”。结果就与这回答失之交臂。当然，如果早点遇到知乎的回答，也就不会有这篇文章了吧。</p></div></article> <nav class="pagination"><a href="/post/unicode-javascript-and-the-emoji-family" title="[译] Emoji.prototype.length  —— Unicode 字符那些事儿" class="prev">« [译] Emoji.prototype.length  —— Unicode 字符那些事儿</a> <a href="/post/rxjs-http-timeout" title="Angular 2 中的 HTTP 请求超时处理" class="next">Angular 2 中的 HTTP 请求超时处理 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/a3f94dea851e06c7cd5c.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

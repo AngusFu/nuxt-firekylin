@@ -1,0 +1,275 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 测试驱动开发：使用 Node.js 和 MongoDB 构建 Todo API | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,Node.js,测试,单元测试"><meta data-n-head="true" name="description" content="测试驱动开发：使用 Node.js 和 MongoDB 构建 Todo API"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-07-04</div></div> <h1 class="title">[译] 测试驱动开发：使用 Node.js 和 MongoDB 构建 Todo API</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="http://rajasekarm.com/">Raja Sekar</a> <br>原文地址:
+          <a target="_blank" href="https://semaphoreci.com/community/tutorials/a-tdd-approach-to-building-a-todo-api-using-node-js-and-mongodb">https://semaphoreci.com/community/tutorials/a-tdd-approach-to-building-a-todo-api-using-node-js-and-mongodb</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/todo-api-with-unit-test">http://www.wemlion.com/post/todo-api-with-unit-test</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>学习如何使用测试驱动开发的方式，用 Node.js、MongoDB、Mocha 和 Sinon.js 开发 Todo API。</p> <h2 id="-">简介</h2> <p>测试是软件开发过程中的一个完整部分，它帮助我们提升软件品质。有很多种测试方法，如手动测试，集成测试，功能测试，负载测试，单元测试等等。在本文中，我们将会遵循测试驱动开发的规则编写代码。</p> <h3 id="-">单元测试是什么？</h3> <p>Martin Fowler 将单元测试定义如下：</p> <ul><li><p>首先一个概念，单元测试是低层次的，专注于软件系统的一小部分；</p></li> <li><p>其次，单元测试通常是由程序员使用常规工具自己编写的 —— 唯一的区别是使用某种单元测试框架；</p></li> <li><p>再次，单元测试预计比其他类型的测试显著地更快。</p></li></ul> <p>在本教程中，我们将会使用 Node.js 和 MongoDB 构建一个 Todo API。我们首先会给生产代码写单元测试，然后才会真正写生产代码。</p> <h2 id="-">环境</h2> <ul><li>Express.js</li> <li>MongoDB</li> <li>Mocha</li> <li>Chai</li> <li>Sinon.js</li></ul> <h2 id="-">项目设置</h2> <p>在我们真正开发 API 之前，我们必须设置文件夹和端点（end point）。</p> <p>在软件项目中，没有最好的应用架构。本教程使用的文件结构，请看该 <a href="https://github.com/rajzshkr/todoapi" target="_blank">GitHub</a> 仓库。</p> <p>现在来创建端点（endpoints）：</p> <p><img alt="table"></p> <h2 id="-">安装依赖</h2> <p>Node.js 有自己的包管理工具 <a href="https://www.npmjs.com/" target="_blank">NPM</a>。要学习更多关于 NPM 的知识，可以看我们的另一篇教程，<a href="https://semaphoreci.com/community/tutorials/npm-node-js-package-manager" target="_blank">《Node.js Package Manager tutorial》</a>。</p> <p>好，我们来安装项目依赖。</p> <pre><code class="hljs lang-javascript">npm install express mongoose method-override morgan body-parser cors —save-dev</code></pre><h2 id="-schema">定义 Schema</h2> <p>我们会使用 Mongoose 作为 Node.js 中的对象文档模型（Object Document Model），它工作起来和典型的 ORM一样，就像 Rails 中用 ActiveRecord一样。Mongoose 帮我们更方便地访问 MongoDB 命令。首先我们为 Todo API 定义 schema。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> mongoose = <span class="hljs-built_in">require</span>(<span class="hljs-string">'mongoose'</span>);
+<span class="hljs-keyword">var</span> Schema = mongoose.Schema;
+<span class="hljs-comment">// Defining schema for our Todo API</span>
+<span class="hljs-keyword">var</span> TodoSchema = Schema({
+  <span class="hljs-attr">todo</span>: {
+    <span class="hljs-attr">type</span>: <span class="hljs-built_in">String</span>
+  },
+  <span class="hljs-attr">completed</span>: {
+    <span class="hljs-attr">type</span>: <span class="hljs-built_in">Boolean</span>,
+    <span class="hljs-attr">default</span>: <span class="hljs-literal">false</span>
+  },
+  <span class="hljs-attr">created_by</span>: {
+    <span class="hljs-attr">type</span>: <span class="hljs-built_in">Date</span>,
+    <span class="hljs-attr">default</span>: <span class="hljs-built_in">Date</span>.now
+  }
+});
+<span class="hljs-comment">//Exporting our model</span>
+<span class="hljs-keyword">var</span> TodoModel = mongoose.model(<span class="hljs-string">'Todo'</span>, TodoSchema);
+
+<span class="hljs-built_in">module</span>.exports = TodoModel;</code></pre><p>Mongoose 中的一切都是从 schema 开始。每个 schema 对应一个 MongoDB 集合，它定义了集合中文档的形状。</p> <p>在上面的 todo schema 中，我们创建了三个字段来存储 todo 描述、状态和创建日期。该 schema 帮助 Node.js 应用理解如何将 MongoDB 中的数据映射成 JavaScript 对象。</p> <h2 id="-express-server">搭建 Express Server</h2> <p>我们将使用 Express 来搭建服务器，它是一个小型 Node.js web 框架，提供了一个强大的功能集，用于开发Web应用程序。</p> <p>我们继续，搭建 Express server。</p> <p>首先，我们要按下面这样引入项目依赖：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>);
+<span class="hljs-keyword">var</span> mongoose = <span class="hljs-built_in">require</span>(<span class="hljs-string">'mongoose'</span>);
+<span class="hljs-keyword">var</span> morgan = <span class="hljs-built_in">require</span>(<span class="hljs-string">'morgan'</span>);
+<span class="hljs-keyword">var</span> bodyParser = <span class="hljs-built_in">require</span>(<span class="hljs-string">'body-parser'</span>);
+<span class="hljs-keyword">var</span> methodOverride = <span class="hljs-built_in">require</span>(<span class="hljs-string">'method-override'</span>);
+<span class="hljs-keyword">var</span> app = express();
+<span class="hljs-keyword">var</span> config = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./app/config/config'</span>);</code></pre><p>接着，配置 Express 中间件：</p> <pre><code class="hljs lang-javascript">app.use(morgan(<span class="hljs-string">'dev'</span>)); <span class="hljs-comment">// log every request to the console</span>
+app.use(bodyParser.urlencoded({<span class="hljs-string">'extended'</span>:<span class="hljs-string">'true'</span>})); <span class="hljs-comment">// parse application/x-www-form-urlencoded</span>
+app.use(bodyParser.json()); <span class="hljs-comment">// parse application/json</span>
+app.use(bodyParser.json({ <span class="hljs-attr">type</span>: <span class="hljs-string">'application/vnd.api+json'</span> })); <span class="hljs-comment">// parse application/vnd.api+json as json</span>
+app.use(methodOverride());</code></pre><h3 id="-mongoose-">管理 Mongoose 连接</h3> <p>使用<code>mongoose.connect</code>将 MongoDB 和应用连接，这会和数据库建立连接。这就是连接 todoapi 数据库的最小操作，数据库跑在本地，默认端口是 27017。如果本地连接失败，试试将 localhost 换成 127.0.0.1。</p> <p>有时候本地主机名改变时会出现一些问题。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">//Connecting MongoDB using mongoose to our application</span>
+mongoose.connect(config.db);
+
+<span class="hljs-comment">//This callback will be triggered once the connection is successfully established to MongoDB</span>
+mongoose.connection.on(<span class="hljs-string">'connected'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Mongoose default connection open to '</span> + config.db);
+});
+
+<span class="hljs-comment">//Express application will listen to port mentioned in our configuration</span>
+app.listen(config.port, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err</span>)</span>{
+  <span class="hljs-keyword">if</span>(err) <span class="hljs-keyword">throw</span> err;
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"App listening on port "</span>+config.port);
+});</code></pre><p>使用下面的命令启动服务器：</p> <pre><code class="hljs lang-bash">//starting our node server
+> node server.js
+App listening on port 2000</code></pre><h2 id="-api-">为 API 编写测试用例</h2> <p>在 TDD（测试驱动开发）中，将所有可能的输入、输出以及错误纳入考虑，然后开始编写测试用例。来给我们的 Todo API 编写测试用例吧。</p> <h3 id="-">搭建测试环境</h3> <p>之前提到过，我们会使用 Mocha 作为测试运行器，Chai 作为断言库，用 Sinon.js 模拟 Todo model。首先安装单元测试环境：</p> <pre><code class="hljs lang-bash">> npm install mocha chai sinon sinon-mongoose --save</code></pre><p>使用 <code>sinon-mongoose</code> 模块来模拟 Mongoose 定义的 MongoDB 模型。</p> <p>现在，引入测试的依赖：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> sinon = <span class="hljs-built_in">require</span>(<span class="hljs-string">'sinon'</span>);
+<span class="hljs-keyword">var</span> chai = <span class="hljs-built_in">require</span>(<span class="hljs-string">'chai'</span>);
+<span class="hljs-keyword">var</span> expect = chai.expect;
+
+<span class="hljs-keyword">var</span> mongoose = <span class="hljs-built_in">require</span>(<span class="hljs-string">'mongoose'</span>);
+<span class="hljs-built_in">require</span>(<span class="hljs-string">'sinon-mongoose'</span>);
+
+<span class="hljs-comment">//Importing our todo model for our unit testing.</span>
+<span class="hljs-keyword">var</span> Todo = <span class="hljs-built_in">require</span>(<span class="hljs-string">'../../app/models/todo.model'</span>);</code></pre><h3 id="todo-api-">Todo API 的测试用例</h3> <p>编写单元测试时，需要同时考虑成功和出错的场景。</p> <p>对我们的 Todo API 来说，我们要给新建、删除、更新、查询 API 同时编写成功和出错的测试用例。我们使用 Mocha, Chai 和 Sinon.js 来编写测试。</p> <h4 id="-todo">获取所有 Todo</h4> <p>本小节，我们来编写从数据库获取所有 todo 的测试用例。需要同时为成功、出错场景编写，以确保代码在生产中的各种环境下都能正常工作。</p> <p>我们不会使用真实数据库来跑测试用例，而是用 <code>sinon.mock</code> 给 Todo schema 建立假数据模型，然后再测试期望的结果。</p> <p>来使用 <code>sinon.mock</code> 给 Todo model 据，然后使用 <code>find</code> 方法获取数据库中存储的所有 todo。</p> <pre><code class="hljs lang-javascript">    describe(<span class="hljs-string">"Get all todos"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
+         <span class="hljs-comment">// Test will pass if we get all todos</span>
+        it(<span class="hljs-string">"should return all todos"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">done</span>)</span>{
+            <span class="hljs-keyword">var</span> TodoMock = sinon.mock(Todo);
+            <span class="hljs-keyword">var</span> expectedResult = {<span class="hljs-attr">status</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">todo</span>: []};
+            TodoMock.expects(<span class="hljs-string">'find'</span>).yields(<span class="hljs-literal">null</span>, expectedResult);
+            Todo.find(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, result</span>) </span>{
+                TodoMock.verify();
+                TodoMock.restore();
+                expect(result.status).to.be.true;
+                done();
+            });
+        });
+
+        <span class="hljs-comment">// Test will pass if we fail to get a todo</span>
+        it(<span class="hljs-string">"should return error"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">done</span>)</span>{
+            <span class="hljs-keyword">var</span> TodoMock = sinon.mock(Todo);
+            <span class="hljs-keyword">var</span> expectedResult = {<span class="hljs-attr">status</span>: <span class="hljs-literal">false</span>, <span class="hljs-attr">error</span>: <span class="hljs-string">"Something went wrong"</span>};
+            TodoMock.expects(<span class="hljs-string">'find'</span>).yields(expectedResult, <span class="hljs-literal">null</span>);
+            Todo.find(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, result</span>) </span>{
+                TodoMock.verify();
+                TodoMock.restore();
+                expect(err.status).to.not.be.true;
+                done();
+            });
+        });
+    });</code></pre><h4 id="-new-todo">保存 New Todo</h4> <p>保存一个新的 todo，需要用一个示例任务来模拟 Todo model。使用我们创建的Todo model来检验 mongoose 的save 方法保存 todo 到数据库的结果。</p> <pre><code class="hljs lang-javascript">    <span class="hljs-comment">// Test will pass if the todo is saved</span>
+    describe(<span class="hljs-string">"Post a new todo"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
+        it(<span class="hljs-string">"should create new post"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">done</span>)</span>{
+            <span class="hljs-keyword">var</span> TodoMock = sinon.mock(<span class="hljs-keyword">new</span> Todo({ <span class="hljs-attr">todo</span>: <span class="hljs-string">'Save new todo from mock'</span>}));
+            <span class="hljs-keyword">var</span> todo = TodoMock.object;
+            <span class="hljs-keyword">var</span> expectedResult = { <span class="hljs-attr">status</span>: <span class="hljs-literal">true</span> };
+            TodoMock.expects(<span class="hljs-string">'save'</span>).yields(<span class="hljs-literal">null</span>, expectedResult);
+            todo.save(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, result</span>) </span>{
+                TodoMock.verify();
+                TodoMock.restore();
+                expect(result.status).to.be.true;
+                done();
+            });
+        });
+        <span class="hljs-comment">// Test will pass if the todo is not saved</span>
+        it(<span class="hljs-string">"should return error, if post not saved"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">done</span>)</span>{
+            <span class="hljs-keyword">var</span> TodoMock = sinon.mock(<span class="hljs-keyword">new</span> Todo({ <span class="hljs-attr">todo</span>: <span class="hljs-string">'Save new todo from mock'</span>}));
+            <span class="hljs-keyword">var</span> todo = TodoMock.object;
+            <span class="hljs-keyword">var</span> expectedResult = { <span class="hljs-attr">status</span>: <span class="hljs-literal">false</span> };
+            TodoMock.expects(<span class="hljs-string">'save'</span>).yields(expectedResult, <span class="hljs-literal">null</span>);
+            todo.save(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, result</span>) </span>{
+                TodoMock.verify();
+                TodoMock.restore();
+                expect(err.status).to.not.be.true;
+                done();
+            });
+        });
+    });</code></pre><h4 id="-id-todo">根据 ID 更新 Todo</h4> <p>本节我们来检验 API 的 update 功能。这和上面的例子很类似，除了我们要使用<code>withArgs</code>方法，模拟带有参数 ID 的 Todo model。</p> <pre><code class="hljs lang-javascript">  <span class="hljs-comment">// Test will pass if the todo is updated based on an ID</span>
+  describe(<span class="hljs-string">"Update a new todo by id"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
+    it(<span class="hljs-string">"should updated a todo by id"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">done</span>)</span>{
+      <span class="hljs-keyword">var</span> TodoMock = sinon.mock(<span class="hljs-keyword">new</span> Todo({ <span class="hljs-attr">completed</span>: <span class="hljs-literal">true</span>}));
+      <span class="hljs-keyword">var</span> todo = TodoMock.object;
+      <span class="hljs-keyword">var</span> expectedResult = { <span class="hljs-attr">status</span>: <span class="hljs-literal">true</span> };
+      TodoMock.expects(<span class="hljs-string">'save'</span>).withArgs({<span class="hljs-attr">_id</span>: <span class="hljs-number">12345</span>}).yields(<span class="hljs-literal">null</span>, expectedResult);
+      todo.save(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, result</span>) </span>{
+        TodoMock.verify();
+        TodoMock.restore();
+        expect(result.status).to.be.true;
+        done();
+      });
+    });
+    <span class="hljs-comment">// Test will pass if the todo is not updated based on an ID</span>
+    it(<span class="hljs-string">"should return error if update action is failed"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">done</span>)</span>{
+      <span class="hljs-keyword">var</span> TodoMock = sinon.mock(<span class="hljs-keyword">new</span> Todo({ <span class="hljs-attr">completed</span>: <span class="hljs-literal">true</span>}));
+      <span class="hljs-keyword">var</span> todo = TodoMock.object;
+      <span class="hljs-keyword">var</span> expectedResult = { <span class="hljs-attr">status</span>: <span class="hljs-literal">false</span> };
+      TodoMock.expects(<span class="hljs-string">'save'</span>).withArgs({<span class="hljs-attr">_id</span>: <span class="hljs-number">12345</span>}).yields(expectedResult, <span class="hljs-literal">null</span>);
+      todo.save(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, result</span>) </span>{
+        TodoMock.verify();
+        TodoMock.restore();
+        expect(err.status).to.not.be.true;
+        done();
+      });
+    });
+  });</code></pre><h4 id="-id-todo">根据 ID 删除 Todo</h4> <p>这是 Todo API 单元测试的最后一小节。本节我们将基于给定的 ID ，使用 mongoose 的 remove 方法，测试 API 的 delete 功能。</p> <pre><code class="hljs lang-javascript">    <span class="hljs-comment">// Test will pass if the todo is deleted based on an ID</span>
+    describe(<span class="hljs-string">"Delete a todo by id"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
+        it(<span class="hljs-string">"should delete a todo by id"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">done</span>)</span>{
+            <span class="hljs-keyword">var</span> TodoMock = sinon.mock(Todo);
+            <span class="hljs-keyword">var</span> expectedResult = { <span class="hljs-attr">status</span>: <span class="hljs-literal">true</span> };
+            TodoMock.expects(<span class="hljs-string">'remove'</span>).withArgs({<span class="hljs-attr">_id</span>: <span class="hljs-number">12345</span>}).yields(<span class="hljs-literal">null</span>, expectedResult);
+            Todo.remove({<span class="hljs-attr">_id</span>: <span class="hljs-number">12345</span>}, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, result</span>) </span>{
+                TodoMock.verify();
+                TodoMock.restore();
+                expect(result.status).to.be.true;
+                done();
+            });
+        });
+        <span class="hljs-comment">// Test will pass if the todo is not deleted based on an ID</span>
+        it(<span class="hljs-string">"should return error if delete action is failed"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">done</span>)</span>{
+            <span class="hljs-keyword">var</span> TodoMock = sinon.mock(Todo);
+            <span class="hljs-keyword">var</span> expectedResult = { <span class="hljs-attr">status</span>: <span class="hljs-literal">false</span> };
+            TodoMock.expects(<span class="hljs-string">'remove'</span>).withArgs({<span class="hljs-attr">_id</span>: <span class="hljs-number">12345</span>}).yields(expectedResult, <span class="hljs-literal">null</span>);
+            Todo.remove({<span class="hljs-attr">_id</span>: <span class="hljs-number">12345</span>}, <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">err, result</span>) </span>{
+                TodoMock.verify();
+                TodoMock.restore();
+                expect(err.status).to.not.be.true;
+                done();
+            });
+        });
+    });</code></pre><p>每次我们都要还原（restore） Todomock，确保下次它还能正常工作。</p> <p>每次运行测试用例的时候，所有的都会失败，因为我们的生产代码还没写好呢。我们会运行自动化测试，直至所有单元测试都通过。</p> <pre><code class="hljs lang-bash">> npm <span class="hljs-built_in">test</span>
+
+  Unit <span class="hljs-built_in">test</span> <span class="hljs-keyword">for</span> Todo API
+    Get all todo
+      1) should <span class="hljs-built_in">return</span> all todo
+      2) should <span class="hljs-built_in">return</span> error
+    Post a new todo
+      3) should create new post
+      4) should <span class="hljs-built_in">return</span> error, <span class="hljs-keyword">if</span> post not saved
+    Update a new todo by id
+      5) should updated a todo by id
+      6) should <span class="hljs-built_in">return</span> error <span class="hljs-keyword">if</span> update action is failed
+    Delete a todo by id
+      7) should delete a todo by id
+      8) should <span class="hljs-built_in">return</span> error <span class="hljs-keyword">if</span> delete action is failed
+
+  0 passing (17ms)
+  8 failing</code></pre><p>你在命令行终端上运行<code>npm test</code>的时候，会得到上面的输出信息，所有的测试用例都失败了。需要根据需求和单元测试用例来编写应用逻辑，使我们的程序更加稳定。</p> <h2 id="-">编写应用逻辑</h2> <p>下一步就是为 Todo API 编写真正的应用代码。我们会运行自动测试用例，一直重构，直到所有单元测试都通过。</p> <h2 id="-">配置路由</h2> <p>对客户端和服务端的 web 应用来说，路由配置是最重要的一部分。在我们的应用中，使用 Express Router 的实例来处理所有路由。来给我们的应用创建路由。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> express = <span class="hljs-built_in">require</span>(<span class="hljs-string">'express'</span>);
+<span class="hljs-keyword">var</span> router = express.Router();
+
+<span class="hljs-keyword">var</span> Todo = <span class="hljs-built_in">require</span>(<span class="hljs-string">'../models/todo.model'</span>);
+<span class="hljs-keyword">var</span> TodoController = <span class="hljs-built_in">require</span>(<span class="hljs-string">'../controllers/todo.controller'</span>)(Todo);
+
+<span class="hljs-comment">// Get all Todo</span>
+router.get(<span class="hljs-string">'/todo'</span>, TodoController.GetTodo);
+
+<span class="hljs-comment">// Create new Todo</span>
+router.post(<span class="hljs-string">'/todo'</span>, TodoController.PostTodo);
+
+<span class="hljs-comment">// Delete a todo based on :id</span>
+router.delete(<span class="hljs-string">'/todo/:id'</span>, TodoController.DeleteTodo);
+
+<span class="hljs-comment">// Update a todo based on :id</span>
+router.put(<span class="hljs-string">'/todo/:id'</span>, TodoController.UpdateTodo);
+
+<span class="hljs-built_in">module</span>.exports = router;</code></pre><h3 id="controller-">Controller（控制器）</h3> <p>现在我们差不多在教程的最后阶段了，开始来写控制器代码。在典型的 web 应用里，controller 控制着保存、检索数据的主要逻辑，还要做验证。来写Todo API 真正的控制器，运行自动化单元测试直至测试用例全部通过。</p> <pre><code class="hljs lang-javascript">    <span class="hljs-keyword">var</span> Todo = <span class="hljs-built_in">require</span>(<span class="hljs-string">'../models/todo.model'</span>);
+
+    <span class="hljs-keyword">var</span> TodoCtrl = {
+        <span class="hljs-comment">// Get all todos from the Database</span>
+        GetTodo: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">req, res</span>)</span>{
+            Todo.find({}, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err, todos</span>)</span>{
+              <span class="hljs-keyword">if</span>(err) {
+                res.json({<span class="hljs-attr">status</span>: <span class="hljs-literal">false</span>, <span class="hljs-attr">error</span>: <span class="hljs-string">"Something went wrong"</span>});
+                <span class="hljs-keyword">return</span>;
+              }
+              res.json({<span class="hljs-attr">status</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">todo</span>: todos});
+            });
+        },
+        <span class="hljs-comment">//Post a todo into Database</span>
+        PostTodo: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">req, res</span>)</span>{
+            <span class="hljs-keyword">var</span> todo = <span class="hljs-keyword">new</span> Todo(req.body);
+            todo.save(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err, todo</span>)</span>{
+              <span class="hljs-keyword">if</span>(err) {
+                res.json({<span class="hljs-attr">status</span>: <span class="hljs-literal">false</span>, <span class="hljs-attr">error</span>: <span class="hljs-string">"Something went wrong"</span>});
+                <span class="hljs-keyword">return</span>;
+              }
+              res.json({<span class="hljs-attr">status</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">message</span>: <span class="hljs-string">"Todo Saved!!"</span>});
+            });
+        },
+        <span class="hljs-comment">//Updating a todo status based on an ID</span>
+        UpdateTodo: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">req, res</span>)</span>{
+            <span class="hljs-keyword">var</span> completed = req.body.completed;
+            Todo.findById(req.params.id, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err, todo</span>)</span>{
+            todo.completed = completed;
+            todo.save(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err, todo</span>)</span>{
+              <span class="hljs-keyword">if</span>(err) {
+                res.json({<span class="hljs-attr">status</span>: <span class="hljs-literal">false</span>, <span class="hljs-attr">error</span>: <span class="hljs-string">"Status not updated"</span>});
+              }
+              res.json({<span class="hljs-attr">status</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">message</span>: <span class="hljs-string">"Status updated successfully"</span>});
+            });
+            });
+        },
+        <span class="hljs-comment">// Deleting a todo baed on an ID</span>
+        DeleteTodo: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">req, res</span>)</span>{
+          Todo.remove({<span class="hljs-attr">_id</span>: req.params.id}, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err, todos</span>)</span>{
+            <span class="hljs-keyword">if</span>(err) {
+              res.json({<span class="hljs-attr">status</span>: <span class="hljs-literal">false</span>, <span class="hljs-attr">error</span>: <span class="hljs-string">"Deleting todo is not successfull"</span>});
+              <span class="hljs-keyword">return</span>;
+            }
+            res.json({<span class="hljs-attr">status</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">message</span>: <span class="hljs-string">"Todo deleted successfully!!"</span>});
+          });
+        }
+    }
+
+<span class="hljs-built_in">module</span>.exports = TodoCtrl;</code></pre><h2 id="-">运行测试用例</h2> <p>现在我们完成了应用的测试用例和控制器逻辑两部分。来跑一下测试，看看最终结果：</p> <pre><code class="hljs lang-bash">> npm <span class="hljs-built_in">test</span>
+  Unit <span class="hljs-built_in">test</span> <span class="hljs-keyword">for</span> Todo API
+    Get all todo
+      ✓ should <span class="hljs-built_in">return</span> all todo
+      ✓ should <span class="hljs-built_in">return</span> error
+    Post a new todo
+      ✓ should create new post
+      ✓ should <span class="hljs-built_in">return</span> error, <span class="hljs-keyword">if</span> post not saved
+    Update a new todo by id
+      ✓ should updated a todo by id
+      ✓ should <span class="hljs-built_in">return</span> error <span class="hljs-keyword">if</span> update action is failed
+    Delete a todo by id
+      ✓ should delete a todo by id
+      ✓ should <span class="hljs-built_in">return</span> error <span class="hljs-keyword">if</span> delete action is failed
+
+  8 passing (34ms)</code></pre><p>最终结果显示，我们所有的测试用例都通过了。接下来的步骤应该是 API 重构，这包含着重复本教程提到的相同过程。</p> <h2 id="-">结论</h2> <p>通过本教程，我们学习了如果使用测试驱动开发的办法，用 Node.js and MongoDB 设计 API。尽管 TDD （测试驱动开发）给开发过程带来了额外复杂度，它能帮我们建立更稳定的、错误更少的应用。就算你不想实践 TDD， 至少也应该编写覆盖应用所有功能点的测试。</p> <p>如果你有任何问题或想法，请不吝留言。</p></div></article> <nav class="pagination"><a href="/post/Node.js-sh-scripts-Manager" title="Node.js .sh scripts Manager" class="prev">« Node.js .sh scripts Manager</a> <a href="/post/when-are-all-resources-all-loaded" title="判断资源并行加载完成的三种办法：计数、Promise及 $.Deferred" class="next">判断资源并行加载完成的三种办法：计数、Promise及 $.Deferred »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/8aeb8106c089d3360aba.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

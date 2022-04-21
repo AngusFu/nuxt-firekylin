@@ -1,0 +1,155 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 客户端存储 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,JavaScript,缓存,Client-Side Storage"><meta data-n-head="true" name="description" content="客户端存储"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-06-25</div></div> <h1 class="title">[译] 客户端存储</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="http://twitter.com/mahemoff">Michael Mahemoff</a> <br>原文地址:
+          <a target="_blank" href="http://www.html5rocks.com/en/tutorials/offline/storage/">http://www.html5rocks.com/en/tutorials/offline/storage/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/client-side-storage">http://www.wemlion.com/post/client-side-storage</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <h2 id="-">介绍</h2> <p>本文是关于客户端存储（client-side storage）的。这是一个通用术语，包含几个独立但相关的 API： Web Storage、Web SQL Database、Indexed Database 和 File Access。每种技术都提供了在用户硬盘上 —— 而非通常存储数据的服务器 —— 存储数据的独特方式。这么做主要基于以下两点理由：（a）使 web app 离线可用； （b）改善性能。对于客户端存储使用情况的详细阐述，请看 HTML5Rocks 上的文章 《<a href="http://www.html5rocks.com/tutorials/offline/whats-offline/" target="_blank">"离线": 这是什么意思？我为何要关心?</a>》。</p> <p>这些 API 有着类似的作用范围和规则。因此，在去看细节之前，我们先了解他们的共同之处吧。</p> <h2 id="-">共同特点</h2> <h3 id="-">基于客户端的存储</h3> <p>实际上，“客户端时间存储”的意思是，数据传给了浏览器的存储 API，它将数据存在本地设备中的一块区域，该区域同样也是它存储其他用户特定信息如个人偏好、缓存的地方。除了存储数据，这些 API 可以用来检索数据，且在某些情况下还能执行搜索和批处理操作。</p> <h3 id="-">置于沙盒中的</h3> <p>所有这四个存储 API 都将数据绑到一个单独的“源”（origin）上。例如，若 <a href="http://abc.example.com" target="_blank">http://abc.example.com</a> 保存了一些数据，那以后浏览器就只会允许 <a href="http://abc.example.com" target="_blank">http://abc.example.com</a> 获取这些数据。当我们谈论“源”（origin）的时候，这意味着域（domain）必须完全相同，所以 <a href="http://example.com" target="_blank">http://example.com</a> 和 <a href="http://def.example.com" target="_blank">http://def.example.com</a> 都不行。端口（port）也必须匹配，因此 <a href="http://abc.example.com:123" target="_blank">http://abc.example.com:123</a> 也是不能访问到 <a href="http://abc.example.com" target="_blank">http://abc.example.com</a> （端口默认为80）存储的数据。同样，协议也必须一样（像http vs https 等等）。</p> <h3 id="-quotas-">空间限制（Quotas）</h3> <p>你能想象，如果任何网站都被允许往毫不知情的硬盘里填充以千兆字节计的数据，该有多混乱。因此，浏览器对存储容量施加了限制。若你的应用试图超出限制，浏览器通常会显示一个对话框，让用户确认增加。您可能以为浏览器对单个源（origin）可使用的所有存储都加以同一单独的限制，但多数存储机制都是单独加以限制的。若 <a href="http://www.w3.org/TR/quota-api/" target="_blank">Quota API</a> 被采纳，这种情况可能会改变。但就现在来说，把浏览器当作一个二维矩阵，其维度分别是“源”（origin）和“存储”（storage）。例如， "<a href="http://abc.example.com" target="_blank">http://abc.example.com</a>" 可能会允许最多存 5MB 的 Web Storage， 25MB 的 Web SQL 数据库，但因用户拒绝访问被禁止使用 Indexed DataBase。 Quota API 将问题放到一起来看，让您查询还有多少可用空间，有多少空间正在使用。</p> <p>有些情况下，用户也能先看到有多少存储将被使用，例如，当用户在 Chrome 应用商店中安装一个应用时，他们将被提示预先接受其权限，其中包括存储限制。（而该应用的）manifest 中的可能有个值是 “unlimited_storage” （无限制存储）。</p> <h3 id="-transactions-">数据库处理（Transactions）</h3> <p>两个 “数据库” 的存储格式支持数据处理。目的和通常的关系型数据库使用数据处理是一样的：保证数据库完整。数据库处理（Transactions）防止 “竞争条件”（race conditions） —— 这种情况是：当两个操作序列在同一时间被应用到数据库中， 导致操作结果都无法被预测，而数据库也处于可疑的准确性（dubious accuracy）状态。</p> <h3 id="-synchronous-and-asynchronous-modes-">同步和异步模式（Synchronous and Asynchronous Modes）</h3> <p>多数存储格式都支持同步和异步模式。同步模式是阻塞的，意味着下一行 js 代码执行之前，存储操作会被完整执行。异步模式会使得后面的 js 代码在数据库操作完成之前执行。存储操作会背景环境中执行，当操作完成的时候，应用会以回调函数被调用这种形式接收通知，这个函数须在调用的时候被指定。</p> <p>应当尽量避免使用同步模式，它虽然看起来比较简单，但操作完成时它会阻塞页面渲染，在某些情况下甚至会冻结整个浏览器。你可能注意到网站乃至是应用出现这种情况，点击一个按钮，结果所有东西都用不了，当你还在想是不是崩溃了？结果一切又突然恢复正常了。</p> <p>某些 API 没有异步模式，如 “localStorage”， 使用这些API时，应当仔细做好性能监测，并随时准备切换到一个异步API，如果它造成了问题。</p> <h2 id="api-">API 概述及比较</h2> <h3 id="web-storage">Web Storage</h3> <p><a href="http://dev.w3.org/html5/webstorage/" target="_blank">Web Storage</a> 是一个叫做 <code>localStorage</code> 的持久对象。可以使用 <code>localStorage.foo = "bar"</code> 保存值，之后可以使用 <code>localStorage.foo</code> 获取到 —— 甚至是浏览器关闭之后重新打开。还可以使用一个叫做 <code>sessionStorage</code> 的对象，工作方式一样，只是当窗口关闭之后会被清除掉。</p> <p>Web Storage 是 <a href="http://en.wikipedia.org/wiki/NoSQL#Key-value_store" target="_blank">NoSQL 键值对储存（NoSQL key-value store）</a>的一种.</p> <h6 id="web-storage-">Web Storage 的优点</h6> <ol><li>数年以来，被所有现代浏览器支持， iOS 和 Android 系统下也支持（IE 从 IE8 开始支持 ）。</li> <li>简单的API签名。</li> <li>同步 API，调用简单。</li> <li>语义事件可保持其他标签和窗口同步。</li></ol> <h6 id="web-storage-">Web Storage 的弱点</h6> <ol><li>使用同步 API（这是得到最广泛支持的模式）存储大量的或者复杂的数据时性能差。</li> <li>缺少索引导致检索大量的或复杂的数据时性能差。（搜索操作需要手动遍历所有项。）</li> <li>存储或读取大量的或复杂的数据结构时性能差，因为需要手动序序列化成字符串或将字符串反序列化。主要的浏览器实现只支持字符串（尽管规范没这么说的）。</li> <li>需要保证数据的持续性和完整性，因为数据是有效非结构化（effectively unstructured）的。</li></ol> <h3 id="web-sql-database">Web SQL Database</h3> <p><a href="http://www.w3.org/TR/webdatabase/" target="_blank">Web SQL Database</a> 是一个结构化的数据库，具备典型 <a href="http://en.wikipedia.org/wiki/Structured_Query_Language" target="_blank">SQL驱动的关系数据库（SQL-powered relational database）</a>的所有功能和复杂度。Indexed Database 在两者之间。<a href="http://www.w3.org/TR/webdatabase/" target="_blank">Web SQL Database</a> 有自由形式的密钥值对，有点像 Web Storage，但也有能力从这些值来索引字段，所以搜索速度要快得多。</p> <h6 id="web-sql-database-">Web SQL Database 的优点</h6> <ol><li>被主要的移动浏览器（Android Browser, Mobile Safari, Opera Mobile）以及一些 PC 浏览器（Chrome, Safari, Opera） 支持。</li> <li>作为异步 API， 总体而言性能很好。数据库交互不会锁定用户界面。（同步API也可用于 WebWorkers。）</li> <li>良好的搜索性能，因为数据可以根据搜索键进行索引。</li> <li>强大，因为它支持<a href="http://en.wikipedia.org/wiki/Database_transaction" target="_blank">事务性数据库模型（transactional database model）</a>。</li> <li>刚性的数据结构更容易保持数据的完整性。</li></ol> <h6 id="web-sql-database-">Web SQL Database 的弱点</h6> <ol><li>过时，不会被 IE 或 Firefox 支持，在某些阶段可能会被从其他浏览器淘汰。</li> <li>学习曲线陡峭，要求掌握关系数据库和SQL的知识。</li> <li><a href="http://en.wikipedia.org/wiki/Object-relational_impedance_mismatch" target="_blank">对象-关系阻抗失配（object-relational impedance mismatch）</a>.</li> <li>降低敏捷性，因为数据库模式必须预先定义，与表中的所有记录必须匹配相同的结构。</li></ol> <h3 id="indexed-database-indexeddb-">Indexed Database (IndexedDB)</h3> <p>到目前为止，我们已经看到，Web Storage 和 Web SQL Database 都有各种的优势和弱点。 <a href="http://www.w3.org/TR/IndexedDB/" target="_blank">Indexed Database</a> 产生于这两个早期 API 的经验，可以看作是一种结合两者优点而不招致其劣势得到尝试。</p> <p>Indexed Database 是一个 “对象存储” （object stores） 的集合，可以直接把对象放进去。这个存储有点像 SQL 表，但在这种情况下，对象的结构没有约束，所以不需要预先定义什么。所以这和 Web Storage 有点像，拥有多个数据库、每个数据库又有多个存储（store）的特点。但不像 Web Storage那样， 还拥有重要的性能优势： 异步接口，可以在存储上创建索引，以提高搜索速度。</p> <h6 id="indexeddb-">IndexedDB 的优点</h6> <ol><li>作为异步API总体表现良好。数据库交互不会锁定用户界面。（同步 API 也可用于 WebWorkers。）</li> <li>良好的搜索性能，因为数据可以根据搜索键进行索引。</li> <li>支持版本控制。</li> <li>强大，因为它支持<a href="http://en.wikipedia.org/wiki/Database_transaction" target="_blank">事务性数据库模型（transactional database model）</a>。</li> <li>因为数据模型简单，学习曲线也相当简单。</li> <li>良好的浏览器支持: Chrome, Firefox, mobile FF, IE10.</li></ol> <h6 id="indexeddb-">IndexedDB 的弱点</h6> <ol><li>非常复杂的API，导致大量的嵌套回调。</li></ol> <h3 id="filesystem">FileSystem</h3> <p>上面的 API 都是适用于文本和结构化数据，但涉及到大文件和二进制内容时，我们需要一些其他的东西。幸运的是，我们现在有了<a href="http://dev.w3.org/2009/dap/file-system/file-dir-sys.html" target="_blank">文件系统 API 标准（FileSystem API standard）</a>。它给每个域一个完整的层次化的文件系统，至少在 Chrome 下面，这些都是用户的硬盘上的真正的文件。就单个文件的读写而言， API 建立在现有的 <a href="http://www.w3.org/TR/FileAPI/" target="_blank">File API</a>之上。</p> <h6 id="filesystem-api-">FileSystem（文件系统） API 的有点</h6> <ol><li>可以存储大量的内容和二进制文件，很适合图像，音频，视频，PDF，等。</li> <li>作为异步 API， 性能良好。</li></ol> <h6 id="filesystem-api-">FileSystem API 的弱点</h6> <ol><li>很早的标准，只有 Chrome 和 Opera 支持。</li> <li>没有事务（transaction）支持。</li> <li>没有内建的搜索/索引支持。</li></ol> <h2 id="-">来看代码</h2> <p>本部分比较不同的 API 如何解决同一个问题。这个例子是一个 “地理情绪”（geo-mood） 签到系统，在那里你可以记录你在时间和地点的情绪。接口可让你在数据库类型之间切换。当然，在现实情况中，这可能显得有点作（contrived），数据库类型肯定比其他的更有意义，文件系统 API 根本不适用于这种应用！但为了演示的目的，如果我们能看到使用不同方式达到同样的结果，这还是有帮助的。还得注意，为了保值可读性，一些代码片段是经过重构的。</p> <p><a href="http://www.html5rocks.com/en/tutorials/offline/storage/demo.html" target="_blank">现在可以来试试我们的“地理情绪”（geo-mood）应用。</a></p> <p>为了让 Demo 更有意思，我们将数据存储单独拿出来，使用<a href="http://en.wikipedia.org/wiki/Polymorphism_in_object-oriented_programming" target="_blank">标准的面向对象的设计技术（standard object-oriented design techniques）</a>。 UI 逻辑只知道有一个 store；它无需知道 store 是如何实现的，因为每个 store 的方法是一样的。因此 UI 层代码可以称为 <code>store.setup()</code>，<code>store.count()</code> 等等。实际上，我们的 store 有四种实现，每种对应一种存储类型。应用启动的时候，检查 URL 并实例化对应的 store。</p> <p>为了保持 API 的一致性，所有的方法都是异步的，即它们将结果返回给调用方。Web Storage 的实现甚至也是这样的，其底层实现是本地的。</p> <p>在下面的演示中，我们将跳过 UI 和定位逻辑，聚焦于存储技术。</p> <h3 id="-store">建立 Store</h3> <p>对 <strong>localStorage</strong>，我们做个简单的检验看存储是否存在。如果不存在，则新建一个数组，并将其存储在  localStorage 的 checkins（签到） 键下面。首先，我们使用 JSON 对象将结构序列化为字符串，因为大多数浏览器只支持字符串存储。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">if</span>  (!localStorage.checkins) localStorage.checkins = <span class="hljs-built_in">JSON</span>.stringify([]);</code></pre><p>对 <strong>Web SQL Database</strong>，数据库结构如果不存在的话，我们需要先创建。幸运的是，如果数据库不存在，<code>openDatabase</code> 方法会自动创建数据库；同样，使用 SQL 句 “if not exists” 可以确保新的 checkins 表 如果已经存在的话不会被重写。我们需要预先定义好数据结构，也就是， checkins 表每列的名称和类型。每一行数据代表一次签到。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">this</span>.db = openDatabase(<span class="hljs-string">'geomood'</span>, <span class="hljs-string">'1.0'</span>, <span class="hljs-string">'Geo-Mood Checkins'</span>, <span class="hljs-number">8192</span>);
+<span class="hljs-keyword">this</span>.db.transaction(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">tx</span>) </span>{
+    tx.executeSql(
+        <span class="hljs-string">"create table if not exists "</span>
+            + <span class="hljs-string">"checkins(id integer primary key asc, time integer, latitude float,"</span>
+            + <span class="hljs-string">"longitude float, mood string)"</span>,
+         [], <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+            <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"siucc"</span>); 
+        }
+    );
+});</code></pre><p><strong>Indexed Database</strong> 启动需要一些工作，因为它需要启用一个数据库版本系统。当我们连接数据库的时候要明确我们需要那个版本，如果当前数据库使用的是之前的版本或者还尚未被创建，会触发 <code>onupgradeneeded</code> 事件，当升级完成后 <code>onsuccess</code> 事件会被触发。如果无需升级，<code>onsuccess</code> 事件马上就会触发。</p> <p>另外一件事就是创建 “mood” 索引，以便之后能很快地查询到匹配的情绪。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> db;
+<span class="hljs-keyword">var</span> version = <span class="hljs-number">1</span>;
+<span class="hljs-built_in">window</span>.indexedStore = {};
+<span class="hljs-built_in">window</span>.indexedStore.setup = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">handler</span>) </span>{ <span class="hljs-comment">// attempt to open the database</span>
+    <span class="hljs-keyword">var</span> request = indexedDB.open(<span class="hljs-string">"geomood"</span>, version);  <span class="hljs-comment">// upgrade/create the database if needed</span>
+    request.onupgradeneeded =  <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">event</span>)  </span>{
+        <span class="hljs-keyword">var</span> db = request.result;
+        <span class="hljs-keyword">if</span>  (event.oldVersion &lt;  <span class="hljs-number">1</span>)  { <span class="hljs-comment">// Version 1 is the first version of the database.</span>
+            <span class="hljs-keyword">var</span> checkinsStore = db.createObjectStore(<span class="hljs-string">"checkins"</span>,  { <span class="hljs-attr">keyPath</span>:  <span class="hljs-string">"time"</span>  });
+            checkinsStore.createIndex(<span class="hljs-string">"moodIndex"</span>,  <span class="hljs-string">"mood"</span>,  { <span class="hljs-attr">unique</span>:  <span class="hljs-literal">false</span>  });
+        }
+        <span class="hljs-keyword">if</span>  (event.oldVersion &lt;  <span class="hljs-number">2</span>)  {
+            <span class="hljs-comment">// In future versions we'd upgrade our database here. </span>
+            <span class="hljs-comment">// This will never run here, because we're version 1.</span>
+        }
+        db = request.result;
+    };
+    request.onsuccess =  <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">ev</span>)  </span>{  <span class="hljs-comment">// assign the database for access outside</span>
+        db = request.result; handler();
+        db.onerror =  <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">ev</span>)  </span>{
+            <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"db error"</span>, <span class="hljs-built_in">arguments</span>);
+        };
+    };
+};</code></pre><p>最后，启动 <strong>FileSystem</strong>。我们会把每种签到 JSON 编码后放在单独的文件中，它们都在 “checkins/” 目录下面。同样这并非 FileSystem API 最合适的用途，但对演示来说还挺好。</p> <p>启动在整个文件系统中拿到一个控制手柄（handle），用来检查 “checkins/” 目录。如果目录不存在，使用 <code>getDirectory</code> 创建。</p> <pre><code class="hljs lang-javascript">setup:  <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">handler</span>)  </span>{
+    requestFileSystem(
+        <span class="hljs-built_in">window</span>.PERSISTENT,
+        <span class="hljs-number">1024</span>*<span class="hljs-number">1024</span>,
+        <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">fs</span>)  </span>{
+            fs.root.getDirectory(
+                <span class="hljs-string">"checkins"</span>,
+                {},  <span class="hljs-comment">// no "create" option, so this is a read op</span>
+                <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">dir</span>)  </span>{
+                    checkinsDir = dir;
+                    handler();
+                }, 
+                <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)  </span>{
+                    fs.root.getDirectory( <span class="hljs-string">"checkins"</span>,  {<span class="hljs-attr">create</span>:  <span class="hljs-literal">true</span>},  <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">dir</span>)  </span>{ checkinsDir = dir;
+                        handler();
+                    }, onError );
+                }
+            );
+        },
+        <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">e</span>)  </span>{
+            <span class="hljs-built_in">console</span>.log(<span class="hljs-string">"error "</span>+e.code+<span class="hljs-string">"initialising - see http://goo.gl/YW0TI"</span>);
+        }  
+    );
+}</code></pre><h3 id="-check-in-">保存一次签到 （Check-in）</h3> <p>使用 localStorage，我们只需要拿出 check-in 数组，在尾部添加一个，然后重新保存就行。我们还需要使用 JSON 对象的方法将其以字符串的方式存起来。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> checkins = <span class="hljs-built_in">JSON</span>.parse(localStorage[<span class="hljs-string">"checkins"</span>]);
+checkins.push(checkin);
+localStorage[<span class="hljs-string">"checkins"</span>] = <span class="hljs-built_in">JSON</span>.stringify(checkins);</code></pre><p>使用 Web SQL Database，所有的事情都在 transaction 中进行。我们要在 checkins 表 创建新的一行，这是一个简单的 SQL 调用，我们使用 “?” 语法，而不是把所有的签到数据都放到 “insert” 命令中，这样更整洁，也更安全。真正的数据——我们要保存的四个值——被放到第二行。“?” 元素会被这些值（<code>checkin.time</code>，<code>checkin.latitude</code>等等）替换掉。接下来的两个参数是操作完成之后被调用的函数，分别在成功和失败后调用。在这个应用中，我们对所有操作使用相同的通用错误处理程序。这样，成功回调函数就是我们传给搜索函数的句柄——确保句柄在成功的时候被调用，以便操作完成之后 UI 能接到通知（比如，更新目前为止的签到数量）。</p> <pre><code class="hljs lang-javascript">store.db.transaction(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">tx</span>) </span>{
+    tx.executeSql(
+        <span class="hljs-string">"insert into checkins "</span> + <span class="hljs-string">"(time, latitude, longitude, mood) values (?,?,?,?);"</span>, 
+        [checkin.time, checkin.latitude, checkin.longitude, checkin.mood],
+        handler, 
+        store.onError
+    ); 
+});</code></pre><p>一旦存储建立起来，将其存储到 IndexedDB 中就像 Web Storage 差不多简单，还有异步工作的优点。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> transaction = db.transaction(<span class="hljs-string">"checkins"</span>,  <span class="hljs-string">'readwrite'</span>); 
+transaction.objectStore(<span class="hljs-string">"checkins"</span>).put(checkin); 
+transaction.oncomplete = handler;</code></pre><p>使用 FileSystem API，新建文件并拿到相应的句柄，可以用 <a href="http://www.w3.org/TR/file-writer-api/" target="_blank">FileWriter API</a> 进行填充。</p> <pre><code class="hljs lang-javascript">fs.root.getFile(
+    <span class="hljs-string">"checkins/"</span> + checkin.time,
+    { <span class="hljs-attr">create</span>: <span class="hljs-literal">true</span>, <span class="hljs-attr">exclusive</span>: <span class="hljs-literal">true</span> }, 
+    <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">file</span>) </span>{
+        file.createWriter(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">writer</span>) </span>{
+            writer.onerror = fileStore.onError;
+            <span class="hljs-keyword">var</span> bb = <span class="hljs-keyword">new</span> WebKitBlobBuilder;
+            bb.append(<span class="hljs-built_in">JSON</span>.stringify(checkin));
+            writer.write(bb.getBlob(<span class="hljs-string">"text/plain"</span>));
+            handler(); }, fileStore.onError);
+    },
+    fileStore.onError
+);</code></pre><h3 id="-">搜索匹配项</h3> <p>接下来的函数找到所有匹配特定情绪的签到，例如，用户能看到他们在最近何时何地过得很开心。使用 localStorage， 我们必须手动遍历每次签到并将其与搜索的情绪对比，建立一个匹配列表。比较好的实践是返回存储数据的克隆，而不是实际的对象，因为搜索应该是一个只读的操作；所以我们将每个匹配的签到对象传递给通用的 <code>clone()</code> 方法进行操作。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> allCheckins = <span class="hljs-built_in">JSON</span>.parse(localStorage[<span class="hljs-string">"checkins"</span>]);
+<span class="hljs-keyword">var</span> matchingCheckins = [];
+allCheckins.forEach(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">checkin</span>) </span>{
+    <span class="hljs-keyword">if</span> (checkin.mood == moodQuery) {
+        matchingCheckins.push(clone(checkin));
+    } 
+});
+handler(matchingCheckins);</code></pre><p>使用  Web SQL Database，我们执行一次查询，只返回我们需要的行。但我们仍需要手动遍历来累计签到数据，因为数据库 API 返回的是数据库行，而不是一个数组。（对大的结果集来说这是好事，但就现在而言这增加了我们需要的工作！）</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> matchingCheckins = [];
+store.db.transaction(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">tx</span>) </span>{
+    tx.executeSql(
+        <span class="hljs-string">"select * from checkins where mood=?"</span>,
+        [moodQuery],
+        <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">tx, results</span>) </span>{
+            <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; results.rows.length; i++) {
+                matchingCheckins.push(clone(results.rows.item(i)));
+            }
+            handler(matchingCheckins); 
+        },
+        store.onError
+    );
+});</code></pre><p>当然，在 IndexedDB 解决方案使用索引，我们先前在 “mood” 表中创建的索引，称为“moodindex”。我们用一个指针遍历每次签到以匹配查询。注意这个指针模式也可以用于整个存储；因此，使用索引就像我们在商店里的一个窗口前，只能看到匹配的对象（类似于在传统数据库中的“视图”）。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> store = db.transaction(<span class="hljs-string">"checkins"</span>, <span class="hljs-string">'readonly'</span>).objectStore(<span class="hljs-string">"checkins"</span>);
+<span class="hljs-keyword">var</span> request = moodQuery ? store.index(<span class="hljs-string">"moodIndex"</span>).openCursor(<span class="hljs-keyword">new</span> IDBKeyRange.only(moodQuery)) : store.openCursor();
+request.onsuccess = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">ev</span>) </span>{
+    <span class="hljs-keyword">var</span> cursor = request.result;
+    <span class="hljs-keyword">if</span> (cursor) {
+        handler(cursor.value);
+        cursor[<span class="hljs-string">"continue"</span>]();
+    } 
+};</code></pre><p>与许多传统的文件系统一样，FileSystem API 没有索引，所以搜索算法（如 Unix中的 “grep” 命令）必须遍历每个文件。我们从 “checkins/” 目录中拿到 <a href="http://www.w3.org/TR/FileAPI/#dfn-filereader" target="_blank">Reader</a> API ，通过 <code>readentries()</code> 。对于每个文件，再使用一个 reader，使用 <code>readastext()</code> 方法检查其内容。这些操作都是异步的，我们需要使用 <code>readnext()</code> 将调用连在一起。</p> <pre><code class="hljs lang-javascript">checkinsDir.createReader().readEntries(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">files</span>) </span>{
+    <span class="hljs-keyword">var</span> reader, fileCount = <span class="hljs-number">0</span>,
+        checkins = [];
+    <span class="hljs-keyword">var</span> readNextFile = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+        reader = <span class="hljs-keyword">new</span> FileReader();
+        <span class="hljs-keyword">if</span> (fileCount == files.length) <span class="hljs-keyword">return</span>;
+        reader.onload = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">e</span>) </span>{
+            <span class="hljs-keyword">var</span> checkin = <span class="hljs-built_in">JSON</span>.parse(<span class="hljs-keyword">this</span>.result);
+            <span class="hljs-keyword">if</span> (moodQuery == checkin.mood || !moodQuery) handler(checkin);
+            readNextFile();
+        };
+
+        files[fileCount++].file(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">file</span>) </span>{
+            reader.readAsText(file);
+        });
+    };
+    readNextFile();
+});</code></pre><h3 id="-">匹配计数</h3> <p>最后，我们需要给所有签到计数。</p> <p>对localStorage，我们简单的反序列化签到数组，读取其长度。</p> <pre><code class="hljs lang-javascript">handler(<span class="hljs-built_in">JSON</span>.parse(localStorage[<span class="hljs-string">"checkins"</span>]).length);</code></pre><p>对 Web SQL Database，可以检索数据库中的每一行（<code>select * from checkins</code>），看结果集的长度。但如果我们知道我们在 SQL 中，有更容易和更快的方式 —— 我们可以执行一个特殊的 select 语句来检索计数。它将返回一行，其中一列包含计数。</p> <pre><code class="hljs lang-javascript">store.db.transaction(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">tx</span>) </span>{
+    tx.executeSql(<span class="hljs-string">"select count(*) from checkins;"</span>, [], <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">tx, results</span>) </span>{
+        handler(results.rows.item(<span class="hljs-number">0</span>)[<span class="hljs-string">"count(*)"</span>]);
+    }, store.onError);
+});</code></pre><p>不幸的是， IndexedDB 不提供任何计算方法，所以我们只能自己遍历。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> count = <span class="hljs-number">0</span>;
+<span class="hljs-keyword">var</span> request = db.transaction([<span class="hljs-string">"checkins"</span>], <span class="hljs-string">'readonly'</span>).objectStore(<span class="hljs-string">"checkins"</span>).openCursor();
+request.onsuccess = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">ev</span>) </span>{
+    <span class="hljs-keyword">var</span> cursor = request.result;
+    cursor ? ++count && cursor[<span class="hljs-string">"continue"</span>]() : handler(count);
+};</code></pre><p>对于文件系统， directory reader 的 <code>readentries()</code> 方法提供一个文件列表，所以我们返回该列表的长度就好。</p> <pre><code class="hljs lang-javascript">checkinsDir.createReader().readEntries(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">files</span>)  </span>{
+    handler(files.length);
+});</code></pre><h2 id="-">总结</h2> <p>本文从较高层次的角度，讲述了现代客户端存储技术。你也可以看看 <a href="http://www.html5rocks.com/en/tutorials/offline/whats-offline" target="_blank">《离线应用概述》（overview on offline apps）</a>这篇文章。</p></div></article> <nav class="pagination"><a href="/post/javascript-argument" title="关于JavaScript 函数传参" class="prev">« 关于JavaScript 函数传参</a> <a href="/post/queues-in-node.js" title="[译] Node.js 中的队列" class="next">[译] Node.js 中的队列 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/4d1c575f94114770f94b.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

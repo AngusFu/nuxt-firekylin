@@ -1,0 +1,198 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] Fetch 请求的本地缓存 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,JavaScript,优化,缓存"><meta data-n-head="true" name="description" content="Fetch 请求的本地缓存"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-08-27</div></div> <h1 class="title">[译] Fetch 请求的本地缓存</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://twitter.com/peterbe">Peter Bengtsson</a> <br>原文地址:
+          <a target="_blank" href="https://www.sitepoint.com/cache-fetched-ajax-requests/">https://www.sitepoint.com/cache-fetched-ajax-requests/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/cache-fetched-ajax-requests">http://www.wemlion.com/post/cache-fetched-ajax-requests</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p><strong>本文展示了如何使用实现 fetch 请求的本地缓存</strong>，遇到重复请求时，将会从 sessionStorage 中读取数据。这样做的好处是，无需为每个需要缓存的资源编写自定义代码。</p> <p>如果你想在 JavaScript 盛会中露露脸，秀秀如何玩转 Promise、最前沿的 API 和 localStorage，那就接着往下看吧。</p> <h2 id="fetch-api">Fetch API</h2> <p>此时此刻，你对 <a href="https://www.sitepoint.com/introduction-to-the-fetch-api/" target="_blank">fetch</a> 可能已经很熟悉了。它是浏览器提供的用以替代旧版的<code>XMLHttpRequest</code>的原生 API。</p> <div data-ratio="2.8" class="aspect-ratio" style="padding:17.857% 0" data-v-dcfc1626><iframe src="/caniuse/embed.html?feat=fetch&periods=future_1,current,past_1,past_2" width="100%" height="100%" scrolling="no" frameborder="0" allowfullscreen data-v-dcfc1626></iframe></div> <p>并非所有浏览器都完美支持 fetch，但你可以使用 <a href="https://github.com/github/fetch" target="_blank">GitHub 上的 fetch polyfill</a>（如果没事做，可以看看 <a href="https://fetch.spec.whatwg.org/" target="_blank">Fetch 标准</a>）。</p> <h2 id="-">原始替代版本</h2> <p>做个假设，我们准确了解需要下载的那个资源，并且只想下载一次。可以使用全局变量作为缓存，像下面这样：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">let</span> origin = <span class="hljs-literal">null</span>
+fetch(<span class="hljs-string">'https://httpbin.org/get'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.json())
+  .then(<span class="hljs-function"><span class="hljs-params">information</span> =></span> {
+    origin = information.origin  <span class="hljs-comment">// your client's IP</span>
+  })
+
+<span class="hljs-comment">// 需要延时以确保 fetch 完成</span>
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your origin is '</span> + origin)
+}, <span class="hljs-number">3000</span>)</code></pre><p><a href="http://codepen.io/SitePoint/pen/QEPEpB?editors=0010#0" target="_blank">On CodePen</a></p> <p>上面使用了全局变量来保存缓存的数据。马上可以发现问题，一旦刷新页面或者跳转到其他页面，缓存的数据就消失了。</p> <p>在剖析这个办法的短板之前，先将解决方案升级下。</p> <pre><code class="hljs lang-javascript">fetch(<span class="hljs-string">'https://httpbin.org/get'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.json())
+  .then(<span class="hljs-function"><span class="hljs-params">info</span> =></span> {
+    sessionStorage.setItem(<span class="hljs-string">'information'</span>, <span class="hljs-built_in">JSON</span>.stringify(info))
+  })
+
+<span class="hljs-comment">// 需要延时以确保 fetch 完成</span>
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> {
+  <span class="hljs-keyword">let</span> info = <span class="hljs-built_in">JSON</span>.parse(sessionStorage.getItem(<span class="hljs-string">'information'</span>))
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your origin is '</span> + info.origin)
+}, <span class="hljs-number">3000</span>)</code></pre><p><a href="http://codepen.io/SitePoint/pen/zBXBwg?editors=0010#0" target="_blank">On CodePen</a></p> <p>第一个问题是，<code>fetch</code> 是基于 Promise 的，意味着我们无法准确知晓 fetch 何时完成，因此在 fetch 完成之前，我们不能依赖它的执行。</p> <p>第二个问题是，该解决方案详细指定了 URL 和缓存的内容（本例中的 <code>information</code>）。我们需要一个基于 URL 的通用解决方案。</p> <h2 id="-">第一次的简单实现</h2> <p>在 <code>fetch</code>外面再包装一层，同样也返回 Promise。调用该方法时，我们并不关心结果是来源于网络还是本地缓存。</p> <p>之前你可能是这样做的：</p> <pre><code class="hljs lang-javascript">fetch(<span class="hljs-string">'https://httpbin.org/get'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.json())
+  .then(<span class="hljs-function"><span class="hljs-params">issues</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your origin is '</span> + info.origin)
+  })</code></pre><p><a href="http://codepen.io/SitePoint/pen/pbBbwQ?editors=0011" target="_blank">On CodePen</a></p> <p>现在加上一层包装，重复的网络请求可以通过本地缓存进行优化。我们将这个包装过的方法简单称作 <code>cachedFetch</code>，代码如下：</p> <pre><code class="hljs lang-javascript">cachedFetch(<span class="hljs-string">'https://httpbin.org/get'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.json())
+  .then(<span class="hljs-function"><span class="hljs-params">info</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your origin is '</span> + info.origin)
+  })</code></pre><p>该方法首次运行的时候，需要发出网络请求，并将结果缓存下来。第二次请求时，则会直接从本地存储中取出数据。</p> <p>首先试试简单地将 <code>fetch</code> 包装下：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> cachedFetch = <span class="hljs-function">(<span class="hljs-params">url, options</span>) =></span> {
+  <span class="hljs-keyword">return</span> fetch(url, options)
+}</code></pre><p><a href="http://codepen.io/SitePoint/pen/kXmXwm?editors=0010#0" target="_blank">On CodePen</a></p> <p>这当然能工作，不过没什么用。接下来，来实现获取数据的<strong>存储</strong>。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> cachedFetch = <span class="hljs-function">(<span class="hljs-params">url, options</span>) =></span> {
+  <span class="hljs-comment">// 将 URL 作为 sessionStorage 的 key</span>
+  <span class="hljs-keyword">let</span> cacheKey = url
+  <span class="hljs-keyword">return</span> fetch(url, options).then(<span class="hljs-function"><span class="hljs-params">response</span> =></span> {
+    <span class="hljs-comment">// 仅在结果为 JSON 或其他非二进制数据情况下缓存结果</span>
+    <span class="hljs-keyword">let</span> ct = response.headers.get(<span class="hljs-string">'Content-Type'</span>)
+    <span class="hljs-keyword">if</span> (ct && (ct.match(<span class="hljs-regexp">/application\/json/i</span>) || ct.match(<span class="hljs-regexp">/text\//i</span>))) {
+      <span class="hljs-comment">// 当然，除了 .text()，也有 .json() 方法</span>
+      <span class="hljs-comment">// 不过结果最终还是会以字符串形式存在 sessionStorage 中</span>
+      <span class="hljs-comment">// 如果不克隆 response，在其返回时就会被使用</span>
+      <span class="hljs-comment">// 这里用这种方式，保持非入侵性</span>
+      response.clone().text().then(<span class="hljs-function"><span class="hljs-params">content</span> =></span> {
+        sessionStorage.setItem(cacheKey, content)
+      })
+    }
+    <span class="hljs-keyword">return</span> response
+  })
+}</code></pre><p><a href="http://codepen.io/SitePoint/pen/yJAJok?editors=0012" target="_blank">On CodePen</a></p> <p>上面发生了不少事。</p> <p><code>fetch</code> 所返回的首个 Promise 实际上还是径直发出了 GET 请求。注意如果有 CORS（Cross-Origin Resource Sharing，跨域资源共享）的问题，<code>.text()</code>、<code>.json()</code> 、<code>.blob()</code> 这些方法不会工作。</p> <p>最有意思的点在于，我们需要<em>克隆</em>首个 Promise 返回的 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Response/clone" target="_blank">Response</a> 对象。如果不这样做，我们就介入过多，当该 Promise 的最终使用者调用如 <code>.json()</code> 这些方法时，会得到如下错误：</p> <pre><code class="hljs lang-javascript"><span class="hljs-built_in">TypeError</span>: Body has already been consumed.</code></pre><p>另外需要注意的一点是，需要注意响应类型：我们只存储状态码为 <code>200</code> <em>且</em>内容类型为 <code>application/json</code> 或 <code>text/*</code>的响应。因为 <code>sessionStorage</code> 只能存储文本数据。</p> <p>下面是使用示例：</p> <pre><code class="hljs lang-javascript">cachedFetch(<span class="hljs-string">'https://httpbin.org/get'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.json())
+  .then(<span class="hljs-function"><span class="hljs-params">info</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your origin is '</span> + info.origin)
+  })
+
+cachedFetch(<span class="hljs-string">'https://httpbin.org/html'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.text())
+  .then(<span class="hljs-function"><span class="hljs-params">document</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Document has '</span> + <span class="hljs-built_in">document</span>.match(<span class="hljs-regexp">/&lt;p>/</span>).length + <span class="hljs-string">' paragraphs'</span>)
+  })
+
+cachedFetch(<span class="hljs-string">'https://httpbin.org/image/png'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.blob())
+  .then(<span class="hljs-function"><span class="hljs-params">image</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Image is '</span> + image.size + <span class="hljs-string">' bytes'</span>)
+  })</code></pre><p>让人喜欢的是，这个解决方案到目前为止可以正常工作，也不会干扰 JSON <em>与</em> HTML 请求。当数据为图片的时候，它也不会试图将其存在 <code>sessionStorage</code> 中。</p> <h2 id="-">真实返回命中缓存的第二次实现</h2> <p>我们的第一次实现，仅仅只关心响应结果的<strong>存储</strong>。当你第二次调用 <code>cachedFetch</code> 时，并未试着从 <code>sessionStorage</code> 中<em>检索</em>任何内容。我们要做的，首先是返回一个 Promise，它需要返回一个 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Response/Response" target="_blank">Response 对象</a>。</p> <p>先看下最基本的实现：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> cachedFetch = <span class="hljs-function">(<span class="hljs-params">url, options</span>) =></span> {
+  <span class="hljs-comment">// 将 URL 作为 sessionStorage 的 key</span>
+  <span class="hljs-keyword">let</span> cacheKey = url
+
+  <span class="hljs-comment">// 命中缓存的新代码开始</span>
+  <span class="hljs-keyword">let</span> cached = sessionStorage.getItem(cacheKey)
+  <span class="hljs-keyword">if</span> (cached !== <span class="hljs-literal">null</span>) {
+    <span class="hljs-comment">// it was in sessionStorage! Yay!</span>
+    <span class="hljs-keyword">let</span> response = <span class="hljs-keyword">new</span> Response(<span class="hljs-keyword">new</span> Blob([cached]))
+    <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve(response)
+  }
+  <span class="hljs-comment">// 命中缓存的新代码结束</span>
+
+  <span class="hljs-keyword">return</span> fetch(url, options).then(<span class="hljs-function"><span class="hljs-params">response</span> =></span> {
+    <span class="hljs-comment">// 仅在结果为 JSON 或其他非二进制数据情况下缓存结果</span>
+    <span class="hljs-keyword">if</span> (response.status === <span class="hljs-number">200</span>) {
+      <span class="hljs-keyword">let</span> ct = response.headers.get(<span class="hljs-string">'Content-Type'</span>)
+      <span class="hljs-keyword">if</span> (ct && (ct.match(<span class="hljs-regexp">/application\/json/i</span>) || ct.match(<span class="hljs-regexp">/text\//i</span>))) {
+        <span class="hljs-comment">// 当然，除了 .text()，也有 .json() 方法</span>
+        <span class="hljs-comment">// 不过结果最终还是会以字符串形式存在 sessionStorage 中</span>
+        <span class="hljs-comment">// 如果不克隆 response，在其返回时就会被使用</span>
+        <span class="hljs-comment">// 这里用这种方式，保持非入侵性</span>
+        response.clone().text().then(<span class="hljs-function"><span class="hljs-params">content</span> =></span> {
+          sessionStorage.setItem(cacheKey, content)
+        })
+      }
+    }
+    <span class="hljs-keyword">return</span> response
+  })
+}</code></pre><p><a href="http://codepen.io/SitePoint/pen/qNwNPb?editors=0012" target="_blank">On CodePen</a></p> <p>这已经可以工作了！</p> <p>打开 <a href="http://codepen.io/SitePoint/pen/qNwNPb?editors=0012" target="_blank">CodePen</a> 查看上面代码的实际效果，记得开启浏览器开发者工具中的  Network tab。多点几次 “Run” 按钮（CodePen 的右上角），可以发现，只有图片被反复请求。</p> <p>本解决方案的好处是避免了“意面式回调”（callback spaghetti）。<code>sessionStorage.getItem</code> 的调用是同步的（也就是阻塞的），所以在 Promise 或者回调中无需应对“它在本地存储中是否存在？”这种问题。只要有内容，就返回缓存结果。否则就按正常逻辑执行。</p> <h2 id="-">考虑失效时间的第三次实现</h2> <p>到目前为止我们一直在使用 <code>sessionStorage</code>，它有点像 <code>localStorage</code>，除了在<strong>打开新页面</strong>时会被清除这一点。这意味着我们在使用一种“自然形式”，内容不会缓存很久。如果要使用 <code>localStorage</code> 来缓存内容，那就算远程内容改变了，浏览器还是会“永远”卡在本地内容。这太糟糕了。</p> <p>更好的解决办法是提供<em>用户</em>控制。（这里的用户指的是使用 <code>cachedFetch</code> 函数的 Web 开发者。）就像 Memcached 或 Redis 这些服务端存储一样，我们可以指定缓存的使用期。</p> <p>例如在 Python (with Flask) 中：</p> <pre><code class="hljs lang-bash">>>> from werkzeug.contrib.cache import MemcachedCache
+>>> cache = MemcachedCache([<span class="hljs-string">'127.0.0.1:11211'</span>])
+>>> cache.set(<span class="hljs-string">'key'</span>, <span class="hljs-string">'value'</span>, 10)
+True
+>>> cache.get(<span class="hljs-string">'key'</span>)
+<span class="hljs-string">'value'</span>
+>>> <span class="hljs-comment"># waiting 10 seconds</span>
+...
+>>> cache.get(<span class="hljs-string">'key'</span>)
+>>></code></pre><p>对此，目前 <code>sessionStorage</code> 和 <code>localStorage</code> 都没有内建的功能实现，所以需要自己手动来实现。通过对比存储与缓存命中时的时间戳，可以达成目的。</p> <p>在此之前，先看看大概应该长什么样子：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 使用默认过期时间，如 5 min</span>
+cachedFetch(<span class="hljs-string">'https://httpbin.org/get'</span>)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.json())
+  .then(<span class="hljs-function"><span class="hljs-params">info</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your origin is '</span> + info.origin)
+  })
+
+<span class="hljs-comment">// 传递以秒为单位的数值</span>
+cachedFetch(<span class="hljs-string">'https://httpbin.org/get'</span>, <span class="hljs-number">2</span> * <span class="hljs-number">60</span>)  <span class="hljs-comment">// 2 min</span>
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.json())
+  .then(<span class="hljs-function"><span class="hljs-params">info</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your origin is '</span> + info.origin)
+  })
+
+<span class="hljs-comment">// 和  fetch 选项放在一起，使用自定义的名字</span>
+<span class="hljs-keyword">let</span> init = {
+  <span class="hljs-attr">mode</span>: <span class="hljs-string">'same-origin'</span>,
+  <span class="hljs-attr">seconds</span>: <span class="hljs-number">3</span> * <span class="hljs-number">60</span> <span class="hljs-comment">// 3 min</span>
+}
+cachedFetch(<span class="hljs-string">'https://httpbin.org/get'</span>, init)
+  .then(<span class="hljs-function"><span class="hljs-params">r</span> =></span> r.json())
+  .then(<span class="hljs-function"><span class="hljs-params">info</span> =></span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'Your origin is '</span> + info.origin)
+  })</code></pre><p>最重要的来了，每次保存响应数据的时候，<em>也</em>需要记录<em>何时</em>存储的。现在我们也可以切换到 <code>localStorage</code> 上了。代码会保证我们不会命中过期的缓存，在 <code>localStorage</code> 中内容原本是持久化的。</p> <p>下面是最终的解决方案：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> cachedFetch = <span class="hljs-function">(<span class="hljs-params">url, options</span>) =></span> {
+  <span class="hljs-keyword">let</span> expiry = <span class="hljs-number">5</span> * <span class="hljs-number">60</span> <span class="hljs-comment">// 默认 5 min</span>
+  <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> options === <span class="hljs-string">'number'</span>) {
+    expiry = options
+    options = <span class="hljs-literal">undefined</span>
+  } <span class="hljs-keyword">else</span> <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> options === <span class="hljs-string">'object'</span>) {
+    <span class="hljs-comment">// 但愿你别设置为 0</span>
+    expiry = options.seconds || expiry
+  }
+  <span class="hljs-comment">// 将 URL 作为 localStorage 的 key</span>
+  <span class="hljs-keyword">let</span> cacheKey = url
+  <span class="hljs-keyword">let</span> cached = localStorage.getItem(cacheKey)
+  <span class="hljs-keyword">let</span> whenCached = localStorage.getItem(cacheKey + <span class="hljs-string">':ts'</span>)
+  <span class="hljs-keyword">if</span> (cached !== <span class="hljs-literal">null</span> && whenCached !== <span class="hljs-literal">null</span>) {
+    <span class="hljs-comment">// 耶！ 它在 localStorage 中</span>
+    <span class="hljs-comment">// 尽管 'whenCached' 是字符串</span>
+    <span class="hljs-comment">// 但减号运算符会将其转换为数字</span>
+    <span class="hljs-keyword">let</span> age = (<span class="hljs-built_in">Date</span>.now() - whenCached) / <span class="hljs-number">1000</span>
+    <span class="hljs-keyword">if</span> (age &lt; expiry) {
+      <span class="hljs-keyword">let</span> response = <span class="hljs-keyword">new</span> Response(<span class="hljs-keyword">new</span> Blob([cached]))
+      <span class="hljs-keyword">return</span> <span class="hljs-built_in">Promise</span>.resolve(response)
+    } <span class="hljs-keyword">else</span> {
+      <span class="hljs-comment">// 清除旧值</span>
+      localStorage.removeItem(cacheKey)
+      localStorage.removeItem(cacheKey + <span class="hljs-string">':ts'</span>)
+    }
+  }
+
+  <span class="hljs-keyword">return</span> fetch(url, options).then(<span class="hljs-function"><span class="hljs-params">response</span> =></span> {
+    <span class="hljs-comment">// 仅在结果为 JSON 或其他非二进制数据情况下缓存结果</span>
+    <span class="hljs-keyword">if</span> (response.status === <span class="hljs-number">200</span>) {
+      <span class="hljs-keyword">let</span> ct = response.headers.get(<span class="hljs-string">'Content-Type'</span>)
+      <span class="hljs-keyword">if</span> (ct && (ct.match(<span class="hljs-regexp">/application\/json/i</span>) || ct.match(<span class="hljs-regexp">/text\//i</span>))) {
+        <span class="hljs-comment">// 当然，除了 .text()，也有 .json() 方法</span>
+        <span class="hljs-comment">// 不过结果最终还是会以字符串形式存在 sessionStorage 中</span>
+        <span class="hljs-comment">// 如果不克隆 response，在其返回时就会被使用</span>
+        <span class="hljs-comment">// 这里用这种方式，保持非入侵性</span>
+        response.clone().text().then(<span class="hljs-function"><span class="hljs-params">content</span> =></span> {
+          localStorage.setItem(cacheKey, content)
+          localStorage.setItem(cacheKey+<span class="hljs-string">':ts'</span>, <span class="hljs-built_in">Date</span>.now())
+        })
+      }
+    }
+    <span class="hljs-keyword">return</span> response
+  })
+}</code></pre><p><a href="http://codepen.io/SitePoint/pen/KrYrXA?editors=0012" target="_blank">On CodePen</a></p> <h2 id="-">未来更好、更理想、更酷的实现</h2> <p>我们在避免过度变动 Web API，最棒的是 <code>localStorage</code> 可比依赖网络快得多了。看看这篇文章对 <code>localStorage</code> 和 XHR 的比较： <a href="https://www.peterbe.com/plog/localforage-vs.-xhr" target="_blank">localForage vs. XHR</a>。它还衡量了其他内容，但得出基本结论，<code>localStorage</code> 确实很快，磁盘缓存热身（disk-cache warm-ups，？不知如何翻译，请读者赐教）也很少出现。</p> <p>接下来，我们还能怎样改进方案呢？</p> <h3 id="-">处理二进制响应</h3> <p>我们的实现没有考虑缓存非文本的内容，如图片等等，但这并非不可能。需要一些更多的代码。特别的，我们可能想存储更多关于 <a href="https://developer.mozilla.org/en-US/docs/Web/API/Blob" target="_blank">Blob</a> 的信息。从根本上说，所有响应都是 Blob。对文本和 JSON 来说，它只是字符串数组，<code>type</code> 和 <code>size</code> 并不真正那么重要，因为从字符串本身就能识别出来。对二进制内容而言，需要将它们转换为 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/ArrayBuffer" target="_blank">ArrayBuffer</a>。</p> <p>关注更多内容，请看 <a href="http://codepen.io/SitePoint/pen/XKQKZv?editors=1010#0" target="_blank">CodePen</a> 上支持图片的实现。</p> <h3 id="-">使用哈希键值缓存</h3> <p>另外一点潜在的优化点是对用作 key 的每个 URL 进行哈希处理，使其变得更小，以空间换取速度（trade space for speed）。在上面的例子中，我们使用了很多非常短小整洁的 URL（如 <code>https://httpbin.org/get</code>），但如果你使用了大量的带有很多查询字符串的长 URL，这样做就很有意义了。</p> <p>办法之一是使用<a href="http://werxltd.com/wp/2010/05/13/javascript-implementation-of-javas-string-hashcode-method/" target="_blank">这个不错的算法</a>，以其安全快速而知名：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> hashstr = <span class="hljs-function"><span class="hljs-params">s</span> =></span> {
+  <span class="hljs-keyword">let</span> hash = <span class="hljs-number">0</span>;
+  <span class="hljs-keyword">if</span> (s.length == <span class="hljs-number">0</span>) <span class="hljs-keyword">return</span> hash;
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = <span class="hljs-number">0</span>; i &lt; s.length; i++) {
+    <span class="hljs-keyword">let</span> char = s.charCodeAt(i);
+    hash = ((hash&lt;&lt;<span class="hljs-number">5</span>)-hash)+char;
+    hash = hash & hash; <span class="hljs-comment">// Convert to 32bit integer</span>
+  }
+  <span class="hljs-keyword">return</span> hash;
+}</code></pre><p>如果觉得这个不错，看下 <a href="http://codepen.io/SitePoint/pen/LkvkON?editors=0012" target="_blank">CodePen</a>。在控制台上可以看到类似 <code>557027443</code> 这样的 key 值。</p> <h2 id="-">结语</h2> <p>现在我们拥有了一个可以使用在 web app 中的工作方案了，我们使用 Web API，并且知晓响应结果会很好地为用户缓存下来。</p> <p>最后一件事大概是这个扩展置于本文之外，将其作为一个真实、具体的项目，加上测试和 <code>README</code>，并发布到 npm 上 —— 换个时间再做吧！</p></div></article> <nav class="pagination"><a href="/post/better-keyboard-navigation-with-progressive-enhancement" title="[译] 渐进增强的键盘导航" class="prev">« [译] 渐进增强的键盘导航</a> <a href="/post/offline-storage-for-progressive-web-apps" title="[译] 渐进式 Web App 的离线存储" class="next">[译] 渐进式 Web App 的离线存储 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/bf002184ac9aa5345817.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

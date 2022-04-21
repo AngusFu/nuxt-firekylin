@@ -1,0 +1,163 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 手把手教你写一个 Javascript 框架：使用 ES6 Proxy 实现数据绑定 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,ES6,数据绑定"><meta data-n-head="true" name="description" content="手把手教你写一个 Javascript 框架：使用 ES6 Proxy 实现数据绑定"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-11-14</div></div> <h1 class="title">[译] 手把手教你写一个 Javascript 框架：使用 ES6 Proxy 实现数据绑定</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://blog.risingstack.com/author/bertalan/">Bertalan Miklos</a> <br>原文地址:
+          <a target="_blank" href="https://blog.risingstack.com/writing-a-javascript-framework-data-binding-es6-proxy/">https://blog.risingstack.com/writing-a-javascript-framework-data-binding-es6-proxy/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/es6-proxy-data-binding">http://www.wemlion.com/post/es6-proxy-data-binding</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p><strong>本文是“编写 JavaScript 框架”系列的第五章。在本章中，我将介绍如何使用 ES6 Proxy 实现简单、强大的数据绑定。</strong></p> <p>本系列主要是如何开发一个开源的客户端框架，框架名为 NX。我将在本系列中分享框架编写过程中如何克服遇到的主要困难。对 NX 感兴趣的朋友可以点击 NX 项目<a href="http://nx-framework.com" target="_blank">主页</a>查看。</p> <p>本系列章节如下：</p> <ul><li><a href="/post/nx-project-structure/">项目结构（Project structuring）</a></li> <li><a href="/post/execution-timing/">执行调度（Execution timing）</a></li> <li><a href="/post/sandbox-code-evaluation/">沙箱求值（Sandboxed code evaluation）</a></li> <li><a href="/post/data-bind-dirty-checking">数据绑定简介</a></li> <li>ES6 Proxy 实现数据绑定 (本文)</li> <li>自定义元素 </li> <li>客户端路由</li></ul> <h2 id="-">知识回顾</h2> <p>ES6 让 JavaScript 变得更加优雅，但多数新特性不过是语法糖罢了。Proxy 是少数几个无法 polyfill 的新增特性。如果还不太熟悉 Proxy，请先看一眼 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Proxy" target="_blank">MDN 上的 Proxy 文档</a>。</p> <p>如果对 ES6 中的 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect" target="_blank">Reflection API</a>、<a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Set" target="_blank">Set</a>、 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Map" target="_blank">Map</a> 以及 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/WeakMap" target="_blank">WeakMap</a> 有所了解，那便是极好的。</p> <h2 id="nx-observe">nx-observe</h2> <p><a href="https://github.com/RisingStack/nx-observe" target="_blank">nx-observe</a> 是一个不到 140 行代码的数据绑定方案。对外暴露的 <code>observable(obj)</code> 、<code>observe(fn)</code>二者分别用于创建 observable 和 observer 函数。当使用到的 observable 对象发生属性变化时，observer 函数将自动执行。示例如下：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 这是一个 observable object</span>
+<span class="hljs-keyword">const</span> person = observable({<span class="hljs-attr">name</span>: <span class="hljs-string">'John'</span>, <span class="hljs-attr">age</span>: <span class="hljs-number">20</span>})
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">print</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`<span class="hljs-subst">${person.name}</span>, <span class="hljs-subst">${person.age}</span>`</span>)
+}
+
+<span class="hljs-comment">// 创建一个 observer 函数</span>
+<span class="hljs-comment">// 控制台打印出 'John, 20'</span>
+observe(print)
+
+<span class="hljs-comment">// 控制台打印出 'Dave, 20'</span>
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> person.name = <span class="hljs-string">'Dave'</span>, <span class="hljs-number">100</span>)
+
+<span class="hljs-comment">// 控制台打印出 'Dave, 22'</span>
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> person.age = <span class="hljs-number">22</span>, <span class="hljs-number">200</span>)</code></pre><p>每当 <code>person.name</code> 或 <code>person.age</code> 发生变化，传给 <code>observe()</code> 的 <code>print</code> 函数就会重新运行。在这里，<code>print</code> 被称为 observer 函数。</p> <p>如果对更多例子感兴趣，可以点开 <a href="https://github.com/RisingStack/nx-observe#example" target="_blank">GitHub readme</a> 或 <a href="http://nx-framework.com/docs/spa/observer" target="_blank">NX 主页</a>，看看更逼真的场景。</p> <h2 id="-observable">实现简单的 observable</h2> <p>接下来的小节解释 nx-observe 底层发生了什么。首先介绍 observable 对象的属性变化是如何被侦测到的，又是如何匹配 observer 的。然后再展示怎样运行这些由变化触发的 observer 函数。</p> <h3 id="-">注册变化</h3> <p>变化是通过由 ES6 Proxy 包装后的 observable 对象注册的。在 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Reflect" target="_blank">Reflection API</a> 的协助下，这些 proxy 能够完美拦截 get 和 set 操作。</p> <p>下面代码中使用的 <code>currentObserver</code> 和 <code>queueObserver()</code> 会在下一节中解释。目前只需要知道，<code>currentObserver</code> 总是指向当前执行的 observer 函数，<code>queueObserver()</code> 把即将执行的 observer 加入队列。</p> <pre><code class="hljs lang-javascript">
+<span class="hljs-comment">/* 将 observable 对象的属性映射到
+   那些使用了这些属性的 observer 函数集合中 */</span>
+<span class="hljs-keyword">const</span> observers = <span class="hljs-keyword">new</span> <span class="hljs-built_in">WeakMap</span>()
+
+<span class="hljs-comment">/* 指向当前正在执行的 observer 函数，
+   也可能是 undefined */</span>
+<span class="hljs-keyword">let</span> currentObserver
+
+<span class="hljs-comment">/* 将对象包装成 proxy，从而将其转换为 observable 对象，
+   还为 observers 添加了一个空 Map，
+   用于保存 property-observer 组合 */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">observable</span> (<span class="hljs-params">obj</span>) </span>{
+  observers.set(obj, <span class="hljs-keyword">new</span> <span class="hljs-built_in">Map</span>())
+  <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Proxy</span>(obj, {get, set})
+}
+
+<span class="hljs-comment">/* 拦截 get 操作，若当前没有正在
+   执行的 observer，则不会做任何事 */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get</span> (<span class="hljs-params">target, key, receiver</span>) </span>{
+  <span class="hljs-keyword">const</span> result = <span class="hljs-built_in">Reflect</span>.get(target, key, receiver)
+   <span class="hljs-keyword">if</span> (currentObserver) {
+     registerObserver(target, key, currentObserver)
+   }
+  <span class="hljs-keyword">return</span> result
+}
+
+<span class="hljs-comment">/* 若当前有 observer 函数正在运行，
+   本函数会将该 observer 函数与
+   当前取到的 observable 对象的属性进行配对，
+   并将它们保存到 observers Map 中 */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">registerObserver</span> (<span class="hljs-params">target, key, observer</span>) </span>{
+  <span class="hljs-keyword">let</span> observersForKey = observers.get(target).get(key)
+  <span class="hljs-keyword">if</span> (!observersForKey) {
+    observersForKey = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>()
+    observers.get(target).set(key, observersForKey)
+  }
+  observersForKey.add(observer)
+}
+
+<span class="hljs-comment">/* 拦截 set 操作，与当前设置的属性相关联的
+   所有 observer 加入执行队列 */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">set</span> (<span class="hljs-params">target, key, value, receiver</span>) </span>{
+  <span class="hljs-keyword">const</span> observersForKey = observers.get(target).get(key)
+  <span class="hljs-keyword">if</span> (observersForKey) {
+    observersForKey.forEach(queueObserver)
+  }
+  <span class="hljs-keyword">return</span> <span class="hljs-built_in">Reflect</span>.set(target, key, value, receiver)
+}</code></pre><p>尚未设置 <code>currentObserver</code> 时，<code>get</code> 不会做任何事情。否则，<code>get</code> 操作会将拿到的 observable 对象属性与当前运行的 observer 函数组合（pair）在一起，保存到 <code>observers</code> WeakMap 中。对于 observable 对象的每个属性，observer 函数都保存在一个 <code>Set</code> 中。这样可以保证不会出现重复。</p> <p><code>set</code> 会检索所有与 observable 对象变动的属性相关的 observer，并将它们加入稍后执行的队列。</p> <p>下图展示了前面的例子的执行步骤。</p> <p><img alt="JavaScript data binding with es6 proxy - observable code sample"></p> <ol><li>创建 observable 对象 <code>person</code>；</li> <li><code>currentObserver</code> 被设为 <code>print</code>；</li> <li><code>print</code> 开始执行；</li> <li>在 <code>print</code> 内部检索到 <code>person.name</code>；</li> <li>在 <code>person</code> 上触发 <code>get</code>；</li> <li><code>observers.get(person).get('name')</code> 检索到 <code>(person, name)</code> 组合的 observer Set；</li> <li><code>currentObserver</code> (print) 被添加到 observer Set 中；</li> <li>对 <code>person.age</code>，同理，执行前面 4-7 步；</li> <li><code>${person.name}, ${person.age}</code> 打印出来；</li> <li><code>print</code> 函数执行结束；</li> <li><code>currentObserver</code> 变为 undefined；</li> <li>其他代码开始运行；</li> <li>设置 <code>person.age</code> 为新的值（22）；</li> <li><code>person</code> 上触发 <code>set</code>；</li> <li><code>observers.get(person).get('age')</code> 检索到 <code>(person, age)</code> 组合的 observer Set，</li> <li>observer Set 中的 observer（包括 <code>print</code>）入队准备执行；</li> <li>再次执行 <code>print</code>。</li></ol> <h3 id="observer-">observer 执行</h3> <p>队列中的 observer 是分批异步执行的，因此性能很好。注册期间，这些 observer 被异步地添加到 <code>queuedObservers</code> <code>Set</code> 中。<code>Set</code> 中不会包含重复元素，所以多次加入同一个 observer 也不会导致重复执行。如果该 <code>Set</code> 之前是空的，则会加入新的任务，在一段时间后迭代执行队列中所有的 observer。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/* 包含触发的将要执行的 observer 函数 */</span>
+<span class="hljs-keyword">const</span> queuedObservers = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Set</span>()
+
+<span class="hljs-comment">/* 指向当前正在执行的 observer 函数，
+   也可能是 undefined */</span>
+<span class="hljs-keyword">let</span> currentObserver
+
+<span class="hljs-comment">/* 暴露的 observe 函数 */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">observe</span> (<span class="hljs-params">fn</span>) </span>{
+  queueObserver(fn)
+}
+
+<span class="hljs-comment">/* 将 observer 添加到队列中，
+   并确保队列会尽快执行 */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">queueObserver</span> (<span class="hljs-params">observer</span>) </span>{
+  <span class="hljs-keyword">if</span> (queuedObservers.size === <span class="hljs-number">0</span>) {
+    <span class="hljs-built_in">Promise</span>.resolve().then(runObservers)
+  }
+  queuedObservers.add(observer)
+}
+
+<span class="hljs-comment">/* 执行队列中的 observer，
+   完成后 currentObserver 置为 undefined */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">runObservers</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-keyword">try</span> {
+    queuedObservers.forEach(runObserver)
+  } <span class="hljs-keyword">finally</span> {
+    currentObserver = <span class="hljs-literal">undefined</span>
+    queuedObservers.clear()
+  }
+}
+
+<span class="hljs-comment">/* 将全局的 currentObserver 变量
+  指向 observer 并执行 */</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">runObserver</span> (<span class="hljs-params">observer</span>) </span>{
+  currentObserver = observer
+  observer()
+}</code></pre><p>执行某一个 observer 时，上面的代码确保全局变量 <code>currentObserver</code> 指向该 observer。设置  <code>currentObserver</code>，会启用 <code>get</code>，监听、匹配执行时用到的 observable 对象的所有属性。</p> <h2 id="-observable-tree">建立动态 observable tree</h2> <p>到目前为止，模型结合单层数据结构使用起来还挺好，但还需要用 observable 手动包装那些值是对象的属性。比如，下面的代码就没法达到预期：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> person = observable({<span class="hljs-attr">data</span>: {<span class="hljs-attr">name</span>: <span class="hljs-string">'John'</span>}})
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">print</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(person.data.name)
+}
+
+<span class="hljs-comment">// 控制台打印出 'John'</span>
+observe(print)
+
+<span class="hljs-comment">// does nothing</span>
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> person.data.name = <span class="hljs-string">'Dave'</span>, <span class="hljs-number">100</span>)</code></pre><p>为了让代码正常工作，还需要将 <code>observable({data: {name: 'John'}})</code> 替换成 <code>observable({data: observable({name: 'John'})})</code>。幸运的是，稍微修改一下 <code>get</code> 就能解决问题。</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">get</span> (<span class="hljs-params">target, key, receiver</span>) </span>{
+  <span class="hljs-keyword">const</span> result = <span class="hljs-built_in">Reflect</span>.get(target, key, receiver)
+  <span class="hljs-keyword">if</span> (currentObserver) {
+    registerObserver(target, key, currentObserver)
+    <span class="hljs-keyword">if</span> (<span class="hljs-keyword">typeof</span> result === <span class="hljs-string">'object'</span>) {
+      <span class="hljs-keyword">const</span> observableResult = observable(result)
+      <span class="hljs-built_in">Reflect</span>.set(target, key, observableResult, receiver)
+      <span class="hljs-keyword">return</span> observableResult
+    }
+  }
+  <span class="hljs-keyword">return</span> result
+}</code></pre><p>如果要返回的值是对象，那么在返回之前，<code>get</code> 会将其包装成 observable 对象。从性能方面来看也很完美，只会在需要的时候才会创建 observable 对象。</p> <h2 id="-es5-">与 ES5 对比</h2> <p>利用 ES5 的属性访问器（getter/setter）也能实现类似的数据绑定。很多流行的框架/库都在使用，如 <a href="https://mobxjs.github.io/mobx/" target="_blank">MobX</a> 和 <a href="https://vuejs.org/" target="_blank">Vue</a>。相较于访问器，使用 Proxy 有两大优势，也有一点不足之处。</p> <h3 id="-">扩展属性</h3> <p>在 JavaScript 中，扩展属性（Expando properties） 是指动态添加的属性。ES5 技术不支持扩展属性，每个属性的访问器都必须预先定义才能实现拦截操作。这也是为何当今预定义的键值集合成为趋势的原因。</p> <p>而 Proxy 技术可以真正支持扩展属性，因为 Proxy 是按照单个对象定义的，对象的所有属性操作都可以拦截。</p> <p>扩展属性很重要，典型例子就是数组。离开添加、删除功能，JavaScript 数组几乎毫无用处。针对此问题，ES5 数据绑定技术通常自定义数组方法，或者干脆重写。</p> <h3 id="getter-setter">getter 和 setter</h3> <p>通过某些特殊的语法，一些使用 ES5 方法的框架/库提供 <code>computed</code> 绑定属性。这些属性都有相应的原生实现，即 getter 和 setter。因为内部使用 getter 和 setter 实现数据绑定逻辑，那么也就无法再利用属性访问器了。</p> <p>而 Proxy 可以拦截包括 getter 和 setter 在内的所有类型的属性访问和变动，所以这对 ES6 方法来说不构成问题。</p> <h3 id="-">不足之处</h3> <p>使用 Proxy 最大的不足还是在于浏览器支持。只有<a href="http://caniuse.com/#feat=proxy" target="_blank">比较新的浏览器</a>才支持，而 Proxy API 最精华的部分却无法通过 polyfill 实现。</p> <h2 id="-">一点笔记</h2> <p>上面介绍的数据绑定方法能够工作，但为了更容易理解，我进行了一些简化处理。下面会提到一些之前没有提到的问题。</p> <h3 id="-">垃圾清理</h3> <p>内存泄漏比较恶心。前面的代码在某种意义上来说有所避免，因为使用了 <code>WeakMap</code> 保存 observer。因此，observable  对象及与其关联的 observer 也会同时被回收。</p> <p>不过，实际使用场景常常是中心化、持久化的存储，伴随着频繁的 DOM 变动。这种情况下，DOM 在垃圾回收之前，必须释放所有为其注册的 observer。前面的例子并没有实现该功能，但可以在 <a href="https://github.com/RisingStack/nx-observe/blob/master/observer.js" target="_blank">nx-observe 的代码</a> 中可以看到 <code>unobserve()</code> 方法如何实现。</p> <h3 id="-">多次包装</h3> <p>Proxy 是透明的，没有分辨 Proxy 和普通对象的原生方法。此外，它们还能无限嵌套，若不进行必要的预防，最终可能导致不停地对 observable 对象进行包装。</p> <p>分辨 Proxy 与普通对象的办法有很多，例子中没有提到。其中一种办法是设置一个名为 <code>proxies</code> 的 <code>WeakSet</code> 对象，之后检查该 WeakSet 中是否存在某个 Proxy 对象即可。如果对 nx-observe 中的 <code>isObservable()</code> 方法感兴趣，可以去看<a href="https://github.com/RisingStack/nx-observe/blob/master/observer.js" target="_blank">代码</a>。</p> <h3 id="-">继承</h3> <p>nx-observe 还能与原型继承搭配工作。请看示例：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> parent = observable({<span class="hljs-attr">greeting</span>: <span class="hljs-string">'Hello'</span>})
+<span class="hljs-keyword">const</span> child = observable({<span class="hljs-attr">subject</span>: <span class="hljs-string">'World!'</span>})
+<span class="hljs-built_in">Object</span>.setPrototypeOf(child, parent)
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">print</span> (<span class="hljs-params"></span>) </span>{
+  <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`<span class="hljs-subst">${child.greeting}</span> <span class="hljs-subst">${child.subject}</span>`</span>)
+}
+
+<span class="hljs-comment">// 控制台打印出 'Hello World!'</span>
+observe(print)
+
+<span class="hljs-comment">// 控制台打印出 'Hello There!'</span>
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> child.subject = <span class="hljs-string">'There!'</span>)
+
+<span class="hljs-comment">// 控制台打印出 'Hey There!'</span>
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> parent.greeting = <span class="hljs-string">'Hey'</span>, <span class="hljs-number">100</span>)
+
+<span class="hljs-comment">// 控制台打印出 'Look There!'</span>
+setTimeout(<span class="hljs-function"><span class="hljs-params">()</span> =></span> child.greeting = <span class="hljs-string">'Look'</span>, <span class="hljs-number">200</span>)</code></pre><p>沿着原型链中的每个对象都会触发 <code>get</code> 操作，直到找到属性，因此在所有可能需要的地方都会注册 observer。</p> <p>还有一个鲜为人知事情，<code>set</code> 操作同样会（偷偷摸摸地）沿着原型链进行。有些极端情况就是因此造成的，这里略过不谈。</p> <h3 id="-">内部属性</h3> <p>Proxy 还能拦截“内部属性访问”。你的代码中可能会使用许多通常基本都不考虑的内部属性。这样一些属性，通常会使用如 <a href="https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Symbol" target="_blank">Symbol</a> 这样的值作为 key。这些属性也通常也能被 Proxy 拦截到，不过也也会有一些出现 bug 的情况。</p> <h3 id="-">异步特性</h3> <p>拦截到 <code>set</code>  操作时，observer 可以同步运行。这样有一些优势，比如减低复杂度，时序也可预测，堆栈跟踪更优雅。但某些场景下也会造成混乱。</p> <p>想象一下，在单个循环中向6一个 observable 数组中添加 1000 项。数组长度会变化一千次，关联的 observer 也会在接连执行一千次。这恐怕不是什么好事。</p> <p>另一个场景是双向观测。如若 observer 同步执行，下面的代码会造成无限循环。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> observable1 = observable({<span class="hljs-attr">prop</span>: <span class="hljs-string">'value1'</span>})
+<span class="hljs-keyword">const</span> observable2 = observable({<span class="hljs-attr">prop</span>: <span class="hljs-string">'value2'</span>})
+
+observe(<span class="hljs-function"><span class="hljs-params">()</span> =></span> observable1.prop = observable2.prop)
+observe(<span class="hljs-function"><span class="hljs-params">()</span> =></span> observable2.prop = observable1.prop)</code></pre><p>鉴于这些，nx-observe 将 observer 添加到不允许重复的队列中一起执行，以避免<a href="https://en.wikipedia.org/wiki/Flash_of_unstyled_content" target="_blank">无样式内容闪动</a>。如果你对 microtask 的概念还不熟悉，请查看我之前关于浏览器时间控制的<a href="https://blog.risingstack.com/writing-a-javascript-framework-execution-timing-beyond-settimeout/" target="_blank">文章</a>。</p> <h2 id="-">写在最后</h2> <p>如果对 NX 框架感兴趣，请访问 <a href="http://nx-framework.com" target="_blank">主页</a>。胆大的读者还可以在Github 上查看 <a href="https://github.com/RisingStack/nx-framework" target="_blank">NX 源码</a> 和 <a href="https://github.com/RisingStack/nx-observe" target="_blank">nx-observe 源码</a>。 </p> <p>希望你喜欢这篇文章，下一章我们将讨论自定义 HTML 元素。</p> <h2 id="-">译者补记</h2> <p>关于 Proxy，可以参阅：</p> <ul><li><p><a href="http://es6.ruanyifeng.com/#docs/proxy" target="_blank">ECMAScript 6 入门</a></p></li> <li><p><a href="http://exploringjs.com/es6/ch_proxies.html" target="_blank">Metaprogramming with proxies</a></p></li> <li><p><a href="http://www.2ality.com/2016/11/proxying-builtins.html" target="_blank">Pitfall: not all objects can be proxied transparently</a></p></li> <li><p><a href="http://pinggod.com/2016/%E5%AE%9E%E4%BE%8B%E8%A7%A3%E6%9E%90-ES6-Proxy-%E4%BD%BF%E7%94%A8%E5%9C%BA%E6%99%AF/" target="_blank">实例解析 ES6 Proxy 使用场景</a></p></li> <li><p><a href="http://www.cnblogs.com/ziyunfei/p/3187867.html" target="_blank">ES6中的代理对象</a></p></li></ul></div></article> <nav class="pagination"><a href="/post/data-bind-dirty-checking" title="[译] 手把手教你写一个 Javascript 框架：数据绑定" class="prev">« [译] 手把手教你写一个 Javascript 框架：数据绑定</a> <a href="/post/ie-filter" title="笔记：IE 下透明度问题" class="next">笔记：IE 下透明度问题 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/e39d14ea4eebe0ad871b.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

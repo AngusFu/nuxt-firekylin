@@ -1,0 +1,44 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">记一种水平垂直居中的办法 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,CSS"><meta data-n-head="true" name="description" content><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2015-04-29</div></div> <h1 class="title">记一种水平垂直居中的办法</h1> <div class="entry-content"><!----> <p>又学到了一种水平垂直居中的方法。适用于父级元素只有一个子元素的情况，比如全屏的效果。</p> <p>父级元素：pos-r, w、h设定;</p> <p>子元素：pos-a,w、h设定, t0 b0 l0 r0, m-a。</p> <p>以前只知道 <code>margin: 0 auto</code> 之类的，从来没想到 <code>margin: auto</code> 的妙用...孤陋寡闻了...</p> <pre><code class="hljs lang-html"><span class="hljs-meta">&lt;!DOCTYPE html></span>
+<span class="hljs-tag">&lt;<span class="hljs-name">html</span> <span class="hljs-attr">lang</span>=<span class="hljs-string">"zh-CN"</span>></span>
+<span class="hljs-tag">&lt;<span class="hljs-name">head</span>></span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">"utf-8"</span>></span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">title</span>></span>Document<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>></span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">style</span>></span><span class="css">
+        <span class="hljs-selector-class">.outer</span> {
+            <span class="hljs-attribute">position</span>: relative;
+            <span class="hljs-attribute">width</span>: <span class="hljs-number">300px</span>;
+            <span class="hljs-attribute">height</span>: <span class="hljs-number">300px</span>;
+            <span class="hljs-attribute">background-color</span>: <span class="hljs-number">#f80</span>;
+            <span class="hljs-attribute">margin</span>: <span class="hljs-number">50px</span> auto;
+        }
+        <span class="hljs-selector-class">.inner</span> {
+            <span class="hljs-attribute">position</span>: absolute;
+            <span class="hljs-attribute">height</span>: <span class="hljs-number">100px</span>;
+            <span class="hljs-attribute">width</span>: <span class="hljs-number">60%</span>;
+            <span class="hljs-attribute">top</span>: <span class="hljs-number">0</span>;
+            <span class="hljs-attribute">bottom</span>: <span class="hljs-number">0</span>;
+            <span class="hljs-attribute">left</span>: <span class="hljs-number">0</span>;
+            <span class="hljs-attribute">right</span>: <span class="hljs-number">0</span>;
+            <span class="hljs-attribute">background-color</span>: <span class="hljs-number">#fff</span>;
+            <span class="hljs-attribute">margin</span>: auto;
+        }
+    </span><span class="hljs-tag">&lt;/<span class="hljs-name">style</span>></span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>></span>
+<span class="hljs-tag">&lt;<span class="hljs-name">body</span>></span>
+    <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"outer"</span>></span>
+        <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">class</span>=<span class="hljs-string">"inner"</span>></span>Lorem ipsum dolor sit amet.<span class="hljs-tag">&lt;/<span class="hljs-name">div</span>></span>
+    <span class="hljs-tag">&lt;/<span class="hljs-name">div</span>></span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>></span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>></span></code></pre><p>效果如下：</p> <p><img alt=""></p></div></article> <nav class="pagination"><a href="/post/about-rem-layout" title="关于移动端 rem 布局的一些总结" class="prev">« 关于移动端 rem 布局的一些总结</a> <a href="/post/xease-campus-2014-note" title="某易 2014 校招面试总结" class="next">某易 2014 校招面试总结 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/069024d413f733819150.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

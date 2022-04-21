@@ -1,0 +1,188 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 自动化、跨浏览器的 JavaScript 单元测试 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,测试,单元测试"><meta data-n-head="true" name="description" content="自动化、跨浏览器的 JavaScript 单元测试"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-08-15</div></div> <h1 class="title">[译] 自动化、跨浏览器的 JavaScript 单元测试</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://twitter.com/philwalton">@Philip Walton</a> <br>原文地址:
+          <a target="_blank" href="https://philipwalton.com/articles/learning-how-to-set-up-automated-cross-browser-javascript-unit-testing/">https://philipwalton.com/articles/learning-how-to-set-up-automated-cross-browser-javascript-unit-testing/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/set-up-automated-cross-browser-javascript-unit-testing">http://www.wemlion.com/post/set-up-automated-cross-browser-javascript-unit-testing</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>大家都知道在不同浏览器上测试代码有多重要。多数时候我会觉得，开发者社区中的朋友们这一点做得非常棒 —— 至少是在初次发布项目的时候。</p> <p>测试做得不好的是在每次修改代码的时候。</p> <p>我个人也为此内疚。“自动化、跨浏览器的 JavaScript 单元测试”，这在我的 todo list 中已陈列数年，可每次坐下来打算认真弄明白时，又放弃了。我知道，有一部分是惰性所致，不过此话题的优质信息的惊人匮乏也难辞其咎。</p> <p>有很多工具和框架（如 Karma）声称“使自动化，JavaScript 测试变简单”，但经验告诉我，这些工具所引入的复杂度，远超出它们所摆脱的麻烦（待会儿再细说）。在我的经验中，只要“工作就行”的工具，对专家来说是很好，不过学起来麻烦。我想要的是，理解这个过程在底层如何工作，这样万一测试程序挂掉（该来的最后总会来），我也能修复它。</p> <p>对我来说，理解工作原理的最佳方法就是从头开始重造一遍。因此，我决定自己来造轮子，与社区分享我所学到的东西。</p> <p>我写这篇文章，因为这正是几年前我刚开始发布开源项目时希望找到的。如果你自己从来没试过自动化、跨浏览器的 JavaScript 单元测试，但一直想学，那本文就是为你而写的。本文会向你解释整个工作过程，展示如何动手。</p> <h2 id="-">手动测试</h2> <p>在介绍自动化测试之前，我觉得有必要了解同样的页面在手动测试中是怎样的。</p> <p>毕竟，自动化就是使用机器以解决现有工作流中的重复部分。没有完整了解手动测试，就想开始玩自动化，也不太可能理解自动化流程。</p> <p>在手动测试中，在测试文件中编写测试用例，可能像下面这样：</p> <pre><code class="hljs lang-js"><span class="hljs-keyword">var</span> assert = <span class="hljs-built_in">require</span>(<span class="hljs-string">'assert'</span>);
+<span class="hljs-keyword">var</span> SomeClass = <span class="hljs-built_in">require</span>(<span class="hljs-string">'../lib/some-class'</span>);
+
+describe(<span class="hljs-string">'SomeClass'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+  describe(<span class="hljs-string">'someMethod'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    it(<span class="hljs-string">'accepts thing A and transforms it into thing B'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+      <span class="hljs-keyword">var</span> sc = <span class="hljs-keyword">new</span> SomeClass();
+      assert.equal(sc.someMethod(<span class="hljs-string">'A'</span>), <span class="hljs-string">'B'</span>);
+    });
+  });
+});</code></pre><p>上面这个例子使用 <a href="https://mochajs.org/" target="_blank">Mocha</a> 和 Node.js 的 <a href="https://nodejs.org/api/assert.html" target="_blank"><code>assert</code></a> 模块，不过使用哪种测试或断言库并不是那么重要，用什么都行。</p> <p>Mocha 在 Node.js 中运行，你可能会在命令行中运行下面的命令：</p> <pre><code class="hljs lang-bash">mocha <span class="hljs-built_in">test</span>/some-class-test.js</code></pre><p>要在浏览器中运行测试，需要一个 HTML 文件，文件中用 script 标签来加载脚本；又因为浏览器不理解 <code>require</code> 声明，你还需要一个像 <a href="http://browserify.org/" target="_blank">browserify</a> 或 <a href="https://webpack.github.io/" target="_blank">webpack</a> 这样的模块打包工具来解析依赖。</p> <pre><code class="hljs lang-bash">browserify <span class="hljs-built_in">test</span>/*-test.js > <span class="hljs-built_in">test</span>/index.js</code></pre><p>很棒的是，这些模块打包工具会将所有测试文件（以及其他任何依赖）打包为一个文件，这样在测试页面中加载就变得简单了。<a href="#footnote-1">[1]</a></p> <p>通常使用 Mocha 的测试文件长这样：</p> <pre><code class="hljs lang-html"><span class="hljs-meta">&lt;!DOCTYPE html></span>
+<span class="hljs-tag">&lt;<span class="hljs-name">html</span>></span>
+<span class="hljs-tag">&lt;<span class="hljs-name">head</span>></span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">meta</span> <span class="hljs-attr">charset</span>=<span class="hljs-string">"utf-8"</span>></span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">title</span>></span>Tests<span class="hljs-tag">&lt;/<span class="hljs-name">title</span>></span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">link</span> <span class="hljs-attr">href</span>=<span class="hljs-string">"../node_modules/mocha/mocha.css"</span> <span class="hljs-attr">rel</span>=<span class="hljs-string">"stylesheet"</span> /></span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"../node_modules/mocha/mocha.js"</span>></span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>></span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">head</span>></span>
+<span class="hljs-tag">&lt;<span class="hljs-name">body</span>></span>
+
+  <span class="hljs-comment">&lt;!-- A container element for the visual Mocha results --></span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">div</span> <span class="hljs-attr">id</span>=<span class="hljs-string">"mocha"</span>></span><span class="hljs-tag">&lt;/<span class="hljs-name">div</span>></span>
+
+  <span class="hljs-comment">&lt;!-- Mocha setup and initiation code --></span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">script</span>></span><span class="javascript">
+  mocha.setup(<span class="hljs-string">'bdd'</span>);
+  <span class="hljs-built_in">window</span>.onload = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    mocha.run();
+  };
+  </span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>></span>
+
+  <span class="hljs-comment">&lt;!-- The script under test --></span>
+  <span class="hljs-tag">&lt;<span class="hljs-name">script</span> <span class="hljs-attr">src</span>=<span class="hljs-string">"index.js"</span>></span><span class="undefined"></span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>></span>
+
+<span class="hljs-tag">&lt;/<span class="hljs-name">body</span>></span>
+<span class="hljs-tag">&lt;/<span class="hljs-name">html</span>></span></code></pre><p>如果你没在用 Node.js，那起步的时候你所做的可能就已经和上面的文件差不多，唯一的区别是所有的依赖可能是通过一个个 script 标签列出来的。</p> <h3 id="-">检测错误</h3> <p>测试框架可以知道测试是不是失败了，因为任何适合只要断言结果不是 true，断言库就会抛出错误。测试框架在 try/catch 代码块中运行每条测试，这样就能捕获任何可能抛出的错误，然后通过网页显示或者控制台打印出错误。</p> <p>多数测试框架（如 Mocha）提供钩子（hooks），以便连通测试过程，使页面中其他脚本也能访问测试结果。对自动化测试来说，这是很重要的一个特性，因为自动化测试要工作，就得从测试脚本中拿到结果。</p> <h3 id="-">手动测试的好处</h3> <p>在浏览器中手动测试的很大的一点好处是，如果某个测试没有通过，可以使用浏览器的开发者工具 debug。</p> <p>简单的代码如下：</p> <pre><code class="hljs lang-js">describe(<span class="hljs-string">'SomeClass'</span>, () => {
+  describe(<span class="hljs-string">'someMethod'</span>, () => {
+    it(<span class="hljs-string">'accepts thing A and transforms it into thing B'</span>, () => {
+      <span class="hljs-keyword">const</span> sc = <span class="hljs-keyword">new</span> SomeClass();
+
+      <span class="hljs-keyword">debugger</span>;
+      assert.equal(sc.someMethod(<span class="hljs-string">'A'</span>), <span class="hljs-string">'B'</span>);
+    });
+  });
+});</code></pre><p>重新打包，打开浏览器开发者工具，刷新页面，然后就能单步调试代码，轻松地跟踪问题的根源。</p> <p>与此形成对比的是，多数现有的流行的自动化测试框架做起来却很困难！它们提供的部分方便之处就是打包单元测试，自动生成测试的页面。</p> <p>在没有测试未通过之前，这也挺好，但万一有测试失败了，想要重现、在本地 debug 就没那么容易了。</p> <h2 id="-">自动化测试</h2> <p>尽管手动测试有些好处，缺点却也不少。打开几个不同的浏览器跑测试用例，每次的变动单调无趣还容易出错。更不用提，多数人都不会在本地开发机上装上所有版本的想要测试的浏览器。</p> <p>如果想认真测试代码，确保每次变动都能进行恰当的测试，那就需要自动化了。不管你做得多好，手动测试容易造成遗忘和忽略，最终还挺浪费时间的。</p> <p>不过自动化测试也有不好的地方。太多太多的自动化测试工具引入了一系列问题。构建过程稍有不同，测试稀奇古怪，错误调试起来苦不堪言。</p> <p>在搭建自己的自动化测试系统时，我可不想再踩坑了，也不想放弃手动测试所带来的任何便利。所以在开始之前，我决定列一个需求清单。</p> <p>毕竟，如果引入了新的问题，增加了复杂度，自动化系统就算不上那么成功。</p> <h3 id="-">需求</h3> <ul><li>我需要通过命令行运行测试</li> <li>我需要在本地调试未通过的测试</li> <li>我需要通过 <code>npm</code> 安装所有测试依赖，这样任何人都能使用 <code>npm install && npm test</code> 使代码跑起来</li> <li>我希望测试过程在持续化集成（CI）机器上跑起来，和在我的开发机上一样。这样一来，构建是一样的，无需检查新的变化就能调试错误</li> <li>我希望所有测试能自动运行，无论何时，只要代码发生变化或是进行 pull request</li></ul> <p>脑子大概有了这个粗略的清单，接下来就该深入探究下，自动化的跨浏览器测试在流行的云测试机中是如何工作的。</p> <h3 id="-">云测试如何工作</h3> <p>现在已经有大量提供云测试的服务商，他们各有千秋。因为我在写开源代码，所以我只看那些为开源项目提供免费计划的服务商，在这当中，<a href="https://saucelabs.com/opensauce/" target="_blank">Sauce Labs</a> 是唯一一家不需要我提供 email 就能开始新开源项目的。</p> <p>最让我惊喜的是，开始阅读 Sauce Labs 中关于 JavaScript 单元测试文档的时候，我发现，这实际上是多么简单明了。许多测试框架号称让测试变得简单，但我却（错误地）以为那很难！</p> <p>之前强调了，我不想让自动化测试和手动测试有什么根本的不同。结果我发现，Sauce Labs 所提供的自动测试方法几乎和我手动测试的过程一个样。</p> <p>下面是测试步骤：</p> <ol><li>给 Sauce Labs 提供你要测试的页面地址，并告诉它你要在哪些浏览器/平台上测试;</li> <li>Sauce Labs 使用 <a href="http://www.seleniumhq.org/projects/webdriver/" target="_blank">selenium webdriver</a> 为你所提供的每一种浏览器/平台组合加载页面。</li> <li>Webdriver 检查页面是否有测试未通过，并保存结果。</li> <li>Sauce Labs 将结果呈现给你。</li></ol> <p>就这么简单。</p> <p>我曾错误地以为，需要将 JavaScript 代码提交给 Sauce Labs，然后在他们的机器上运行。实际上并非如此，他们只需要你提供的 URL。这就像人工测试一样，唯一的不同是，Sauce Labs 处理打开各种浏览器的工作，并为你记录测试结果。</p> <h3 id="api">API</h3> <p>Sauce Labs 运行单元测试的 API 包括两个方法：</p> <ul><li><p><a href="https://wiki.saucelabs.com/display/DOCS/JavaScript+Unit+Testing+Methods#JavaScriptUnitTestingMethods-StartJSUnitTests" target="_blank">开始 JS 单元测试（Start JS Unit Tests）</a></p></li> <li><p><a href="https://wiki.saucelabs.com/display/DOCS/JavaScript+Unit+Testing+Methods#JavaScriptUnitTestingMethods-GetJSUnitTestStatus" target="_blank">获取 JS 单元测试状态（Get JS Unit Test Status）</a></p></li></ul> <p><a href="https://wiki.saucelabs.com/display/DOCS/JavaScript+Unit+Testing+Methods#JavaScriptUnitTestingMethods-StartJSUnitTests" target="_blank">开始 JS 单元测试</a> 的方法初始化单个 HTML 页面（就是我们提供的 URL）测试，在你所提供的各种浏览器/平台组合上。</p> <p>文档中给出了使用 <code>curl</code> 的例子：</p> <pre><code class="hljs lang-bash">curl https://saucelabs.com/rest/v1/SAUCE_USERNAME/js-tests \
+  -X POST \
+  -u SAUCE_USERNAME:SAUCE_ACCESS_KEY \
+  -H <span class="hljs-string">'Content-Type: application/json'</span> \
+  --data <span class="hljs-string">'{"url": "https://example.com/tests.html",  "framework": "mocha", "platforms": [["Windows 7", "firefox", "27"], ["Linux", "chrome", "latest"]]}'</span></code></pre><p>因为我们要做的是 JavaScript 单元测试，我会给出使用 <a href="https://www.npmjs.com/package/request" target="_blank">request</a>  node 模块的例子，如果你在使用 Node.js，这可能更接近你使用的最后结果:</p> <pre><code class="hljs lang-js">request({
+  <span class="hljs-attr">url</span>: <span class="hljs-string">`https://saucelabs.com/rest/v1/<span class="hljs-subst">${username}</span>/js-tests`</span>,
+  <span class="hljs-attr">method</span>: <span class="hljs-string">'POST'</span>,
+  <span class="hljs-attr">auth</span>: {
+    <span class="hljs-attr">username</span>: process.env.SAUCE_USERNAME,
+    <span class="hljs-attr">password</span>: process.env.SAUCE_ACCESS_KEY
+  },
+  <span class="hljs-attr">json</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">body</span>: {
+    <span class="hljs-attr">url</span>: <span class="hljs-string">'https://example.com/tests.html'</span>,
+    <span class="hljs-attr">framework</span>: <span class="hljs-string">'mocha'</span>,
+    <span class="hljs-attr">platforms</span>: [
+      [<span class="hljs-string">'Windows 7'</span>, <span class="hljs-string">'firefox'</span>, <span class="hljs-string">'27'</span>],
+      [<span class="hljs-string">'Linux'</span>, <span class="hljs-string">'chrome'</span>, <span class="hljs-string">'latest'</span>]
+    ]
+  }
+}, (err, response) => {
+  <span class="hljs-keyword">if</span> (err) {
+    <span class="hljs-built_in">console</span>.error(err);
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-built_in">console</span>.log(response.body);
+  }
+});</code></pre><p>注意，在 POST 的 body 中的 <code>framework: 'mocha'</code>。Sauce Labs 支持许多流行的 JavaScript 单元测试框架，如 Mocha，Jasmine，QUnit，以及 YUI。“支持”仅仅意味着，Sauce Lab 的 Webdriver 知道去哪找到测试结果（尽管多数情况下，你还是得自己填这些 —— 等会儿再细说）。</p> <p>如果你所使用的测试框架不在上述列表中，可以设置 <code>framework: 'custom'</code>，这样 Sauce Labs 就会去寻找一个叫 <code>window.global_test_results</code> 的全局变量。结果的格式在文档的 <a href="https://wiki.saucelabs.com/display/DOCS/Reporting+JavaScript+Unit+Test+Results+to+Sauce+Labs+Using+a+Custom+Framework" target="_blank">custom framework</a> 小节中列出来了。</p> <h4 id="webdriver-mocha-">Webdriver 获取 Mocha 测试结果</h4> <p>就算一开始请求时你已经告诉 Sauce Labs 你在使用 Mocha，你还是得更新页面的 HTML，将测试结果保存在一个 Sauce Labs 能够访问的全局变量中。</p> <p>为支持 Mocha，将页面中的如下代码：</p> <pre><code class="hljs lang-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span>></span><span class="javascript">
+mocha.setup(<span class="hljs-string">'bdd'</span>);
+<span class="hljs-built_in">window</span>.onload = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+  mocha.run();
+};
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>></span></code></pre><p>修改成：</p> <pre><code class="hljs lang-html"><span class="hljs-tag">&lt;<span class="hljs-name">script</span>></span><span class="javascript">
+mocha.setup(<span class="hljs-string">'bdd'</span>);
+<span class="hljs-built_in">window</span>.onload = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+  <span class="hljs-keyword">var</span> runner = mocha.run();
+  <span class="hljs-keyword">var</span> failedTests = [];
+
+  runner.on(<span class="hljs-string">'end'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-built_in">window</span>.mochaResults = runner.stats;
+    <span class="hljs-built_in">window</span>.mochaResults.reports = failedTests;
+  });
+
+  runner.on(<span class="hljs-string">'fail'</span>, logFailure);
+
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">logFailure</span>(<span class="hljs-params">test, err</span>)</span>{
+    <span class="hljs-keyword">var</span> flattenTitles = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">test</span>)</span>{
+      <span class="hljs-keyword">var</span> titles = [];
+      <span class="hljs-keyword">while</span> (test.parent.title){
+        titles.push(test.parent.title);
+        test = test.parent;
+      }
+      <span class="hljs-keyword">return</span> titles.reverse();
+    };
+
+    failedTests.push({
+      <span class="hljs-attr">name</span>: test.title,
+      <span class="hljs-attr">result</span>: <span class="hljs-literal">false</span>,
+      <span class="hljs-attr">message</span>: err.message,
+      <span class="hljs-attr">stack</span>: err.stack,
+      <span class="hljs-attr">titles</span>: flattenTitles(test)
+    });
+  };
+};
+</span><span class="hljs-tag">&lt;/<span class="hljs-name">script</span>></span></code></pre><p>以上代码与 Mocha 样板默认代码的唯一区别在于，该逻辑将测试结果赋值给 Sauce Labs 所期望的 <code>window.mochaResults</code> 变量。新的代码不会影响浏览器中的手动测试，所以还可以像原来一样使用。</p> <p>再强调此前提过的一点，Sauce Labs “运行”测试的时候，并非真正在运行什么东西，它只是访问一个网页，然后等到 <code>window.mochaResults</code> 对象被发现有值了。然后再记录结果。</p> <h4 id="-">判断测试是否通过</h4> <p><a href="https://wiki.saucelabs.com/display/DOCS/JavaScript+Unit+Testing+Methods#JavaScriptUnitTestingMethods-StartJSUnitTests" target="_blank">开始 JS 单元测试 (Start JS Unit Tests)</a> 方法告诉 Sauce Labs 按照队列在你所要求的浏览器/平台中运行测试，但它并未范围测试结果。</p> <p>它所返回的仅仅只是队列中任务的 ID。响应大概像下面这样：</p> <pre><code class="hljs lang-json">{
+  <span class="hljs-attr">"js tests"</span>: [
+    <span class="hljs-string">"9b6a2d7e6c8d4fd2afeeb0ff7e54e694"</span>,
+    <span class="hljs-string">"d38688ec7256497da6966f4523ddee76"</span>,
+    <span class="hljs-string">"14054e68ccd344c0bed77a798a9ce1e8"</span>,
+    <span class="hljs-string">"dbc54181f7d947458f52201ea5fcb901"</span>
+  ]
+}</code></pre><p>要判断测试是否通过，可以调用<a href="https://wiki.saucelabs.com/display/DOCS/JavaScript+Unit+Testing+Methods#JavaScriptUnitTestingMethods-GetJSUnitTestStatus" target="_blank">获取 JS 单元测试状态（Get JS Unit Test Status）</a>方法，这个方面接受一个任务 ID 列表，返回每个任务的当前状态。</p> <p>定期调用这个方法，直到所有的工作完成。</p> <pre><code class="hljs lang-javascript">request({
+  <span class="hljs-attr">url</span>: <span class="hljs-string">`https://saucelabs.com/rest/v1/<span class="hljs-subst">${username}</span>/js-tests/status`</span>,
+  <span class="hljs-attr">method</span>: <span class="hljs-string">'POST'</span>,
+  <span class="hljs-attr">auth</span>: {
+    <span class="hljs-attr">username</span>: process.env.SAUCE_USERNAME,
+    <span class="hljs-attr">password</span>: process.env.SAUCE_ACCESS_KEY
+  },
+  <span class="hljs-attr">json</span>: <span class="hljs-literal">true</span>,
+  <span class="hljs-attr">body</span>: jsTests, <span class="hljs-comment">// The response.body from the first API call.</span>
+
+}, (err, response) => {
+  <span class="hljs-keyword">if</span> (err) {
+    <span class="hljs-built_in">console</span>.error(err);
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-built_in">console</span>.log(response.body);
+  }
+});</code></pre><p>响应大致如下：</p> <pre><code class="hljs lang-json">{
+  <span class="hljs-attr">"completed"</span>: <span class="hljs-literal">false</span>,
+  <span class="hljs-attr">"js tests"</span>: [
+    {
+      <span class="hljs-attr">"url"</span>: <span class="hljs-string">"https://saucelabs.com/jobs/75ac4cadb85e415fae957f7811d778b8"</span>,
+      <span class="hljs-attr">"platform"</span>: [
+        <span class="hljs-string">"Windows 10"</span>,
+        <span class="hljs-string">"chrome"</span>,
+        <span class="hljs-string">"latest"</span>
+      ],
+      <span class="hljs-attr">"result"</span>: {
+        <span class="hljs-attr">"passes"</span>: <span class="hljs-number">29</span>,
+        <span class="hljs-attr">"tests"</span>: <span class="hljs-number">30</span>,
+        <span class="hljs-attr">"end"</span>: {},
+        <span class="hljs-attr">"suites"</span>: <span class="hljs-number">7</span>,
+        <span class="hljs-attr">"reports"</span>: [],
+        <span class="hljs-attr">"start"</span>: {},
+        <span class="hljs-attr">"duration"</span>: <span class="hljs-number">97</span>,
+        <span class="hljs-attr">"failures"</span>: <span class="hljs-number">0</span>,
+        <span class="hljs-attr">"pending"</span>: <span class="hljs-number">1</span>
+      },
+      <span class="hljs-attr">"id"</span>: <span class="hljs-string">"1f74a237d5ba4a47b5a42570ae1e7999"</span>,
+      <span class="hljs-attr">"job_id"</span>: <span class="hljs-string">"75ac4cadb85e415fae957f7811d778b8"</span>
+    },
+    // ... the rest of the jobs
+  ]
+}</code></pre><p>一旦 <code>response.body.complete</code> 属性变为 <code>true</code>，所有测试结束，然后就能遍历以获取测试结果。</p> <h3 id="-localhost-">通过 localhost 测试</h3> <p>前面说过，Sauce Labs 是通过访问 URL “运行”测试的。所以这也意味着你所使用的 URL 必须是互联网上能公开访问的。</p> <p>这样一来，如果要通过 <code>localhost</code> 跑测试，那就有问题了。</p> <p>已经有一些解决该问题的工具了，包括 <a href="https://wiki.saucelabs.com/display/DOCS/Sauce+Connect+Proxy" target="_blank">Sauce Connect</a> (官方推荐)，这是 Sauce Labs 创建的一个代理服务器，它在本地服务器与 Sauce Labs 虚拟机之间开了一个安全连接。</p> <p>Sauce Connect 是按照安全的要求来设计的，通过它，外人几乎不可能访问到你的代码。不过它的一个缺点是配置、使用极其复杂。</p> <p>如果代码安全性很重要，Sauce Connect 可能值得一试；否则的话，还有一些更简单的类似方案。</p> <p>我选择的是 <a href="https://ngrok.com/" target="_blank">ngrok</a>。</p> <h4 id="ngrok">ngrok</h4> <p><a href="https://ngrok.com/" target="_blank">ngrok</a> 是建立与 localhost 之间的安全信道（secure tunnels）的工具。它提供一个公开的 URL<a href="#footnote-2">[2]</a> 给本地的 Web 服务器，这个 URL 恰恰就是在 Sauce Labs 上运行测试所需要的。</p> <p>如果你在虚拟机上做过开发或手动测试，可能已经听说过 ngrok；如果没有，建议你好好去看看。这是个非常有用的工具。</p> <p>在开发机上安装 ngrok，和下载二进制文件、加入到 PATH 一样简单；不过，如果你要在 Node 中使用 ngrok，最后还是通过 npm 来安装。</p> <pre><code class="hljs lang-javascript">npm install ngrok</code></pre><p>在 Node 中通过以下代码，可以开启一个 ngrok 进程：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> ngrok = <span class="hljs-built_in">require</span>(<span class="hljs-string">'ngrok'</span>);
+
+ngrok.connect(port, (err, url) => {
+  <span class="hljs-keyword">if</span> (err) {
+    <span class="hljs-built_in">console</span>.error(err);
+  } <span class="hljs-keyword">else</span> {
+    <span class="hljs-built_in">console</span>.log(<span class="hljs-string">`Tests now accessible at: <span class="hljs-subst">${url}</span>`</span>);
+  }
+});</code></pre><p>一旦有了测试文件的公开 URL，使用 Sauce Labs 跨浏览器测试本地代码基本上就很简单啦！</p> <h2 id="-">过程整合</h2> <p>本文涵盖了不少话题，可能会给人以这样的印象：自动化跨浏览器的 JavaScript 单元测试很复杂。但实际上并不是这样的。</p> <p>文章的框架是从我的角度来设定的 —— 我在试着解决自己的问题。而且就我自己的经验来看，真正的复杂之处仅仅是因为缺乏相关信息，整个过程如何工作，如何将所有这些整合起来。</p> <p>如果理解了所有这些步骤，那就很简单了。总结起来就是这样：</p> <p><strong>最初的手动过程：</strong></p> <ol><li>编写测试，创建一个运行测试的 HTML 页面；</li> <li>在一两个本地浏览器中运行测试，确保正常工作。</li></ol> <p><strong>添加自动化：</strong></p> <ol><li>新建 Sauce Labs 账号，获取用户名 和 access key；</li> <li>更新测试页面的源码，使 Sauce Labs 能够通过全局变量读取测试结果；</li> <li>使用 ngrok 创建安全信道连接本地测试页面，使其能公开访问；</li> <li>列出测试的浏览器/平台列表，调用 <a href="https://wiki.saucelabs.com/display/DOCS/JavaScript+Unit+Testing+Methods#JavaScriptUnitTestingMethods-StartJSUnitTests" target="_blank">Start JS Unit Tests</a> 方法；</li> <li>周期调用 <a href="https://wiki.saucelabs.com/display/DOCS/JavaScript+Unit+Testing+Methods#JavaScriptUnitTestingMethods-GetJSUnitTestStatus" target="_blank">Get JS Unit Test Status</a> 直至测试结束；</li> <li>报告测试结果。</li></ol> <h2 id="-">更简单的方式</h2> <p>我知道本文开始的时候，我说了很多，你不需要任何框架来完成自动化、跨浏览器的 JavaScript 单元测试，我仍然坚信这一点。但尽管上述步骤很简单，你可能也并不想每个项目都重复去做。</p> <p>我之前也有很多想要加入自动化测试的老项目，因此对我来说，将这些逻辑打包成模块是很有意义的。</p> <p>强烈建议你自己尝试去实现，这样才能全面了解它如何工作。但如果你没有时间，且希望能快速搭建测试，建议你尝试我创建的 <a href="https://github.com/philipwalton/easy-sauce" target="_blank">Easy Sauce</a> 项目。</p> <h3 id="easy-sauce">Easy Sauce</h3> <p><a href="https://github.com/philipwalton/easy-sauce" target="_blank">Easy Sauce</a> 是一个 Node 包，一个命令行工具（<code>easy-sauce</code>）。它也是我现在使用的跨浏览器测试工具。</p> <p><code>easy-sauce</code> 命令需要一个 HTML 测试文件的路径（默认为 <code>/test/</code>），一个启动本地服务器的端口（默认为 <code>1337</code>），以及以个测试的浏览器/平台列表。接下来 <code>easy-sauce</code> 会在 Sauce Lab 云端运行测试，将结果打印到控制台上并退出，返回合适的状态码，标明测试是否通过。</p> <p>为了方便 npm 包，<code>easy-sauce</code> 默认会从 <code>package.json</code> 中读取配置项，不用单纯储存它们。这样有个额外好处就是，使用你的包的用户，能够很清楚地看到你所支持的浏览器/平台。</p> <p>关于 <code>easy-sauce</code> 的完整使用指南，请移步 Github 上的<a href="https://github.com/philipwalton/easy-sauce" target="_blank">文档</a>。</p> <p>最后，我想强调的是，这个项目是专门来解决的我的用例的。虽然我觉得它可能对很多其他开发者会很有用，但我无意将其调转为功能齐全的测试解决方案。</p> <p><code>easy-sauce</code> 的整个点在于，填补了我（我相信很多开发者也是如此）与合适的测试之间的复杂性裂缝。</p> <h2 id="-">总结</h2> <p>本文开始的时候，我写了一个需求列表。有了 Easy Sauce，现在我可以满足所有我工作项目上的需求。</p> <p>如果你的项目还没用上自动化跨浏览器单元测试，我想鼓励你尝试下 Easy Sauce。就算你不使用它，至少你得有相关知识完成自己的解决方案，或者对现有工具有更好的理解。</p> <p>测试愉快！</p> <p id="footnote-1">
+1. 使用模板打包工具的一个缺点是堆栈跟踪（stack traces）目前对 source map 的支持还不是很好。Chrome 的一个解决办法是 <a href="https://github.com/evanw/node-source-map-support#browser-support" target="_blank">node-source-map-support</a> 模块。
+</p> <p id="footnote-2">
+2. ngrok 生成的 URL 是公开的，这意味着理论上网络上的任何人都可以访问。不过，URL 是随机生成的，而测试只会跑那么几分钟，某人发现它的几率相当低。虽然没有 Sauce Connect 那么安全，相对也还是安全的。
+</p></div></article> <nav class="pagination"><a href="/post/build-your-first-thing-with-web-assembly" title="[译] WebAssembly  初尝" class="prev">« [译] WebAssembly  初尝</a> <a href="/post/JavaScript-and-Functional-Programming" title="[译] JavaScript  与函数式编程" class="next">[译] JavaScript  与函数式编程 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/b97f9767f55bbf9cb1f5.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

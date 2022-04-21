@@ -1,0 +1,159 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">Chrome和Firefox下的网页截图 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,JavaScript,Angular.js,网页截图"><meta data-n-head="true" name="description" content="Chrome和Firefox下的网页截图"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-03-11</div></div> <h1 class="title">Chrome和Firefox下的网页截图</h1> <div class="entry-content"><!----> <p>最近在实现一个功能，需求如下：</p> <ul><li>前提：当前页面无弹窗</li> <li>页面任意位置执行粘贴</li> <li>读取剪切板中的截屏数据</li> <li>上传截图</li></ul> <p>首先还是从网上找相关的例子。</p> <p>找到了SF上的专栏文章《<a href="https://segmentfault.com/a/1190000004288686" target="_blank">js获取剪切板内容，js控制图片粘贴</a>》。</p> <p>于是基于这个，做出了第一版的截图上传功能。</p> <p>由于项目使用的是angularjs，事先已经封装好一套上传图片的办法，只需要调用 <code>$scope.image = blob</code>，自动就会发送、上传该文件。</p> <p>我是半路介入项目的。原来为数不多的几个js文件实在太大，一个 <code>apiService.js</code>就累积了三四千行，各种服务都在这个文件里，主视图就一个mainController，也是三四千行。</p> <p>说实话，我真的惊呆了。</p> <p>所以还是尽量避免修改原来的代码。</p> <p>按照我自己习惯，把功能封装成 <code>directive</code>，独立建一个文件。</p> <p><strong>代码如下</strong>：（特别鸣谢<a href="https://segmentfault.com/u/weil" target="_blank">本期节目</a>的文章）</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">/**
+ * @description: 截屏上传
+ * @author:      angusfu1126@qq.com
+ * @date:        2016-03-03 20:59:09
+ */</span>
+app.directive(<span class="hljs-string">'screenshotOrDragUpload'</span>, <span class="hljs-comment">/*ngInject*/</span> <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">$filter</span>) </span>{
+    <span class="hljs-keyword">return</span> {
+        <span class="hljs-attr">restrict</span>: <span class="hljs-string">'A'</span>
+        link: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">$scope, iElm, iAttrs, controller</span>) </span>{
+
+            <span class="hljs-keyword">var</span> imageRegex = <span class="hljs-regexp">/^image\//i</span>;
+
+            <span class="hljs-comment">// 粘贴截图事件</span>
+            <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">'paste'</span>, onPasteHandler, <span class="hljs-literal">false</span>);
+
+            <span class="hljs-comment">// 作用域销毁的时候解除事件绑定</span>
+            $scope.$on(<span class="hljs-string">'$destroy'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+                <span class="hljs-built_in">document</span>.removeEventListener(<span class="hljs-string">'paste'</span>, onPasteHandler);
+            });
+
+            <span class="hljs-comment">/**
+             * 全局蒙版显示的时候
+             * 不执行粘贴或者拖拽功能
+             * 避免和各种弹层ng-show条件太耦合
+             * 此处使用DOM方法判断
+             */</span>
+            <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">isMaskShown</span>(<span class="hljs-params"></span>) </span>{
+                <span class="hljs-comment">// 项目依赖于jquery</span>
+                <span class="hljs-keyword">return</span> angular.element(<span class="hljs-string">'.global-mask'</span>).is(<span class="hljs-string">':visible'</span>);
+            }
+
+            <span class="hljs-comment">/**
+             * 根据时间戳命名
+             */</span>
+            <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">generateFileName</span>(<span class="hljs-params">user</span>) </span>{
+                <span class="hljs-keyword">return</span> $filter(<span class="hljs-string">'date'</span>)(<span class="hljs-keyword">new</span> <span class="hljs-built_in">Date</span>(), <span class="hljs-string">'yyyyMMdd_HH:MM:ss'</span>);
+            }
+
+            <span class="hljs-comment">/**
+             * 处理 `ctrl + v` 截图粘贴事件
+             */</span>
+            <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">onPasteHandler</span>(<span class="hljs-params">e</span>) </span>{
+                <span class="hljs-keyword">if</span> (isMaskShown()) <span class="hljs-keyword">return</span>;
+
+                <span class="hljs-keyword">var</span> clipboardData = e.clipboardData;
+                <span class="hljs-keyword">var</span> ua = <span class="hljs-built_in">window</span>.navigator.userAgent;
+
+                <span class="hljs-comment">// 如果无法获取剪贴板则返回</span>
+                <span class="hljs-keyword">if</span> (!clipboardData || !clipboardData.items) {
+                    <span class="hljs-keyword">return</span>;
+                }
+
+                <span class="hljs-comment">// Mac平台下Chrome49版本以下</span>
+                <span class="hljs-comment">// 复制Finder中的文件的Bug Hack掉</span>
+                <span class="hljs-comment">// see: https://segmentfault.com/a/1190000004288686</span>
+                <span class="hljs-keyword">if</span> (clipboardData.items
+                        && clipboardData.items.length === <span class="hljs-number">2</span>
+                        && clipboardData.items[<span class="hljs-number">0</span>].kind === <span class="hljs-string">"string"</span>
+                        && clipboardData.items[<span class="hljs-number">1</span>].kind === <span class="hljs-string">"file"</span>
+                        && clipboardData.types
+                        && clipboardData.types.length === <span class="hljs-number">2</span>
+                        && clipboardData.types[<span class="hljs-number">0</span>] === <span class="hljs-string">"text/plain"</span>
+                        && clipboardData.types[<span class="hljs-number">1</span>] === <span class="hljs-string">"Files"</span>
+                        && ua.match(<span class="hljs-regexp">/Macintosh/i</span>)
+                        && <span class="hljs-built_in">Number</span>(ua.match(<span class="hljs-regexp">/Chrome\/(\d{2})/i</span>)[<span class="hljs-number">1</span>]) &lt; <span class="hljs-number">49</span>
+                 ) {
+                    <span class="hljs-keyword">return</span>;
+                }
+
+                <span class="hljs-keyword">var</span> len = clipboardData.items.length,
+                    item = <span class="hljs-literal">null</span>,
+                    blob = <span class="hljs-literal">null</span>;
+
+                <span class="hljs-keyword">while</span> (len--) {
+
+                    item = clipboardData.items[len];
+
+                    <span class="hljs-keyword">if</span> (item.kind == <span class="hljs-string">"file"</span>) {
+
+                        blob = item.getAsFile();
+
+                        <span class="hljs-keyword">if</span> (imageRegex.test(blob.type) && blob.size > <span class="hljs-number">0</span>) {
+                            blob.name = generateFileName();
+
+                            <span class="hljs-comment">// 调用上传</span>
+                            $scope.image = blob;
+                            <span class="hljs-keyword">break</span>;
+                        }
+                    }
+                }
+            }
+
+
+        }
+    };
+});</code></pre><p>当然，文章不可能就此结束。。。</p> <p>分割线休息片刻</p> <p>==============================================================</p> <p>上述功能只有在 Chrome 和 Safari 中有效，但到火狐上面就挂掉了啊。。。</p> <p>测试一下，给 document 绑定 paste 事件，粘贴的时候压根就读不到数据。</p> <p>火狐下面，并没有 <code>clipboardData.items</code> 这一项。</p> <p>o(╯□╰)o</p> <p>那怎么办呢？</p> <p>只能退而求其次。放弃，或者寻求降级的办法。</p> <p>就在我觉得无路可走的时候，火狐的一个特点让我眼前一亮。。。</p> <p>分别用 chrome 和 firefox 打开这个 <a href="http://sandbox.runjs.cn/show/xjhkfcr2" target="_blank">demo</a>试试看，试着用 qq 截个图或者在文件夹中复制一张图片，粘贴在红色框框里。</p> <p>有没有发现，只有在火狐下能把图粘贴进来？</p> <p>嗯，解决办法就在这里了。</p> <p>其实，demo 中的红色框框是一个有 <code>contenteditable</code> 属性的 <code>div</code>。</p> <p>关于 <code>contenteditable</code>，此处有张鑫旭大神的博文两篇，且记在此处备忘：</p> <ul><li><p><a href="http://www.zhangxinxu.com/wordpress/2016/01/contenteditable-plaintext-only/" target="_blank">小tip: 如何让contenteditable元素只能输入纯文本</a></p></li> <li><p><a href="http://www.zhangxinxu.com/wordpress/2010/12/div-textarea-height-auto/" target="_blank">div模拟textarea文本域轻松实现高度自适应</a></p></li></ul> <p>firefox 下面，是可以把剪切板中的图片数据粘贴进去的，而 chrome 下面则不行了。</p> <p>而项目的输入框，正好是一个 <code>pre</code> 标签加上 <code>contenteditable</code> 属性模拟出来的。完美~~~（此处应有金星老师表情包）</p> <p>好了，在火狐中粘贴截图之后，右键查看一下，是不是像下图酱紫的？</p> <p><img alt="图片描述"></p> <p>有木有看到醒目的 <code>img</code> 标签？</p> <p>有木有看到醒目的 <code>data:image/png;base64,</code>？</p> <p>办法有了。解决方案如下：</p> <ul><li><p>监听 <code>keydown</code> 事件</p></li> <li><p>检测输入框是否为空</p> <ul><li>非空：不允许粘贴图片（但我们不能事先判断数据类型，只能迅速remove掉img元素）</li> <li>空的：获取img元素及其src数据，然后迅速移除元素</li></ul></li></ul> <p>当然，此处是有坑的。。。</p> <p>具体坑在哪里呢？看代码吧。其实我觉得我可能没完全解决。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">if</span> (<span class="hljs-regexp">/firefox/i</span>.test(navigator.userAgent)) {
+    <span class="hljs-keyword">var</span> URL = (<span class="hljs-built_in">window</span>.URL || <span class="hljs-built_in">window</span>.mozURL),
+
+        supportTransform = URL && <span class="hljs-built_in">window</span>.Blob && <span class="hljs-built_in">window</span>.atob && <span class="hljs-built_in">window</span>.ArrayBuffer && <span class="hljs-built_in">window</span>.Uint8Array,
+
+        <span class="hljs-comment">// see http://jsperf.com/blob-base64-conversion</span>
+        convertBase64UrlToBlob = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">urlData</span>) </span>{
+            <span class="hljs-comment">//去掉url的头，并转换为byte</span>
+            <span class="hljs-keyword">var</span> bytes = <span class="hljs-built_in">window</span>.atob(urlData.split(<span class="hljs-string">','</span>)[<span class="hljs-number">1</span>]);
+
+            <span class="hljs-comment">//处理异常,将ascii码小于0的转换为大于0</span>
+            <span class="hljs-keyword">var</span> ab = <span class="hljs-keyword">new</span> <span class="hljs-built_in">ArrayBuffer</span>(bytes.length);
+            <span class="hljs-keyword">var</span> ia = <span class="hljs-keyword">new</span> <span class="hljs-built_in">Uint8Array</span>(ab);
+            <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = <span class="hljs-number">0</span>; i &lt; bytes.length; i++) {
+                ia[i] = bytes.charCodeAt(i);
+            }
+            <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> Blob([ab], {
+                <span class="hljs-attr">type</span>: <span class="hljs-string">'image/png'</span>
+            });
+        };
+
+    $(<span class="hljs-string">'pre'</span>).on(<span class="hljs-string">'keydown'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">e</span>) </span>{
+
+        <span class="hljs-keyword">var</span> isCtrlV = (e.ctrlKey && e.keyCode == <span class="hljs-string">'86'</span>);
+
+        <span class="hljs-keyword">if</span> (!supportTransform || !isCtrlV) <span class="hljs-keyword">return</span>;
+
+        <span class="hljs-keyword">var</span> $<span class="hljs-keyword">this</span> = $(<span class="hljs-keyword">this</span>),
+            html = $<span class="hljs-keyword">this</span>.html(),
+            canPasteImage = <span class="hljs-literal">false</span>;
+
+        <span class="hljs-comment">// Notice</span>
+        <span class="hljs-comment">// 火狐的坑在这里啊啊啊啊</span>
+        <span class="hljs-comment">// 只有空的时候才能粘贴图片</span>
+        <span class="hljs-keyword">if</span> (!html || html === <span class="hljs-string">'&lt;br>'</span>) {
+            canPasteImage = <span class="hljs-literal">true</span>;
+        }
+
+        setTimeout(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+            <span class="hljs-keyword">var</span> $imgs = $<span class="hljs-keyword">this</span>.find(<span class="hljs-string">'img'</span>).remove(),
+                data = $imgs.eq(<span class="hljs-number">0</span>).attr(<span class="hljs-string">'src'</span>);
+
+            <span class="hljs-keyword">if</span> (canPasteImage && data) {
+                <span class="hljs-keyword">var</span> blob = convertBase64UrlToBlob(data);
+                blob.name = generateFileName();
+                <span class="hljs-comment">// 调用上传</span>
+                $scope.image = blob;
+            }
+        }, <span class="hljs-number">0</span>);
+
+    });
+}</code></pre><p>做个笔记： Blob对象和base64字符串的转换, <a href="http://jsperf.com/blob-base64-conversion" target="_blank">http://jsperf.com/blob-base64-conversion</a></p> <p>目前还没在IE上测试过，不知道结果如何。  </p></div></article> <nav class="pagination"><a href="/post/problems-with-firefox" title="近来在Firefox上遇到的一些坑" class="prev">« 近来在Firefox上遇到的一些坑</a> <a href="/post/js-promise-slides" title="异步场景下的 js 编程" class="next">异步场景下的 js 编程 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/fb9a35b48598222a2e89.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

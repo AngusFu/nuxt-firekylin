@@ -1,0 +1,75 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">判断资源并行加载完成的三种办法：计数、Promise及 $.Deferred | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,开发心得,JavaScript,Promise"><meta data-n-head="true" name="description" content="判断资源并行加载完成的三种办法：计数、Promise及 $.Deferred"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-07-04</div></div> <h1 class="title">判断资源并行加载完成的三种办法：计数、Promise及 $.Deferred</h1> <div class="entry-content"><!----> <h2 id="-">方法一：计数比较</h2> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">loadImg</span>(<span class="hljs-params">url, cb</span>) </span>{
+    <span class="hljs-keyword">var</span> img = <span class="hljs-keyword">new</span> Image();
+    img.src = url;
+    img.onload = cb;
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">loadImages</span>(<span class="hljs-params">urlArr, afterAllLoadedFunc</span>) </span>{
+    <span class="hljs-keyword">var</span> count = urlArr.length;
+    <span class="hljs-keyword">var</span> loadedCount = <span class="hljs-number">0</span>;
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> i = count - <span class="hljs-number">1</span>; i >= <span class="hljs-number">0</span>; i--) {
+        loadImg(urlArr[i], <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+            loadedCount += <span class="hljs-number">1</span>;
+            <span class="hljs-keyword">if</span> (count === loadedCount) {
+                afterAllLoadedFunc();
+            }
+        });
+    }
+}
+
+loadImages([<span class="hljs-string">'./xx.jpg'</span>, <span class="hljs-string">'./yy.jpg'</span>, <span class="hljs-string">'./zz.jpg'</span>], <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    alert(<span class="hljs-string">'all imgs have been loaded'</span>);
+});</code></pre><h2 id="-promise">方法二：Promise</h2> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 使用 Promise</span>
+<span class="hljs-comment">// 兼容的话需要引入 es6-promise 库</span>
+
+<span class="hljs-keyword">var</span> loadImg = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">url</span>) </span>{
+    <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> <span class="hljs-built_in">Promise</span>(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">resolve, reject</span>) </span>{
+        <span class="hljs-keyword">var</span> img = <span class="hljs-keyword">new</span> Image();
+        img.src = url;
+        img.onload = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+            resolve()  ;
+        };
+        img.onerror = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+            reject()  ;
+        };
+    });
+};
+
+<span class="hljs-built_in">Promise</span>.all([
+    loadImg(<span class="hljs-string">'xxx.jpg'</span>),
+    loadImg(<span class="hljs-string">'yyy.jpg'</span>),
+    loadImg(<span class="hljs-string">'zzz.jpg'</span>),
+]).then(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    alert(<span class="hljs-string">'all images are loaded!'</span>)
+});</code></pre><h2 id="-deferred">方法三：$.Deferred</h2> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 如果有jquery</span>
+<span class="hljs-keyword">var</span> loadImg = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">url</span>) </span>{
+    <span class="hljs-keyword">var</span> defer = $.Deferred();
+
+    <span class="hljs-keyword">var</span> img = <span class="hljs-keyword">new</span> Image();
+    img.src = url;
+    img.onload = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+        defer.resolve()  ;
+    };
+    img.onerror = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+        defer.reject()  ;
+    };
+
+    <span class="hljs-keyword">return</span> defer.promise();
+};
+
+$.when(loadImg(<span class="hljs-string">'xx.jpg'</span>), loadImg(<span class="hljs-string">'yy.jpg'</span>), loadImg(<span class="hljs-string">'zz.jpg'</span>)).done(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    alert(<span class="hljs-string">'all images are loaded!'</span>)
+});</code></pre><p>更多请参考 <a href="http://angusfu.github.io/slides/promise/" target="_blank">http://angusfu.github.io/slides/promise/</a></p></div></article> <nav class="pagination"><a href="/post/todo-api-with-unit-test" title="[译] 测试驱动开发：使用 Node.js 和 MongoDB 构建 Todo API" class="prev">« [译] 测试驱动开发：使用 Node.js 和 MongoDB 构建 Todo API</a> <a href="/post/test-with-ava-jsdom" title="使用 ava 和 jsdom 测试前端界面" class="next">使用 ava 和 jsdom 测试前端界面 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/65329c06dacbf3a0dd4e.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

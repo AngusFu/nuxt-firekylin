@@ -1,0 +1,68 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 让人倾倒的 11 个 npm trick | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,Node.js,npm"><meta data-n-head="true" name="description" content><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-09-03</div></div> <h1 class="title">[译] 让人倾倒的 11 个 npm trick</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://twitter.com/bitandbang">@Tierney Coren</a> <br>原文地址:
+          <a target="_blank" href="https://nodesource.com/blog/eleven-npm-tricks-that-will-knock-your-wombat-socks-off/">https://nodesource.com/blog/eleven-npm-tricks-that-will-knock-your-wombat-socks-off/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/eleven-npm-tricks-that-will-knock-your-wombat-socks-off">http://www.wemlion.com/post/eleven-npm-tricks-that-will-knock-your-wombat-socks-off</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p><img alt="让人倾倒的 11 个 npm trick"></p> <p>有效率地使用 npm 可能会很困难。内置特性堆积如山，尝试学习它们是很艰巨的任务。</p> <p>就我个人而言，单学习并使用其中一些小 trick 解救了我，从前移除那些未使用的模块时，我只能先删除整个 <code>node_modules</code> 文件夹，接着再用 <code>npm install</code> 重新安装<em>一切</em>。（<code>npm prune</code>，请见本文第四节。）如你所想，这简直要让人发狂了。</p> <p>我们编了这样一个 trick 列表，使用起来很简单，它们会加速你使用 npm 开发的过程，无论你在做什么项目。</p> <h2 id="1-package-">1.打开 package 主页</h2> <p><strong>运行:</strong> <code>npm home $package</code></p> <p>执行 <code>home</code> 命令会打开 <code>$package</code> 的主页。例如，如果指定 <code>$package</code> 为 <code>lodash</code>，那么就就会打开 Lodash 官网。没有安装（全局/某个项目） package 不影响该命令的使用。</p> <h2 id="2-package-github-">2. 打开 package Github 仓库</h2> <p><strong>运行:</strong> <code>npm repo $package</code></p> <p>类似前面的 <code>home</code> 命令， <code>repo</code>  命令会打开 <code>$package</code> 的 Github 仓库。如 <code>npm repo express</code> 会打开 Express 的官方仓库地址。同样，不需要安装 package 就能使用。</p> <h2 id="3-package-">3. 检查 package 的过时依赖</h2> <p><strong>运行:</strong> <code>npm outdated</code></p> <p>在项目中，运行 <code>outdated</code> 命令会通过 npm registry 检查是否有过时的 package，并在命令行中打印出当前版本、所需版本以及最新版本。</p> <p><img alt="在 Node 项目中运行 npm outdated"></p> <h2 id="4-package-json-package">4. 检查 package.json 中未声明的 package</h2> <p><strong>运行:</strong> <code>npm prune</code></p> <p>运行 <code>prune</code> 命令，npm CLI 会读取 <code>package.json</code>，并将结果与项目的 <code>/node_modules</code> 目录进行对比，并打印出不在  <code>package.json</code> 之列的模块列表。</p> <p><code>npm prune</code> 命令接着会拿出这些 package，并移除那些没有手动加到 <code>package.json</code> 中或没有使用 <code>--save</code> 标志安装的 package。</p> <p><img alt="在 Node 项目中运行 npm prune"></p> <p><strong>更新：</strong> 感谢 <a href="https://twitter.com/EvanHahn" target="_blank">@EvanHahn</a> 提醒，一种个人配置可以让 <code>npm prune</code> 提供与 <code>npm</code> 默认方式略有不同的结果。</p> <h2 id="5-">5. 锁定依赖版本</h2> <p><strong>运行:</strong> <code>npm shrinkwrap</code></p> <p>在项目中使用 <code>shrinkwrap</code> 命令，会生成一个 <code>npm-shrinkwrap.json</code> 文件，将项目依赖锁定在当前在 <code>node_modules</code> 中使用的特定版本。运行 <code>npm install</code> 时，若发现存在 <code>npm-shrinkwrap.json</code>，则会覆盖列出的依赖以及 <code>package.json</code> 中的任何语义版本范围。</p> <p>如果需要验证项目中 <code>package.json</code>、 <code>npm-shrinkwrap.json</code> 及 <code>node_modules</code> 的一致性，可以考虑使用 <a href="https://github.com/uber/npm-shrinkwrap" target="_blank">npm-shrinkwrap</a>。</p> <p><img alt="在 Node 项目中运行 npm shrinkwrap"></p> <h2 id="6-node-js-v4-lts-npm-v3">6. 在 Node.js v4 LTS 中使用 npm v3</h2> <p><strong>运行:</strong> <code>npm install -g npm@3</code></p> <p>使用 npm 全局安装 <code>npm@3</code>，会将 npm v2 升级至 v3。使用 npm v2 LTS 的 Node.js v4 LTS 发布版本（“Argon”）中也是如此。这会在 v4 LTS 中安装 npm v3 的最新稳定版本。（译者注：LTS 指 Long-Term Support， 即提供长期技术支持的版本。）</p> <h2 id="7-npm-install-g-sudo-">7. 运行 <code>npm install -g</code>，无需加  <code>sudo</code></h2> <p><strong>运行:</strong> <code>npm config set prefix $dir</code></p> <p><code>$dir</code> 指你想将<em>全局依赖安装在的</em>目录，运行命令，这一来，安装全局模块再也不用使用 sudo，该目录则成为全局的 bin 目录。唯一需要注意的是，确保使用 <code>chown -R $USER $dir</code> 该目录的<strong>调整用户权限</strong>。</p> <h2 id="8-">8. 改变所有项目的默认前缀</h2> <p><strong>运行:</strong> <code>npm config set save-prefix ~</code></p> <p>使用 <code>--save</code> 或 <code>--save-dev</code> 标志安装新 package 时，使用 <code>~</code> 比默认的 <code>^</code> 行为更加保守。<code>~</code> 将依赖锁定在小版本（minor version），允许使用 <code>npm update</code> 安装补丁版本。<code>^</code> 将依赖锁定在主版本，允许使用 <code>npm update</code>更新小版本。</p> <h2 id="9-devdependencies-">9. 生产环境下去除 <code>devDependencies</code> 依赖</h2> <p>项目准备上到生产环境时，确保使用 <code>--production</code> 标志安装依赖。该标志会安装 <code>dependencies</code>，忽略 <code>devDependencies</code>。这会确保开发所使用的工具及 package 不会进入生产环境。</p> <p>此外，还可以将 <code>NODE_ENV</code> 环境变量设置为 <code>production</code>，确保 <code>devDependencies</code> 绝不会被安装。</p> <h2 id="10-npmignore-">10. 使用 <code>.npmignore</code> 要当心</h2> <p>如果还没使用过 <code>.npmignore</code>，会默认使用 <code>.gitignore</code> 文件，加上一些更健全的默认选项。</p> <p>很多人不明白都是，一旦在项目中添加了 <code>.npmignore</code> 文件，<code>.gitignore</code> 的规则就会被忽略（好讽刺，出乎意料啊）。结果就是，发布项目时，不得不审查两个文件是否同步，防止敏感信息的泄露。</p> <h2 id="11-npm-init-">11. 带默认内容的 <code>npm init</code></h2> <p>在新项目中运行 <code>npm init</code> 时，可以配置 <code>package.json</code> 细节。如果想设置 <code>npm init</code> 会一直使用的默认工作，可以使用 <code>config set</code> 命令，加上一些额外的参数：</p> <pre><code class="hljs lang-bash">npm config <span class="hljs-built_in">set</span> init.author.name <span class="hljs-variable">$name</span>
+npm config <span class="hljs-built_in">set</span> init.author.email <span class="hljs-variable">$email</span></code></pre><p>若想彻底自定义初始化脚本，可以指定一个自定义的默认脚本：</p> <pre><code class="hljs lang-bash">npm config <span class="hljs-built_in">set</span> init-module ~/.npm-init.js</code></pre><p>下面是一个示例脚本，会弹出私有设置项，在需要情况下创建 Github 仓库。确保更改默认的 Github 用户名（<code>YOUR_GITHUB_USERNAME</code>），作为 Github 用户名环境变量的 fallback 值。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> cp = <span class="hljs-built_in">require</span>(<span class="hljs-string">'child_process'</span>);
+<span class="hljs-keyword">var</span> priv;
+
+<span class="hljs-keyword">var</span> USER = process.env.GITHUB_USERNAME || <span class="hljs-string">'YOUR_GITHUB_USERNAME'</span>;
+
+<span class="hljs-built_in">module</span>.exports = {
+
+  <span class="hljs-attr">name</span>: prompt(<span class="hljs-string">'name'</span>, basename || package.name),
+
+  <span class="hljs-attr">version</span>: <span class="hljs-string">'0.0.1'</span>,
+
+  <span class="hljs-attr">private</span>: prompt(<span class="hljs-string">'private'</span>, <span class="hljs-string">'true'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">val</span>)</span>{
+    <span class="hljs-keyword">return</span> priv = (<span class="hljs-keyword">typeof</span> val === <span class="hljs-string">'boolean'</span>) ? val : !!val.match(<span class="hljs-string">'true'</span>)
+  }),
+
+  <span class="hljs-attr">create</span>: prompt(<span class="hljs-string">'create github repo'</span>, <span class="hljs-string">'yes'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">val</span>)</span>{
+    val = val.indexOf(<span class="hljs-string">'y'</span>) !== <span class="hljs-number">-1</span> ? <span class="hljs-literal">true</span> : <span class="hljs-literal">false</span>;
+
+    <span class="hljs-keyword">if</span>(val){
+      <span class="hljs-built_in">console</span>.log(<span class="hljs-string">'enter github password:'</span>);
+      cp.execSync(<span class="hljs-string">"curl -u '"</span>+USER+<span class="hljs-string">"' https://api.github.com/user/repos -d "</span> +
+        <span class="hljs-string">"'{\"name\": \""</span>+basename+<span class="hljs-string">"\", \"private\": "</span>+ ((priv) ? <span class="hljs-string">'true'</span> : <span class="hljs-string">'false'</span>)  +<span class="hljs-string">"}' "</span>);
+      cp.execSync(<span class="hljs-string">'git remote add origin '</span>+ <span class="hljs-string">'https://github.com/'</span>+USER+<span class="hljs-string">'/'</span> + basename + <span class="hljs-string">'.git'</span>);
+    }
+
+    <span class="hljs-keyword">return</span> <span class="hljs-literal">undefined</span>;
+  }),
+
+  <span class="hljs-attr">main</span>: prompt(<span class="hljs-string">'entry point'</span>, <span class="hljs-string">'index.js'</span>),
+
+  <span class="hljs-attr">repository</span>: {
+    <span class="hljs-attr">type</span>: <span class="hljs-string">'git'</span>,
+    <span class="hljs-attr">url</span>: <span class="hljs-string">'git://github.com/'</span>+USER+<span class="hljs-string">'/'</span> + basename + <span class="hljs-string">'.git'</span> },
+
+  <span class="hljs-attr">bugs</span>: { <span class="hljs-attr">url</span>: <span class="hljs-string">'https://github.com/'</span>+USER<span class="hljs-string">'/'</span> + basename + <span class="hljs-string">'/issues'</span> },
+
+  <span class="hljs-attr">homepage</span>: <span class="hljs-string">"https://github.com/"</span>+USER+<span class="hljs-string">"/"</span> + basename,
+
+  <span class="hljs-attr">keywords</span>: prompt(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">s</span>) </span>{ <span class="hljs-keyword">return</span> s.split(<span class="hljs-regexp">/\s+/</span>) }),
+
+  <span class="hljs-attr">license</span>: <span class="hljs-string">'MIT'</span>,
+
+  <span class="hljs-attr">cleanup</span>: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">cb</span>)</span>{
+
+    cb(<span class="hljs-literal">null</span>, <span class="hljs-literal">undefined</span>)
+  }
+
+}</code></pre><h2 id="-">最后一点...</h2> <p>若想学习更多关于 npm、Node.js、JavaScript、Docker、Kubernetes 以及 Electron 等等等等，可以在 Twitter、 上关注 <a href="https://twitter.com/nodesource" target="_blank">@NodeSource</a>。我们一直都在，很乐意收到你的消息！</p></div></article> <nav class="pagination"><a href="/post/ts-note-on-global-reference" title="笔记：TypeScript 中引用全局变量" class="prev">« 笔记：TypeScript 中引用全局变量</a> <a href="/post/being-pushy" title="[译] HTTP 推送" class="next">[译] HTTP 推送 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/63935ae20e43136c52a1.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

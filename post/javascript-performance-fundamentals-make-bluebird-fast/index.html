@@ -1,0 +1,132 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] Bluebird 高性能揭秘 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,Promise"><meta data-n-head="true" name="description" content="Bluebird 高性能揭秘"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2017-01-12</div></div> <h1 class="title">[译] Bluebird 高性能揭秘</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://www.reaktor.com/blog/author/petka-antonov/">Petka Antonov</a> <br>原文地址:
+          <a target="_blank" href="https://reaktor.com/blog/javascript-performance-fundamentals-make-bluebird-fast/">https://reaktor.com/blog/javascript-performance-fundamentals-make-bluebird-fast/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/javascript-performance-fundamentals-make-bluebird-fast">http://www.wemlion.com/post/javascript-performance-fundamentals-make-bluebird-fast</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>Bluebird 是一个广泛使用的 Promise 库，最早在 2013 年得到人们的关注。相比其他同等水平的 Promise 库，Bluebird 快了一百来倍。Bluebird 自始至终遵循着 JavaScript 优化的一些基本原则，所以才有这么好的性能。本文将会介绍其中最有价值的三个方面。</p> <h3 id="1-">1.  函数中的对象分配最小化</h3> <p>对象分配（object allocation），尤其是函数中的对象分配，对性能的影响是很大的，因为其实现需要用到大量内部数据。JavaScript 实现了垃圾自动回收，占用内存的不单是分配的对象；垃圾回收器也有份，它在不断寻找那些不再使用的对象，以释放内存。JavaScript 占用内存越多，垃圾回收需要的 CPU 资源也就越多，这样一来，运行代码的 CPU 资源就会减少。</p> <p>函数是 JavaScript 中的一等对象，和其他对象有着相同的特性。假设在函数 fnA 中，声明了另一个函数 fnB，那么每次调用外层的 fnA 时，都会有一个全新的 fnB 函数对象被创建，哪怕两次代码完全一样。请看下面的例子：</p> <pre><code class="hljs lang-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">trim</span>(<span class="hljs-params">string</span>) </span>{
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">trimStart</span>(<span class="hljs-params">string</span>) </span>{
+        <span class="hljs-keyword">return</span> string.replace(<span class="hljs-regexp">/^\s+/g</span>, <span class="hljs-string">""</span>);
+    }
+
+    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">trimEnd</span>(<span class="hljs-params">string</span>) </span>{
+        <span class="hljs-keyword">return</span> string.replace(<span class="hljs-regexp">/\s+$/g</span>, <span class="hljs-string">""</span>);
+    }
+
+    <span class="hljs-keyword">return</span> trimEnd(trimStart(string))
+}</code></pre><p>每次调用 trim 函数的时候，两个并非必需的函数对象（trimStart 和 trimEnd 函数）就会被创建出来。说这两个函数对象并非必需，是因为它们作为独特对象的特点并未起到丝毫作用，如属性赋值、变量隐藏等，所用到的仅仅是它们的内部功能而已。</p> <p>要优化这个例子并不麻烦，将那两个函数移到 trim 函数之外就好。它们同处于相同模块，只会加载一次，所以这两个函数各自只会创建一个函数对象：</p> <pre><code class="hljs lang-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">trimStart</span>(<span class="hljs-params">string</span>) </span>{
+    <span class="hljs-keyword">return</span> string.replace(<span class="hljs-regexp">/^\s+/g</span>, <span class="hljs-string">""</span>);
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">trimEnd</span>(<span class="hljs-params">string</span>) </span>{
+    <span class="hljs-keyword">return</span> string.replace(<span class="hljs-regexp">/\s+$/g</span>, <span class="hljs-string">""</span>);
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">trim</span>(<span class="hljs-params">string</span>) </span>{
+    <span class="hljs-keyword">return</span> trimEnd(trimStart(string))
+}</code></pre><p>但更为常见的情况是，函数对象似乎是一种必要之恶，优化并不像上面这般简单。比如说，传递回调函数时，总是需要考虑特定上下文。这通常可以用闭包实现，简单又直观，效率却极低。举个小例子，使用 Node 读取 JSON 文件：</p> <pre><code class="hljs lang-js"><span class="hljs-keyword">var</span> fs = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">readFileAsJson</span>(<span class="hljs-params">fileName, callback</span>) </span>{
+    fs.readFile(fileName, <span class="hljs-string">'utf8'</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">error, result</span>) </span>{
+        <span class="hljs-comment">// 每次调用 readFileAsJson 函数时，会创建一个新的函数对象</span>
+       <span class="hljs-comment">// 因为是闭包，也会分配一个内部上下文对象来保存状态</span>
+        <span class="hljs-keyword">if</span> (error) {
+            <span class="hljs-keyword">return</span> callback(error);
+        }
+        <span class="hljs-comment">// 需要 try-catch 来处理可能存在的非法 JSON 造成的语法错误</span>
+        <span class="hljs-keyword">try</span> {
+            <span class="hljs-keyword">var</span> json = <span class="hljs-built_in">JSON</span>.parse(result);
+            callback(<span class="hljs-literal">null</span>, json);
+        } <span class="hljs-keyword">catch</span> (e) {
+            callback(e);
+        }
+    })
+}</code></pre><p>在上面的例子中，传给 <code>fs.readFile</code> 的匿名回调，是不能从 readFileAsJson 函数中提取出来的，因为该匿名函数能够访问其外部的 callback 变量。需要注意的是，即便使用命名函数取代匿名函数，也不会有任何区别。</p> <p>Bluebird 内部常用到的优化方法，是采用明确的普通对象保存与上下文相关的数据。对一次包含逐层传递 callback 的操作来说，只需分配一次对象。相比每当 callback 传入另一层函数时就需要创建新闭包，优化方法只需要传递一个额外的参数。假设某个操作调用 callback 分五步进行，若使用闭包则意味着要分配五个函数对象外加五个上下文对象，而使用优化方法则只需要一个普通对象。</p> <p>假如可以修改 <code>fs.readFile</code> API，使其接收一个上下文对象，那么前面的例子可以这样优化：</p> <pre><code class="hljs lang-js"><span class="hljs-keyword">var</span> fs = <span class="hljs-built_in">require</span>(<span class="hljs-string">'fs-modified'</span>);
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">internalReadFileCallback</span>(<span class="hljs-params">error, result</span>) </span>{
+    <span class="hljs-comment">// 修改后的 readFile 函数将上下文对象设置为 `this`</span>
+    <span class="hljs-comment">// 并调用原来传来的 callback</span>
+    <span class="hljs-keyword">if</span> (error) {
+        <span class="hljs-keyword">return</span> <span class="hljs-keyword">this</span>(error);
+    }
+    <span class="hljs-comment">// 需要 try-catch 来处理可能存在的非法 JSON 造成的语法错误</span>
+    <span class="hljs-keyword">try</span> {
+        <span class="hljs-keyword">var</span> json = <span class="hljs-built_in">JSON</span>.parse(result);
+        <span class="hljs-keyword">this</span>(<span class="hljs-literal">null</span>, json);
+    } <span class="hljs-keyword">catch</span> (e) {
+        <span class="hljs-keyword">this</span>(e);
+    }
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">readFileAsJson</span>(<span class="hljs-params">fileName, callback</span>) </span>{
+    <span class="hljs-comment">// 修改后的  fs.readFile 接收上下文对象作为第四个参数</span>
+    <span class="hljs-comment">// 但实际无需为 `callback` 单独创建一个普通对象</span>
+    <span class="hljs-comment">// 直接将其作为上下文对象即可</span>
+    fs.readFile(fileName, <span class="hljs-string">'utf8'</span>, internalReadFileCallback, callback);
+}</code></pre><p>显然，我们需要从内部、使用两个方面控制 API，这种优化对那些不接收上下文对象作为参数的 API 来说，全无用处。但当我们控制了多个内部层的时候，性能优化的收益则极为可观。顺便提一个经常被忽略的细节：JavaScript 数组的某些内置 API（如 forEach）可以接收一个上下文对象作为第二个参数。</p> <h3 id="2-">2. 减小对象体积</h3> <p>减小经常、频繁使用的对象（如 Promise）的体积至关重要。对象被分配在栈（heap）中，对象体积越大，栈空间也会越快被占满，回收器要做的工作也更多。通常来说，对象体积越小，回收器判断对象状态时要访问的字段也就越少。</p> <p>使用位运算符，布尔值 and/or 特定整数字段能够包装到更小的空间中。JavaScript 采用 32 位整数，所以可以将 32 个布尔字段（或 8 个 4 位整数字段，又或者 16 个布尔和 2 个 8 位整数字段 etc.）打包到一个字段中。为维护代码可读性，每个逻辑字段需要一对 getter/setter，用来对物理字段进行相关位运算操作。下面的例子展示如何使用整数保存一个布尔字段（未来还可扩展到多个逻辑字段）：</p> <pre><code class="hljs lang-js"><span class="hljs-comment">// 使用 1 &lt;&lt; 1 代表第二位, 1 &lt;&lt; 2 代表第三位，依此类推</span>
+<span class="hljs-keyword">const</span> READONLY = <span class="hljs-number">1</span> &lt;&lt; <span class="hljs-number">0</span>;
+
+<span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">File</span> </span>{
+    <span class="hljs-keyword">constructor</span>() {
+        <span class="hljs-keyword">this</span>._bitField = <span class="hljs-number">0</span>;
+    }
+
+    isReadOnly() {
+        <span class="hljs-comment">// 圆括号不可省略</span>
+        <span class="hljs-keyword">return</span> (<span class="hljs-keyword">this</span>._bitField & READONLY) !== <span class="hljs-number">0</span>;
+    }
+
+    setReadOnly() {
+        <span class="hljs-keyword">this</span>._bitField = <span class="hljs-keyword">this</span>._bitField | READONLY;
+    }
+
+    unsetReadOnly() {
+        <span class="hljs-keyword">this</span>._bitField = <span class="hljs-keyword">this</span>._bitField & (~READONLY);
+    }
+}</code></pre><p>访问器方法如此短小，运行时很可能会被内联，所以也不会产生额外开销。</p> <p>两个乃至多个不会同时用到的字段也可以合并成一个字段，用一个布尔值记录该字段所记录的值的类型即可。不过，如果像前面所讲的那样，将这个布尔字段打包在某个整数字段中，这样做的结果，无非只是节省了一些空间。</p> <p>Bluebird 在保存一个 Promise 对象的完成值与拒绝理由时就用到这种技巧。如果该Promise 对象完成，则使用该字段记录完成值，反之亦然。重复一遍，属性访问必须通过访问器函数，将丑陋的优化字节隐藏在底层。</p> <p>如果对象需要保存一个列表，尽量避免使用数组，直接使用索引属性，将值保存在对象上即可。</p> <p>不要这样做：</p> <pre><code class="hljs lang-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">EventEmitter</span> </span>{
+    <span class="hljs-keyword">constructor</span>() {
+        <span class="hljs-keyword">this</span>.listeners = [];
+    }
+
+    addListener(fn) {
+        <span class="hljs-keyword">this</span>.listeners.push(fn);
+    }
+}</code></pre><p>应尽量避免使用数组：</p> <pre><code class="hljs lang-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">EventEmitter</span> </span>{
+    <span class="hljs-keyword">constructor</span>() {
+        <span class="hljs-keyword">this</span>.length = <span class="hljs-number">0</span>;
+    }
+
+    addListener(fn) {
+        <span class="hljs-keyword">var</span> index = <span class="hljs-keyword">this</span>.length;
+        <span class="hljs-keyword">this</span>.length++;
+        <span class="hljs-keyword">this</span>[index] = fn;
+    }
+}</code></pre><p>若 <code>length</code> 字段被限制为一个小的整数（如 10 位，限制 event emitter 的监听器数量最大为 1024），则还可以与其他布尔字段、特定整数字段打包在一起。</p> <h3 id="3-">3. 可选特性懒重写</h3> <p>Bluebird 提供了有些可选特性，使用它们时可能拉低整个库的性能。这些特性主要包括警告、long stack trace、取消、<code>Promise.prototype.bind</code> 以及 Promise 状态监控等。实现这些特性，须在整个库的不同地方调用不同的钩子函数。比如说，要实现 Promise 监控，那么每次创建 Promise 对象时就要调用某个函数。</p> <p>在调用钩子函数之前，当然最好先检查是否需要启用监控特性，这比不管三七二十一直接调用要靠谱。不过借助于内联缓存和内联函数，对未启用这些特性的用户来说，影响其实可以完全忽略。将初始钩子函数设置为空函数即可达到目的：</p> <pre><code class="hljs lang-js"><span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Promise</span> </span>{
+    <span class="hljs-comment">// ...</span>
+    <span class="hljs-keyword">constructor</span>(executor) {
+        <span class="hljs-comment">// ...</span>
+        <span class="hljs-keyword">this</span>._promiseCreatedHook();
+    }
+
+    <span class="hljs-comment">// 空方法</span>
+    _promiseCreatedHook() {}
+}</code></pre><p>如果用户并未启用监控特性，优化器发现函数是什么都没干，便会忽略它。所以实际上可以认为 constructor 中的钩子函数不存在。</p> <p>那么如何启用相关特性呢？重写相关的空函数就可以啦：</p> <pre><code class="hljs lang-js"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">enableMonitoringFeature</span>(<span class="hljs-params"></span>) </span>{
+    <span class="hljs-built_in">Promise</span>.prototype._promiseCreatedHook = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{
+        <span class="hljs-comment">// 实际实现</span>
+    };
+
+    <span class="hljs-comment">// ...</span>
+}</code></pre><p>这样的函数重写会使所有的 Promise 对象内联缓存失效，因此应该只在应用启动时，任何 Promise 对象创建之前进行重写。这样一来，空钩子函数就不会有任何影响了。</p> <h3 id="-">译者补充</h3> <p>拖拖拉拉，终于把这篇文章翻译出来了。需要说明的是，没有完全按照原文逐字翻译，插入了自己的一些理解。</p> <p>遗憾的是，有一部分名词实在不好翻译，所以本文难免有一些生硬的地方。虽然译者可以摸着良心说，真的已经尽了最大的努力。</p> <p>之前读到 stackoverflow 上的一个回答，也属于优化的一部分吧，涉及到 V8 中对象的两种存储模式，即字典模式、快速模式。建议有兴趣的同学看看：<a href="http://stackoverflow.com/questions/24987896/how-does-bluebirds-util-tofastproperties-function-make-an-objects-properties" target="_blank">how-does-bluebirds-util-tofastproperties-function-make-an-objects-properties</a>。</p> <p>另外，之前有个工具 <a href="https://github.com/nolanlawson/optimize-js" target="_blank">optimize-js</a>，好像也可以针对 V8 做了一些优化，具体可以看文档，说得非常详细。</p></div></article> <nav class="pagination"><a href="/post/timing-atack" title="关于时序攻击" class="prev">« 关于时序攻击</a> <a href="/post/ajax-requests-in-react" title="[译] React 中的 AJAX 请求：获取数据的方法与时机" class="next">[译] React 中的 AJAX 请求：获取数据的方法与时机 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/86d02b956ad082b8fb53.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

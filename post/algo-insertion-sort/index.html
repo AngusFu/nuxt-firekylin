@@ -1,0 +1,95 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">算法学习：插入排序 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,算法,JavaScript"><meta data-n-head="true" name="description" content="算法学习：插入排序"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-11-02</div></div> <h1 class="title">算法学习：插入排序</h1> <div class="entry-content"><!----> <h2 id="-">缘起</h2> <p>最近打算好好学习算法。因为专业的原因，对计算机原理、数据结构与算法这些知识，一开始可以说是一窍不通的。</p> <p>最开始在项目中接触算法，完全基于项目需要。当时负责一个酒店项目，数据接入来自公共部分。项目详情页拿到的数据，包括当前酒店所有套餐，最多的可能有几十个。需求仅仅要求显示三条，而且结果是根据不同内容（如状态、网络、热水、空调等等）有优先级的。</p> <p>当时被这套逻辑闹得很揪心。后来想想，放手干吧，多做几次遍历。最后在排序这块遇到问题了。结果就是在阮大神的博客上找到了一个快速排序的例子，稍作修改，就用在项目中了。当时还觉得小有成就。当然，后来项目经过满满一周测试，即将上线时，被取消了。</p> <p>回首算来，在上一家公司一年多的时间中，我所做的项目，真正上线的真没几个。唯一上线的可能只有一个 React Native 开发的 APP，一直活到现在。当然，也有好处，学到了很多东西。</p> <p>哦，对了，第一次接触算法应该是在找工作的时候。当时跑到杭州去面试，公司不大，相对传统，主营业务说白了就是 POS 机。面试我们的是软件出身的总经理，要求很简单，每人一台机器，题目相同，不管面的是 Java 还是 C++ 或者前端。一个和图有关的题目，记得后来在哪本书上看过类似的题，很经典的算法。当时，主要学习视觉、交互为主的我，完全是一脸懵的状态。结果自然不用多说。奇怪的是，第二天回到武汉，我竟然解决了，还是拿高中数学知识解决的。造化弄人，塞翁失马，焉知非福？</p> <p>面试完了之后，开始读《数据结构与算法 JavaScript 描述》一书。但这本书在数据结构方面用了很大的篇幅。了解稍微多了一点，但解决问题的能力依然有限。所以这次，我打算读《算法导论》。不打算用学院派的方式学习，只求了解算法的思想，然后自己跟着试验一遍，加强了解。</p> <p>好了，前言说够了。步入正题。</p> <h2 id="-">插入排序</h2> <p>想象现在你手上有十张扑克牌（假定它们在 2-10 之间），没有经过整理，顺序打乱，我们用一个数组记录如下：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> cards = [<span class="hljs-number">7</span>, <span class="hljs-number">3</span>, <span class="hljs-number">5</span>, <span class="hljs-number">10</span>, <span class="hljs-number">6</span>, <span class="hljs-number">9</span>, <span class="hljs-number">2</span>, <span class="hljs-number">7</span>, <span class="hljs-number">9</span>, <span class="hljs-number">4</span>];
+<span class="hljs-comment">// 生成方法如下</span>
+<span class="hljs-comment">// var arr = [];</span>
+<span class="hljs-comment">// var t =10;</span>
+<span class="hljs-comment">// while (t) a[--t] = ~~(Math.random()*9) + 2</span></code></pre><p>下面，我们要通过一种办法对手上的牌进行排序。</p> <p>首先，拿出最左侧的一张牌 cardA，放在桌面上：</p> <pre><code class="hljs lang-javascript">Table: cardA(<span class="hljs-number">7</span>)
+Cards: <span class="hljs-number">3</span>   <span class="hljs-number">5</span>   <span class="hljs-number">10</span>   <span class="hljs-number">6</span>   <span class="hljs-number">9</span>   <span class="hljs-number">2</span>   <span class="hljs-number">7</span>   <span class="hljs-number">9</span>   <span class="hljs-number">4</span></code></pre><p>接着进行第二次取牌，依然拿手上最左侧的第一张 cardB，然后将这张牌与桌面上的牌 cardA 进行比较。</p> <p>在我们的例子中，因为 cardB(3) 小于 cardA(7)，所以将 cardB(3) 放在 cardA(7) 的左侧：</p> <pre><code class="hljs lang-javascript">Table: cardB(<span class="hljs-number">3</span>)   cardA(<span class="hljs-number">7</span>)
+Cards: <span class="hljs-number">5</span>   <span class="hljs-number">10</span>   <span class="hljs-number">6</span>   <span class="hljs-number">9</span>   <span class="hljs-number">2</span>   <span class="hljs-number">7</span>   <span class="hljs-number">9</span>   <span class="hljs-number">4</span></code></pre><p>第三步，拿出手上左侧第一张 cardC，将它和桌面上的两张牌进行比较。这时候，因为 cardB(3) &lt; cardC(5) &lt; cardA(7)，所以我们将这次从手上拿出的牌<strong>插入</strong>到桌面两张牌之间。</p> <pre><code class="hljs lang-javascript">Table: cardB(<span class="hljs-number">3</span>)   cardC(<span class="hljs-number">5</span>)   cardA(<span class="hljs-number">7</span>)
+Cards: <span class="hljs-number">10</span>   <span class="hljs-number">6</span>   <span class="hljs-number">9</span>   <span class="hljs-number">2</span>   <span class="hljs-number">7</span>   <span class="hljs-number">9</span>   <span class="hljs-number">4</span></code></pre><p>我们继续上面的步骤。从前面的步骤可以看出，每次从手上拿出一张牌之前，桌面的牌是已经排好序的。我们只需要将此次拿出的牌与桌面上的牌一一比较，找到合适的位置插入即可 —— 记住，插入位置后面所有牌的位置都相应加 1，这点很重要。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// 我们将桌面上排好序的牌记为数组 sorted</span>
+<span class="hljs-comment">// 将第 n 轮（n >=0 ）拿出的牌记作 cardN</span>
+<span class="hljs-comment">// 那么找到 cardN 插入位置的办法如下：</span>
+
+<span class="hljs-comment">// 从右向左找</span>
+<span class="hljs-comment">// 只需要找到第一个比 cardN 小的即可</span>
+<span class="hljs-comment">// 数组下标从 0 开始</span>
+<span class="hljs-keyword">var</span> pos = sorted.length - <span class="hljs-number">1</span>;
+
+<span class="hljs-comment">// 开始从右向左比较</span>
+<span class="hljs-keyword">while</span> (pos >= <span class="hljs-number">0</span> && sorted[pos] > cardN) {
+  <span class="hljs-comment">// 比 cardN 大的都向右挪动一位</span>
+  sorted[pos + <span class="hljs-number">1</span>] = sorted[pos];
+  <span class="hljs-comment">// 向左移动</span>
+  pos--;
+}
+
+<span class="hljs-comment">// 上面 while 循环已经将所有比 cardN 大的数都右移一位</span>
+<span class="hljs-comment">// 空出来的位置，自然就是 cardN 应该在的位置了</span>
+<span class="hljs-comment">// 注意次这时 pos 已经是第一个比 cardN 小的数字的位置</span>
+<span class="hljs-comment">// 所以需加一</span>
+sorted[pos + <span class="hljs-number">1</span>] = cardN;</code></pre><p>这样一来，我们就有了下面这个纯粹是 JavaScript 思维式的代码：</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">insertionSort</span>(<span class="hljs-params">cards</span>) </span>{
+  <span class="hljs-comment">// 为了不改变原数组，便于比较</span>
+  <span class="hljs-comment">// 我们先复制一份</span>
+  cards = cards.slice(<span class="hljs-number">0</span>);
+
+  <span class="hljs-keyword">var</span> cardN = <span class="hljs-literal">null</span>;
+  <span class="hljs-keyword">var</span> sorted = [];
+
+  <span class="hljs-comment">// 从最左侧取出一张 直到取完</span>
+  <span class="hljs-keyword">while</span> (cardN = cards.shift()) {
+    <span class="hljs-keyword">var</span> pos = sorted.length - <span class="hljs-number">1</span>;
+
+    <span class="hljs-keyword">while</span> (pos >= <span class="hljs-number">0</span> && sorted[pos] > cardN) {
+      <span class="hljs-comment">// 比 cardN 大的都向右挪动一位</span>
+      sorted[pos + <span class="hljs-number">1</span>] = sorted[pos];
+      <span class="hljs-comment">// 向左移动</span>
+      pos--;
+    }
+    sorted[pos + <span class="hljs-number">1</span>] = cardN;
+  }
+
+  <span class="hljs-keyword">return</span> sorted;
+}</code></pre><p>OK，一个 JavaScript 版本的插入排序就这样实现啦！</p> <p>不过，聪明如你，肯定会去搜索一番，怎么和其他的不一样啊？没关系，我们来继续改进。</p> <p>在上面的算法实现中，我们预设了一个 sorted 数组，相当于我们桌面的牌。我相信，聪明如你，牌技肯定不差，要照这么一张张往桌子上放，多累！我们整理手上的牌时，一般都是在一只手上完成的好吗？</p> <p>该怎么实现呢？我们直接看代码，相信有了上面的分析，很容易就能看懂。</p> <pre><code class="hljs lang-javascript">
+ <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">insertionSort</span>(<span class="hljs-params">cards</span>) </span>{
+  cards = cards.slice(<span class="hljs-number">0</span>);
+
+  <span class="hljs-keyword">var</span> len = cards.length;
+  <span class="hljs-keyword">var</span> cardN, i, j;
+
+  <span class="hljs-comment">// 将左侧第一张牌先看作我们的桌面上已经排好序的 sorted 数组</span>
+  <span class="hljs-comment">// 每次循环时 i 代表当前的要插值的那张牌</span>
+  <span class="hljs-keyword">for</span> (i = <span class="hljs-number">1</span>; i &lt; len; i++) {
+    <span class="hljs-comment">// 当前要移动的牌</span>
+    cardN = cards[i];
+
+    <span class="hljs-comment">// 倒着往前对比</span>
+    <span class="hljs-comment">// 这是最右侧那张牌</span>
+    j = i - <span class="hljs-number">1</span>;
+
+    <span class="hljs-comment">// 将 cardN 与其左侧已排序的数组逐一对比</span>
+    <span class="hljs-comment">// 直至找到比 cardN 小的那张</span>
+    <span class="hljs-keyword">while</span> (j >= <span class="hljs-number">0</span> && cards[j] > cardN) {
+      cards[j + <span class="hljs-number">1</span>] = cards[j];
+      <span class="hljs-comment">// 相当于 cardN 逐一不停地与其左侧排好序的牌交换位置</span>
+      <span class="hljs-comment">// 直到找到比 cardN 小的那张</span>
+      <span class="hljs-comment">// 但下面这句没必要</span>
+      <span class="hljs-comment">// cards[j] = cardN;</span>
+      j--;
+    }
+    <span class="hljs-comment">// 插入 cardN </span>
+    cards[j + <span class="hljs-number">1</span>] = cardN;
+  }
+
+  <span class="hljs-keyword">return</span> cards;
+}</code></pre><p>最近刚刚给博客新增了复制代码的功能（PC 下方可见）。可以直接复制前面的代码，测试一下~</p> <p>简单分析插入排序的时间复杂度。考虑两个极端情况。</p> <p>最好的情况是给定的数组已经排序好的，每次拿到的数向左对比一次就可。对比一次后，while 循环根本就不会进入。所以 for 循环中每次只需要一次对比，算起来最后就是 (n - 1) 次循环。</p> <p>最差的情况是数组是完全逆序的，每次拿到的数必须一直向前进行对比，直到最左侧的数字为止。考虑第 i 个数，需要与前面对比 (i - 1) 次，累计起来总次数就是 <code>0 + 1 + 2 + 3 + (n - 1) = n * (n - 1) / 2</code> 次。</p> <p>取最好情况与最差情况的平均数：<code>((n - 1) + n * (n - 1) / 2) / 2 = (n^2 + n -2) / 2</code>。</p> <p>经过上面粗略的估算，可以得出插入排序的时间复杂度为 O(n^2)。</p></div></article> <nav class="pagination"><a href="/post/using-html-form-validation-in-pure-javascript" title="[译] HTML 表单验证" class="prev">« [译] HTML 表单验证</a> <a href="/post/jquery-ajax-formdata" title="使用 jQuery.ajax 上传带文件的表单" class="next">使用 jQuery.ajax 上传带文件的表单 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/6c0a5c6d1c616e6ab0f3.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

@@ -1,0 +1,71 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">[译] 手把手教你写一个 Javascript 框架：项目结构 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="翻译,ES6,JavaScript"><meta data-n-head="true" name="description" content="手把手教你写一个 Javascript 框架：项目结构"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-11-20</div></div> <h1 class="title">[译] 手把手教你写一个 Javascript 框架：项目结构</h1> <div class="entry-content"><blockquote><p style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">
+          原文作者:
+          <a target="_blank" href="https://blog.risingstack.com/author/bertalan/">Bertalan Miklos</a> <br>原文地址:
+          <a target="_blank" href="https://blog.risingstack.com/writing-a-javascript-framework-project-structuring/">https://blog.risingstack.com/writing-a-javascript-framework-project-structuring/</a> <br>译文地址:
+          <a target="_blank" href="http://www.wemlion.com/post/nx-project-structure">http://www.wemlion.com/post/nx-project-structure</a> <br>本文由
+          <a target="_blank" href="http://www.wemlion.com">文蔺</a> 翻译，转载请保留此声明。
+          <br>著作权属于原作者，本译文仅用于学习、研究和交流目的，请勿用于商业目的。
+        </p></blockquote> <p>过去几个月中，RisingStack 的 JavaScript 工程师 Bertalan Miklos 编写了新一代客户端框架 <a href="http://nx-nxframework.rhcloud.com" target="_blank">NX</a>。Bertalan 将通过<strong>编写 JavaScript 框架</strong>系列文章与我们分享他在编写框架过程中的收获：</p> <p><strong>本章将展示 NX 的项目结构，并讲述如何解决可扩展性、依赖注入以及私有变量等方面的一些困难。</strong></p> <p>本系列章节如下：</p> <ol><li>项目结构（正是本文）</li> <li><a href="/post/execution-timing/">执行调度(Execution timing)</a></li> <li><a href="/post/sandbox-code-evaluation/">沙箱求值</a></li> <li><a href="/post/data-bind-dirty-checking">数据绑定简介</a></li> <li><a href="/post/es6-proxy-data-binding/">ES6 Proxy 实现数据绑定</a></li> <li>自定义元素</li> <li>客户端路由</li></ol> <h2 id="-">项目结构</h2> <p>没有放之四海而皆准的项目结构，但有一些基本准则。感兴趣的同学可以看下我们的 Node Hero 系列中的《<a href="https://blog.risingstack.com/node-hero-node-js-project-structure-tutorial/" target="_blank">Node.js 项目结构教程</a> 》这一章。</p> <h3 id="nx-">NX 框架概览</h3> <p>NX 的目标是成为一个开源社区驱动的易于扩展的项目。项目特点如下：</p> <ul><li>包含现代客户端框架必须的所有特性；</li> <li>除 polyfill 外，没有任何外部依赖；</li> <li>代码总量 3000 行；</li> <li>没有代码多于 300 行的模块；</li> <li>单个特性模块依赖不超过 3 个。</li></ul> <p>项目各模块依赖关系如下图所示：</p> <p><img alt="JavaScript Framework in post: The NX project structure"></p> <p>这种结构为典型框架开发难题提供了一种解决方案。</p> <ul><li>扩展性</li> <li>依赖注入</li> <li>私有变量</li></ul> <h3 id="-">可扩展性实现</h3> <p>社区驱动项目必须易于扩展。故项目的核心部分应当小巧，并拥有一个预定义的依赖处理系统。前者确保项目易于理解，后者则保证框架稳定。</p> <p>本节先聚焦于实现小巧的内核。</p> <p>现代框架应当拥有的主要特性就是创建自定义元素并将其应用于 DOM 的能力。NX 的核心只有一个 <code>component</code> 函数，它的工作正在于此这个函数允许用户配置、注册一个新类型的元素。</p> <pre><code class="hljs lang-javascript">component(config)
+  .register(<span class="hljs-string">'comp-name'</span>)</code></pre><p>注册的 <code>comp-name</code> 是空组件类型，可以按照预期在 DOM 中实例化。</p> <pre><code class="hljs lang-html"><span class="hljs-tag">&lt;<span class="hljs-name">comp-name</span>></span><span class="hljs-tag">&lt;/<span class="hljs-name">comp-name</span>></span></code></pre><p>下一步是保证能使用新特性扩展组件。为保持简洁、可扩展，这些新特性不应该污染核心部分。这时候使用依赖注入就很方便了。</p> <h2 id="-di-">利用中间件实现依赖注入（DI）</h2> <p>如果你对依赖注入不太熟悉，建立先阅读这篇文章：《<a href="https://blog.risingstack.com/dependency-injection-in-node-js" target="_blank">Dependency Injection in Node.js</a>》。</p> <blockquote><p>依赖注入是一种设计模式，在这种模式中，一个或多个依赖或服务被注入到或引用传递给一个独立对象。</p></blockquote> <p>DI 解决了硬性依赖，却引入了新问题。使用者需要知道如何配置、注入依赖。大多客户端框架都将这些工作交给 DI 容器，帮助开发者完成。</p> <blockquote><p>DI 容器指的是知道如何实例化、配置对象的对象。</p></blockquote> <p>另外一种方式则是中间件 DI 模式，这在服务端得到广泛应用（如 Express、Koa 等）。其中的奥秘在于，所有可注入的依赖（中间件）拥有相同的接口，以相同方式注入。这种方法则无需 DI 容器。</p> <p>为保持简洁，我决定采用中间件模式。若你曾使用过 Express，以下代码自然不会陌生：</p> <pre><code class="hljs lang-javascript">component()
+  .use(paint) <span class="hljs-comment">// inject paint middleware</span>
+  .use(resize) <span class="hljs-comment">// inject resize middleware</span>
+  .register(<span class="hljs-string">'comp-name'</span>)
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">paint</span> (<span class="hljs-params">elem, state, next</span>) </span>{
+  <span class="hljs-comment">// elem is the component instance, set it up or extend it here</span>
+  elem.style.color = <span class="hljs-string">'red'</span>
+  <span class="hljs-comment">// then call next to run the next middleware (resize)</span>
+  next()
+}
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">resize</span> (<span class="hljs-params">elem, state, next</span>) </span>{
+  elem.style.width = <span class="hljs-string">'100 px'</span>
+  next()
+}</code></pre><p>中间件在新的组件实例插入 DOM 时执行，通常会给实例扩展一些新特性。如若不同库扩展相同对象，则将导致名称冲突。暴露私有变量会加剧问题，并可能被其他人意外利用。</p> <p>公开 API 小巧玲珑，其余部分隐身不见，正是避免问题的优秀方案。</p> <h3 id="-">处理私有变量</h3> <p>JavaScript 中需要通过函数作用域来实现私有变量。需要使用跨作用域私有变量时，人们习惯使用<code>_</code>前缀来标志，并将其公开暴露。这可以避免意外使用，但无法解决命名冲突。更好的办法是使用  ES6 的 <code>Symbol</code> 基本数据类型。</p> <blockquote><p>Symbol 是一种唯一的、不可变的数据类型，可用作对象属性标识符。</p></blockquote> <p>下面的代码展示了 symbol 的实际使用：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> color = <span class="hljs-built_in">Symbol</span>()
+
+<span class="hljs-comment">// a middleware</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">colorize</span> (<span class="hljs-params">elem, state, next</span>) </span>{
+  elem[color] = <span class="hljs-string">'red'</span>
+  next()
+}</code></pre><p>这样一来，通过 <code>color</code> symbol （以及元素 elem）就能获取 <code>red</code>。<code>red</code> 的私有程度，可由 <code>color</code> symbol 暴露的不同程度控制。合理数量的私有变量，通过中心存储读取，是一种优雅的解决方案。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// symbols module</span>
+exports.private = {
+  <span class="hljs-attr">color</span>: <span class="hljs-built_in">Symbol</span>(<span class="hljs-string">'color from colorize'</span>)
+}
+exports.public = {}</code></pre><p><code>index.js</code> 如下：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// main module</span>
+<span class="hljs-keyword">const</span> symbols = <span class="hljs-built_in">require</span>(<span class="hljs-string">'./symbols'</span>)
+exports.symbols = symbols.public</code></pre><p>在项目内部，所有模块都可访问 symbol 存储对象，但私有部分不会对外暴露。公有部分则可用于对外部开发者暴露一些低层次特性。这就避免了意外使用，因为开发者需要明确引入需要使用的 symbol。此外，symbol 引用也不会像字符串一样产出冲突，是故不会产生命名冲突。</p> <p>以下几点概括了不同场景下的用法：</p> <p><strong>1. 公有变量</strong></p> <p>正常使用.</p> <pre><code class="hljs lang-javascript"><span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">elem, state, next</span>) </span>{
+  elem.publicText = <span class="hljs-string">'Hello World!'</span>
+  next()
+}</code></pre><p><strong>2. 私有变量</strong></p> <p>项目私有的跨作用域变量，应当在私有 symbol 对象中加入一个 symbol key。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// symbols module</span>
+exports.private = {
+  <span class="hljs-attr">text</span>: <span class="hljs-built_in">Symbol</span>(<span class="hljs-string">'private text'</span>)
+}
+exports.public = {}</code></pre><p>并在需要的地方引入。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> private = <span class="hljs-built_in">require</span>(<span class="hljs-string">'symbols'</span>).private
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">elem, state, next</span>) </span>{
+  elem[private.text] = <span class="hljs-string">'Hello World!'</span>
+  next()
+}</code></pre><p><strong>3. 半私有变量</strong></p> <p>低层次 API 的变量，应当在公有 symbol 对象中加入一个 symbol key。</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// symbols module</span>
+exports.private = {
+  <span class="hljs-attr">text</span>: <span class="hljs-built_in">Symbol</span>(<span class="hljs-string">'private text'</span>)
+}
+exports.public = {
+  <span class="hljs-attr">text</span>: <span class="hljs-built_in">Symbol</span>(<span class="hljs-string">'exposed text'</span>)
+}</code></pre><p>并在需要的地方引入。</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> exposed = <span class="hljs-built_in">require</span>(<span class="hljs-string">'symbols'</span>).public
+
+<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">elem, state, next</span>) </span>{
+  elem[exposed.text] = <span class="hljs-string">'Hello World!'</span>
+  next()
+}</code></pre><h3 id="-">写在最后</h3> <p>如果对 NX 框架感兴趣，请访问 <a href="http://nx-framework.com/" target="_blank">主页</a>。胆大的读者还可以在 Github 上查看 <a href="https://github.com/RisingStack/nx-framework" target="_blank">NX 源码</a> 和 <a href="https://github.com/RisingStack/nx-observe" target="_blank">nx-observe 源码</a>。</p> <p>希望你喜欢这篇文章。下一章我们将讨论执行调度。</p></div></article> <nav class="pagination"><a href="/post/when-to-use-which-css-methodology" title="[译] CSS 方法论的选择" class="prev">« [译] CSS 方法论的选择</a> <a href="/post/sandbox-code-evaluation" title="[译] 手把手教你写一个 Javascript 框架：沙箱求值" class="next">[译] 手把手教你写一个 Javascript 框架：沙箱求值 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/0ecb8789478bd4d3480a.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

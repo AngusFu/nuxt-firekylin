@@ -1,0 +1,32 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">算法学习：冒泡排序 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,JavaScript,算法"><meta data-n-head="true" name="description" content="算法学习：冒泡排序"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-11-09</div></div> <h1 class="title">算法学习：冒泡排序</h1> <div class="entry-content"><!----> <p>从基础入手。前面学习了<a href="../algo-insertion-sort/">插入排序</a>和<a href="../algo-selection-sort">选择排序</a>。</p> <p>接下来看冒泡排序。</p> <p>依然假设手上有 N 张扑克牌，记作 cards。</p> <p>第一步，先比较第 1 张与第 2 张，如果第 1 张比第 2 张大，则将两者调换位置；</p> <p>第二步，重复上面的方法，比较第 2 张、第 3 张；</p> <p>……</p> <p>第 (n - 1) 步，比较第 (n - 1) 张、第 n 张，若第 (n - 1) 张比第 n 张大，则将两者调换位置。</p> <p>仔细想下，发现没有？这样 (n - 1) 个步骤下来，整个数组中最大数已经被顺利推到最右侧啦！也就是说，现在第 n 个数已经是最大的。这就是冒泡排序叫“冒泡”的原因。</p> <p>那么接下来，我们只需要对前面的 (n - 1) 个数再进行同样的 (n - 2) 次操作，找到第二大的数放在第 (n - 1) 个位置上。</p> <p>最后的实现如下：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">const</span> bubbleSort = <span class="hljs-function">(<span class="hljs-params">cards</span>) =></span> {
+  cards = cards.slice(<span class="hljs-number">0</span>);
+
+  <span class="hljs-keyword">let</span> len = cards.length;
+  <span class="hljs-keyword">let</span> temp = <span class="hljs-number">0</span>;
+
+  <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> i = len - <span class="hljs-number">1</span>; i >= <span class="hljs-number">0</span>; i--) {
+
+    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">let</span> j = <span class="hljs-number">0</span>; j &lt; len - i; j++) {
+
+      <span class="hljs-keyword">if</span> (cards[j] > cards[j + <span class="hljs-number">1</span>]) {
+        temp = cards[j + <span class="hljs-number">1</span>];
+        cards[j + <span class="hljs-number">1</span>] = cards[j];
+        cards[j] = temp;
+      }
+    }
+  }
+
+  <span class="hljs-keyword">return</span> cards;
+};</code></pre><p>仅仅看循环次数，评估下冒泡排序的复杂度。很简单，因为每次需要 (i - 1) 步的两两对比，因此总的时间是：</p> <pre><code class="hljs lang-javascript">(n - <span class="hljs-number">1</span>) + (n - <span class="hljs-number">2</span>) + ... + (<span class="hljs-number">2</span> - <span class="hljs-number">1</span>) + (<span class="hljs-number">1</span> - <span class="hljs-number">1</span>) = n * (n - <span class="hljs-number">1</span>) / <span class="hljs-number">2</span></code></pre><p>复杂度为 O(n^n)。不过，在最坏的情况下，交换操作也是 O(n^n)，这对数组来说，还是有些可怕。</p></div></article> <nav class="pagination"><a href="/post/nodejs-event-loop" title="[译] 理解 Node.js 事件循环" class="prev">« [译] 理解 Node.js 事件循环</a> <a href="/post/algo-selection-sort" title="算法学习：选择排序" class="next">算法学习：选择排序 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/293db41933a2de6781eb.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>

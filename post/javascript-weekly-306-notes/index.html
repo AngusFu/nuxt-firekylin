@@ -1,0 +1,177 @@
+<!doctype html>
+<html data-n-head-ssr data-n-head="">
+  <head>
+    <title data-n-head="true">JavaScript Weekly 306 阅读笔记 | 文蔺的博客</title><meta data-n-head="true" charset="utf-8"><meta data-n-head="true" name="viewport" content="width=device-width,initial-scale=1,minimum-scale=1,maximum-scale=1,user-scalable=no"><meta data-n-head="true" name="description" content="文蔺的前端学习记录，国外技术文章翻译，个人学习心得等等这些都会记录在这里。"><meta data-n-head="true" name="keywords" content="原创,阅读笔记,Angular 2"><meta data-n-head="true" name="description" content=" JavaScript Weekly 306 阅读笔记"><link data-n-head="true" rel="shortcut icon" href="/favicon.ico"><link rel="stylesheet" href="/static/0501d49c081ea86e209e.css">
+  </head>
+  <body data-n-head="">
+    <div data-server-rendered="true" id="__nuxt"><!----><div id="__layout"><div class="wrapper"><nav id="sidebar" class="behavior_1"><div class="wrap"><div class="profile"><a href="/" class="nuxt-link-active"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a> <span>文蔺的博客</span></div> <ul class="buttons"><li><a href="/" title="主页" class="nuxt-link-active"><i class="iconfont icon-home"></i> <span> 主页</span></a></li><li><a href="/archives" title="归档"><i class="iconfont icon-archive"></i> <span> 归档</span></a></li><li><a href="/slides" title="Slides"><i class="iconfont icon-archive"></i> <span> Slides</span></a></li><li><a href="/about" title="关于"><i class="iconfont icon-user"></i> <span> 关于</span></a></li><li><a href="/link" title="关注"><i class="iconfont icon-link"></i> <span> 关注</span></a></li><li><a href="/collection" title="收藏"><i class="iconfont icon-archive"></i> <span> 收藏</span></a></li></ul></div> <ul class="buttons"><li><a href="https://github.com/AngusFu/" rel="nofollow" target="_blank" class="inline"><i title="GitHub" class="iconfont icon-github-v"></i></a> <!----> <!----> <a href="/atom.xml" target="_blank" class="inline"><i title="RSS" class="iconfont icon-rss-v"></i></a> <a href="/search" class="inline"><i title="Search" class="iconfont icon-search"></i></a></li></ul></nav> <div id="header"><div class="btn-bar"><i></i></div> <h1><a href="/" class="nuxt-link-active">文蔺的博客</a></h1> <a href="/about/" class="me"><img src="/imgs/avatar.jpg" alt="文蔺的博客"></a></div> <div id="sidebar-mask" style="display:none"></div> <div id="main" class="main"><div id="page-post"><article class="post detail"><div class="meta"><div class="date">2016-10-21</div></div> <h1 class="title">JavaScript Weekly 306 阅读笔记</h1> <div class="entry-content"><!----> <h2 id="-document-ready-"><code>$(document).ready</code> 方法</h2> <ul><li><p>jQuery 3 中<code>$(document).ready(handler)</code> 等方法被 deprecated，仅保留 <code>$(handler)</code></p></li> <li><p><code>$('img').ready</code> 这种方式，和 <code>$(document).ready</code> 没有任何区别</p></li> <li><p><code>$(selector).ready(handler)</code> 这种是低效的，且会造成不必要的误解</p></li> <li><p>脚本放在 <code>&lt;body></code> 最底部的话，完全不需要 ready；</p></li></ul> <p>原生代码实现：</p> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">var</span> callback = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
+  <span class="hljs-comment">// Handler when the DOM is fully loaded</span>
+};
+
+<span class="hljs-keyword">if</span> (
+    <span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">"complete"</span> ||
+    (<span class="hljs-built_in">document</span>.readyState !== <span class="hljs-string">"loading"</span> && !<span class="hljs-built_in">document</span>.documentElement.doScroll)
+) {
+  callback();
+} <span class="hljs-keyword">else</span> {
+  <span class="hljs-built_in">document</span>.addEventListener(<span class="hljs-string">"DOMContentLoaded"</span>, callback);
+}
+
+<span class="hljs-comment">// IE &lt;= 8 </span>
+<span class="hljs-built_in">document</span>.attachEvent(<span class="hljs-string">"onreadystatechange"</span>, <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
+  <span class="hljs-comment">// check if the DOM is fully loaded</span>
+  <span class="hljs-keyword">if</span>(<span class="hljs-built_in">document</span>.readyState === <span class="hljs-string">"complete"</span>){
+    <span class="hljs-comment">// remove the listener, to make sure it isn't fired in future</span>
+    <span class="hljs-built_in">document</span>.detachEvent(<span class="hljs-string">"onreadystatechange"</span>, <span class="hljs-built_in">arguments</span>.callee);
+    <span class="hljs-comment">// The actual handler...</span>
+  }
+});</code></pre><p><small>原文：<a href="https://www.sitepoint.com/jquery-document-ready-plain-javascript/" target="_blank">Quick Tip: Replace jQuery’s Ready() with Plain JavaScript</a></small></p> <h2 id="yarn-vs-npm">Yarn vs NPM</h2> <ul><li><p>shrinkwrap </p> <ul><li>yarn 会自动更新 yarn.lock 文件，npm 需要手动维护</li> <li><a href="https://yarnpkg.com/en/docs/configuration#toc-use-yarn-lock-to-pin-your-dependencies" target="_blank">yarn.lock 文档</a></li> <li><a href="https://docs.npmjs.com/cli/shrinkwrap" target="_blank">npm shrinkwrap 文档</a></li></ul></li> <li><p>yarn 并行安装；npm 串行安装</p></li> <li><p>命令行差异：见原文，也可参见<a href="http://www.wemlion.com/2016/npm-vs-yarn-cheat-sheet/" target="_blank">Yarn 和 Npm 命令行小抄</a>译文</p></li></ul> <h2 id="angular-2-reactive-forms">Angular 2 Reactive Forms</h2> <ul><li><p><a href="https://toddmotto.com/angular-2-forms-reactive" target="_blank"><strong>reactive</strong></a> ==> <strong>ReactiveFormsModule</strong></p></li> <li><p><a href="https://toddmotto.com/angular-2-forms-template-driven" target="_blank"><strong>template-driven</strong></a> ==> <strong>FormsModule</strong></p></li> <li><p><code>import { ReactiveFormsModule } from '@angular/forms';</code></p></li> <li><p><code>import { FormControl, FormGroup, Validators } from '@angular/forms';</code></p></li></ul> <pre><code class="hljs lang-javascript"><span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SignupFormComponent</span> <span class="hljs-title">implements</span> <span class="hljs-title">OnInit</span> </span>{
+  user: FormGroup;
+  <span class="hljs-keyword">constructor</span>() {}
+  ngOnInit() {
+    <span class="hljs-keyword">this</span>.user = <span class="hljs-keyword">new</span> FormGroup({
+      <span class="hljs-attr">name</span>: <span class="hljs-keyword">new</span> FormControl(<span class="hljs-string">''</span>, [Validators.required, Validators.minLength(<span class="hljs-number">2</span>)]),
+      <span class="hljs-attr">account</span>: <span class="hljs-keyword">new</span> FormGroup({
+    <span class="hljs-attr">email</span>: <span class="hljs-keyword">new</span> FormControl(<span class="hljs-string">''</span>, Validators.required),
+    <span class="hljs-attr">confirm</span>: <span class="hljs-keyword">new</span> FormControl(<span class="hljs-string">''</span>, Validators.required)
+      })
+    });
+  }
+  onSubmit({ value, valid }: { <span class="hljs-attr">value</span>: User, <span class="hljs-attr">valid</span>: boolean }) {
+    <span class="hljs-built_in">console</span>.log(value, valid);
+  }
+}</code></pre><ul><li><code>import { FormBuilder, FormGroup, Validators } from '@angular/forms';</code></li></ul> <pre><code class="hljs lang-javascript">@Component({...})
+<span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">SignupFormComponent</span> <span class="hljs-title">implements</span> <span class="hljs-title">OnInit</span> </span>{
+  user: FormGroup;
+  <span class="hljs-keyword">constructor</span>(private fb: FormBuilder) {}
+  ngOnInit() {
+    <span class="hljs-keyword">this</span>.user = <span class="hljs-keyword">this</span>.fb.group({
+      <span class="hljs-attr">name</span>: [<span class="hljs-string">''</span>, [Validators.required, Validators.minLength(<span class="hljs-number">2</span>)]],
+      <span class="hljs-attr">account</span>: <span class="hljs-keyword">this</span>.fb.group({
+    <span class="hljs-attr">email</span>: [<span class="hljs-string">''</span>, Validators.required],
+    <span class="hljs-attr">confirm</span>: [<span class="hljs-string">''</span>, Validators.required]
+      })
+    });
+  }
+  onSubmit({ value, valid }: { <span class="hljs-attr">value</span>: User, <span class="hljs-attr">valid</span>: boolean }) {
+    <span class="hljs-built_in">console</span>.log(value, valid);
+  }
+}</code></pre><ul><li>FormBuilder 和 FormControl 对比</li></ul> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// before</span>
+ngOnInit() {
+  <span class="hljs-keyword">this</span>.user = <span class="hljs-keyword">new</span> FormGroup({
+    <span class="hljs-attr">name</span>: <span class="hljs-keyword">new</span> FormControl(<span class="hljs-string">''</span>, [Validators.required, Validators.minLength(<span class="hljs-number">2</span>)]),
+    <span class="hljs-attr">account</span>: <span class="hljs-keyword">new</span> FormGroup({
+      <span class="hljs-attr">email</span>: <span class="hljs-keyword">new</span> FormControl(<span class="hljs-string">''</span>, Validators.required),
+      <span class="hljs-attr">confirm</span>: <span class="hljs-keyword">new</span> FormControl(<span class="hljs-string">''</span>, Validators.required)
+    })
+  });
+}
+
+<span class="hljs-comment">// after</span>
+ngOnInit() {
+  <span class="hljs-keyword">this</span>.user = <span class="hljs-keyword">this</span>.fb.group({
+    <span class="hljs-attr">name</span>: [<span class="hljs-string">''</span>, [Validators.required, Validators.minLength(<span class="hljs-number">2</span>)]],
+    <span class="hljs-attr">account</span>: <span class="hljs-keyword">this</span>.fb.group({
+      <span class="hljs-attr">email</span>: [<span class="hljs-string">''</span>, Validators.required],
+      <span class="hljs-attr">confirm</span>: [<span class="hljs-string">''</span>, Validators.required]
+    })
+  });
+}</code></pre><p><small>原文：<a href="https://toddmotto.com/angular-2-forms-reactive" target="_blank">Angular 2 form fundamentals: reactive forms</a></small></p> <h2 id="es2016-strict-mode">ES2016 Strict Mode</h2> <ul><li>以下情况下，函数体内不能使用 <code>"use strict"</code>：<ul><li>参数有默认值</li> <li>参数解构</li> <li>rest 参数</li></ul></li></ul> <pre><code class="hljs lang-javascript"><span class="hljs-comment">// syntax error in ECMAScript 2016</span>
+<span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">doSomething</span>(<span class="hljs-params">a, b=a</span>) </span>{
+<span class="hljs-meta">    "use strict"</span>;
+    <span class="hljs-comment">// code</span>
+}
+
+<span class="hljs-comment">// syntax error in ECMAScript 2016</span>
+<span class="hljs-keyword">const</span> doSomething = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">{a, b}</span>) </span>{
+<span class="hljs-meta">    "use strict"</span>;
+    <span class="hljs-comment">// code</span>
+};
+
+<span class="hljs-comment">// syntax error in ECMAScript 2016</span>
+<span class="hljs-keyword">const</span> doSomething = <span class="hljs-function">(<span class="hljs-params">...a</span>) =></span> {
+    <span class="hljs-string">"use strict"</span>;
+    <span class="hljs-comment">// code</span>
+};</code></pre><blockquote><p>the specification indicated that <strong>parameter lists should be parsed in the same mode as the function body</strong> (which means the "use strict" directive in the function body must trigger strict mode).</p></blockquote> <p><small>原文：<a href="https://www.nczonline.net/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/" target="_blank">The ECMAScript 2016 change you probably don't know</a></small></p> <h2 id="asynchronous-iteration">Asynchronous Iteration</h2> <ul><li>参见原文</li> <li>Alternative 1:  Communicating Sequential Processes (CSP), <a href="https://github.com/ubolonton/js-csp" target="_blank">js-csp</a></li> <li>Alternative 2: Reactive Programming</li></ul> <p><small>原文：<a href="https://www.nczonline.net/blog/2016/10/the-ecmascript-2016-change-you-probably-dont-know/" target="_blank">The ECMAScript 2016 change you probably don't know</a></small></p> <h2 id="angular-2-">Angular 2 变化</h2> <p>其实我就看上了 <a href="https://plnkr.co/edit/oydh0yvV27hlQPA8wEYP?p=preview" target="_blank">Demo</a> 中的两段代码，很有启发：</p> <pre><code class="hljs lang-javascript"><span class="hljs-comment">//our root app component</span>
+<span class="hljs-keyword">import</span> {Component, NgModule, Input, trigger, state, animate, transition, style, HostListener } <span class="hljs-keyword">from</span> <span class="hljs-string">'@angular/core'</span>
+<span class="hljs-keyword">import</span> {BrowserModule} <span class="hljs-keyword">from</span> <span class="hljs-string">'@angular/platform-browser'</span>
+<span class="hljs-keyword">import</span> {Tooltip} <span class="hljs-keyword">from</span> <span class="hljs-string">'./tooltip.directive'</span>;
+
+@Component({
+  <span class="hljs-attr">selector</span> : <span class="hljs-string">'toggle'</span>,
+  <span class="hljs-attr">animations</span>: [
+    trigger(<span class="hljs-string">'toggle'</span>, [
+      state(<span class="hljs-string">'true'</span>, style({ <span class="hljs-attr">opacity</span>: <span class="hljs-number">1</span>; color: <span class="hljs-string">'red'</span> })),
+      state(<span class="hljs-string">'void'</span>, style({ <span class="hljs-attr">opacity</span>: <span class="hljs-number">0</span>; color: <span class="hljs-string">'blue'</span> })),
+      transition(<span class="hljs-string">':enter'</span>, animate(<span class="hljs-string">'500ms ease-in-out'</span>)),
+      transition(<span class="hljs-string">':leave'</span>, animate(<span class="hljs-string">'500ms ease-in-out'</span>))
+    ])
+  ],
+  <span class="hljs-attr">template</span>: <span class="hljs-string">`
+  &lt;div class="toggle" [@toggle]="show" *ngIf="show">
+    &lt;ng-content>&lt;/ng-content>
+  &lt;/div>`</span>
+})
+<span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Toggle</span> </span>{
+  @Input() show:boolean = <span class="hljs-literal">true</span>;
+  @HostListener(<span class="hljs-string">'document:click'</span>)
+  onClick(){
+    <span class="hljs-keyword">this</span>.show=!<span class="hljs-keyword">this</span>.show;
+  }
+}
+
+@Component({
+  <span class="hljs-attr">selector</span>: <span class="hljs-string">'my-app'</span>,
+  <span class="hljs-attr">template</span>: <span class="hljs-string">`
+    &lt;div>
+      &lt;div tooltip>Click to toggle animations&lt;/div>
+      &lt;h2>Hello &lt;/h2>
+      &lt;toggle>Hey!&lt;/toggle>
+    &lt;/div>
+  `</span>,
+})
+<span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">App</span> </span>{
+  name:string;
+  <span class="hljs-keyword">constructor</span>() {
+    <span class="hljs-keyword">this</span>.name = <span class="hljs-string">'Angular 2.1'</span>
+  }
+}
+
+@NgModule({
+  <span class="hljs-attr">imports</span>: [ BrowserModule ],
+  <span class="hljs-attr">declarations</span>: [ App, Toggle, Tooltip ],
+  <span class="hljs-attr">bootstrap</span>: [ App ]
+})
+<span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">AppModule</span> </span>{}</code></pre><pre><code class="hljs lang-javascript"><span class="hljs-comment">// tooltip.directive.ts</span>
+<span class="hljs-keyword">import</span> {Directive, ElementRef, HostListener} <span class="hljs-keyword">from</span> <span class="hljs-string">"@angular/core"</span>;
+
+@Directive({
+  <span class="hljs-attr">selector</span>: <span class="hljs-string">'[tooltip]'</span>,
+  <span class="hljs-attr">host</span>: {
+    <span class="hljs-string">'[class.tooltip]'</span>: <span class="hljs-string">"true"</span>,
+  }
+})
+<span class="hljs-keyword">export</span> <span class="hljs-class"><span class="hljs-keyword">class</span> <span class="hljs-title">Tooltip</span> </span>{
+  <span class="hljs-keyword">constructor</span>(private div: ElementRef) { }
+
+  @HostListener(<span class="hljs-string">'document:mousemove'</span>, [<span class="hljs-string">'$event'</span>])
+  mousemove(e: MouseEvent){
+    <span class="hljs-keyword">this</span>.div.nativeElement.style.display = <span class="hljs-string">"block"</span>;
+    <span class="hljs-keyword">this</span>.div.nativeElement.style.top = e.pageY + <span class="hljs-number">15</span> + <span class="hljs-string">"px"</span>;
+    <span class="hljs-keyword">this</span>.div.nativeElement.style.left = e.pageX + <span class="hljs-number">10</span> + <span class="hljs-string">"px"</span>;
+  }
+
+  @HostListener(<span class="hljs-string">'document:mouseout'</span>, [<span class="hljs-string">'$event'</span>])
+  mouseout(e: MouseEvent){
+    <span class="hljs-keyword">var</span> <span class="hljs-keyword">from</span> = e.relatedTarget || e.toElement;
+    <span class="hljs-keyword">if</span> (!<span class="hljs-keyword">from</span> || <span class="hljs-keyword">from</span>.nodeName == <span class="hljs-string">"HTML"</span>) {
+      <span class="hljs-keyword">this</span>.div.nativeElement.style.display = <span class="hljs-string">"none"</span>;
+    }
+  }
+}</code></pre><p><small>原文：<a href="https://medium.com/google-developer-experts/angular-2-new-features-in-angular-2-1-94132b1888f0#.wegekey62" target="_blank">Angular 2 — New features in Angular 2.1</a></small></p> <h2 id="-d-ts">编写自己的 .d.ts</h2> <p>写得挺详细，需要的时候可以参阅</p> <p><small>原文：<a href="http://blog.wolksoftware.com/contributing-to-definitelytyped" target="_blank">How to Create Your Own TypeScript Type Definition Files (.d.ts)</a></small></p> <h2 id="-">更多</h2> <p>see <a href="http://javascriptweekly.com/issues/306" target="_blank">http://javascriptweekly.com/issues/306</a></p></div></article> <nav class="pagination"><a href="/post/front-end-interview-algo-questions" title="关于前端常见算法面试题的一些思考" class="prev">« 关于前端常见算法面试题的一些思考</a> <a href="/post/npm-vs-yarn-cheat-sheet" title="[译] yarn 和 npm 命令行小抄" class="next">[译] yarn 和 npm 命令行小抄 »</a></nav></div> <footer id="footer" class="inner">
+      © 2022 -  文蔺的博客
+      
+        <span> - </span> <a href="/" class="nuxt-link-active">www.wemlion.com</a> <br>
+      Powered by <a target="_blank" href="https://nuxtjs.org">Nuxt.js</a> & <a target="_blank" rel="nofollow" href="https://firekylin.org" class="external">FireKylin</a></footer></div></div></div></div><script>window.__NUXT__={layout:"default",data:[{}],error:null,serverRendered:!0}</script><script src="/static/c418fb652629ac1ad5ca.js" defer></script><script src="/static/d989c0250b3c145b7084.js" defer></script><script src="/static/a04af2434d342797c405.js" defer></script><script src="/static/a9e13b4b84fcd888d410.js" defer></script><script src="/static/0329710550037b626a84.js" defer></script>
+  </body>
+</html>
