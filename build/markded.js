@@ -31,7 +31,7 @@ Renderer.prototype.image = function(href, title, text) {
       /http:\/\/(s|p)[0-9]\.(qhimg|qhres)\.com/,
       "https://$1.ssl.$2.com"
     )
-    .replace(/qhres2./, 'qhres2');
+    .replace(/qhres\.com/, 'qhres2.com');
 
   var out = '<img v-lazy="`' + href + '`" alt="' + text + '"';
   if (title) {
