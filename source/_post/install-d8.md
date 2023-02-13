@@ -20,7 +20,7 @@ abstract: "安装 d8 踩的一些坑"
 
 最终，整个编译耗费时间 100 余分钟。
 
-![](https://p5.ssl.qhimg.com/t017441ab6f60c16928.jpg)
+![](https://p1.ssl.qhimg.com/t017441ab6f60c16928.jpg)
 
 
 

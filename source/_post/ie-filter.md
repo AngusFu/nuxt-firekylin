@@ -9,7 +9,7 @@ tags:
 
 IE8 下面遇到奇怪的问题。本来半透明的 png 图片，竟然一片黑。
 
-![](https://p5.ssl.qhimg.com/t01685a11ad71082aa5.png)
+![](https://p1.ssl.qhimg.com/t01685a11ad71082aa5.png)
 
 然而，我明明按照习惯使用了 `opacity + filter` 的方式。
 
