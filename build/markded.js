@@ -2,7 +2,7 @@ const marked = require("marked");
 const { Renderer } = marked;
 const hljs = require("highlight.js");
 
-Renderer.prototype.link = function(href, title, text) {
+Renderer.prototype.link = function (href, title, text) {
   let relative = !/^(https?:)?\/\//.test(href);
   let out = `<a href="${href}"`;
 
@@ -19,17 +19,17 @@ Renderer.prototype.link = function(href, title, text) {
   return out;
 };
 
-Renderer.prototype.code = function(code, lang) {
+Renderer.prototype.code = function (code, lang) {
   lang = lang || "javascript";
   const markup = hljs.highlight(lang, code).value;
   return `<pre><code class="hljs lang-${lang}">${markup}</code></pre>`;
 };
 
-Renderer.prototype.image = function(href, title, text) {
+Renderer.prototype.image = function (href, title, text) {
   href = href
     .replace(
-      /http:\/\/(s|p)[0-9]\.(qhimg|qhres)\.com/,
-      "https://$1.ssl.$2.com"
+      /http:\/\/(s|p)([0-9])\.(qhimg|qhres)\.com/,
+      (_, g1, g2, g3) => `https://${g1}${Math.min(Number(g2), 3)}.ssl.${g3}.com`
     )
     .replace(/qhres\.com/, 'qhres2.com');
 
@@ -41,7 +41,7 @@ Renderer.prototype.image = function(href, title, text) {
   return out;
 };
 
-Renderer.prototype.html = function(code) {
+Renderer.prototype.html = function (code) {
   code = code.replace(
     /<img src="([^"]+)"/g,
     (m, g1) => `<img v-lazy="'${g1}'"`
@@ -50,7 +50,7 @@ Renderer.prototype.html = function(code) {
 };
 
 const renderer = new Renderer();
-module.exports = function(source) {
+module.exports = function (source) {
   return marked(source, {
     renderer
   });
