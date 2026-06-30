@@ -213,7 +213,7 @@
             // 清理 script
             doc.querySelectorAll('script').forEach(el => el.remove());
 
-            const body = (doc.querySelector('#page-content') || document.body;
+            const body = doc.querySelector('#page-content') || document.body;
             
 
             // 1. 处理图片懒加载
@@ -233,7 +233,7 @@
             // 2. 清理非 rich_media 元素
             Array.from(body.children).forEach(child => {
                 if (!child.classList.contains('rich_media')) {
-                    child.remove();
+                    // child.remove();
                 }
             });
 
