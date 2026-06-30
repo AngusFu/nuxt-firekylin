@@ -209,7 +209,9 @@
 
         function processHTML(html) {
             const parser = new DOMParser();
-            const doc = parser.parseFromString(html, 'text/html');
+            let doc = parser.parseFromString(html, 'text/html');
+            doc = doc.querySelector('#page-content') || doc
+            
 
             // 1. 处理图片懒加载
             doc.querySelectorAll('img[data-src]').forEach(img => {
